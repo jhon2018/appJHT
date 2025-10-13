@@ -1,6 +1,10 @@
+//ruta: lib/features/welcome/presentation/pages/welcome_page.dart
+//Objetivo: Página de bienvenida con diseño responsivo para web y móvil
 import 'package:flutter/material.dart';
 import '../widgets/welcome_wave_clip.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../../login/presentation/pages/login_page.dart';
+
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -17,7 +21,7 @@ class WelcomePage extends StatelessWidget {
         final isWebOrTablet = constraints.maxWidth > 600;
 
         return Scaffold(
-          // Eliminamos el Center y el Container limitador aquí. 
+          // Elimirnamos el Center y el Container limitador aquí. 
           // El Column debe ocupar todo el espacio.
           body: Column(
             children: [
@@ -99,9 +103,9 @@ class WelcomePage extends StatelessWidget {
               color: Color.fromARGB(222, 0, 0, 0),
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 6),
           Text(
-            '¡Welcome to JHT \nTransport Company!',
+            '¡Welcome to \n JHT Transport Company!',
             style: TextStyle(
               fontSize: isWebOrTablet ? 36 : 30, 
               fontWeight: FontWeight.bold,
@@ -119,7 +123,7 @@ class WelcomePage extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            '¡Explora nuestra app y descubre todo lo que podemos hacer por ti!',
+            '¡Explora nuestra app mòvil o visita nuestra página web y descubre todo lo que podemos hacer por ti!',
             style: TextStyle(
               fontSize: 14,
               color: const Color.fromARGB(255, 29, 27, 27),
@@ -155,7 +159,12 @@ class WelcomePage extends StatelessWidget {
                     icon: const Icon(FontAwesomeIcons.arrowRight, size: 20),
                     color: Colors.white,
                     onPressed: () {
-                      print('Navegando a la pantalla de Login...');
+                      // print('Navegando a la pantalla de Login...');
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => const LoginPage(), // Navega y reemplaza la ruta
+                      ),
+                    );
                     },
                   ),
                 ),
@@ -166,4 +175,5 @@ class WelcomePage extends StatelessWidget {
       ),
     );
   }
+
 }
