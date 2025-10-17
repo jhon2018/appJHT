@@ -1,10 +1,11 @@
 //ruta: lib/features/welcome/presentation/pages/welcome_page.dart
 //Objetivo: Página de bienvenida con diseño responsivo para web y móvil
+import 'package:app_jht_front/features/login/presentation/bloc/login_bloc.dart';
 import 'package:flutter/material.dart';
 import '../widgets/welcome_wave_clip.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../login/presentation/pages/login_page.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -154,19 +155,21 @@ class WelcomePage extends StatelessWidget {
                     color: accentColor,
                     shape: BoxShape.circle,
                   ),
-                  child: IconButton(
-                    padding: EdgeInsets.zero, 
-                    icon: const Icon(FontAwesomeIcons.arrowRight, size: 20),
-                    color: Colors.white,
-                    onPressed: () {
-                      // print('Navegando a la pantalla de Login...');
+                child: IconButton(
+                  padding: EdgeInsets.zero, 
+                  icon: const Icon(FontAwesomeIcons.arrowRight, size: 20),
+                  color: Colors.white,
+                  onPressed: () {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                        builder: (context) => const LoginPage(), // Navega y reemplaza la ruta
+                        builder: (context) => BlocProvider.value(
+                          value: BlocProvider.of<LoginBloc>(context),
+                          child: const LoginPage(),
+                        ),
                       ),
                     );
-                    },
-                  ),
+                  },
+                ),
                 ),
               ],
             ),

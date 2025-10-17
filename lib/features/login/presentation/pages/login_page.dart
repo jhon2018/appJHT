@@ -4,17 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 // Importamos el clipper
 import '../widgets/login_wave_clipper.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/login_bloc.dart';
+import '../bloc/login_event.dart';
+import '../bloc/login_state.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
+  
+
   const LoginPage({super.key});
 
   // Colores definidos para el login, basados en el diseño web (Azul Oscuro/Blue Background).
-  static const Color primaryColor = Color.fromARGB(
-    255,
-    48,
-    51,
-    98,
-  ); // Azul oscuro (Botón/Texto)
+  static const Color primaryColor = Color.fromARGB(255, 48, 51, 98);// Azul oscuro (Botón/Texto)
   static const Color webBackgroundColor = Color.fromARGB(
     255,
     70,
@@ -28,6 +29,24 @@ class LoginPage extends StatelessWidget {
     90,
   ); // Azul oscuro (Texto, Íconos)
   static const Color buttonColor = primaryColor; // Color del botón
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  // Controllers para capturar los datos
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +89,10 @@ class LoginPage extends StatelessWidget {
                     const SizedBox(width: 60),
 
                     // FORMULARIO (DERECHA)
-                    Expanded(flex: 3, child: _WebLoginFormCard()),
+                    Expanded(flex: 3, child: _WebLoginFormCard(
+                      usernameController: _usernameController,
+                      passwordController: _passwordController,
+                    )),
                   ],
                 ),
               ),
@@ -107,7 +129,7 @@ class LoginPage extends StatelessWidget {
       child: Container(
         width: double.infinity,
         height: headerHeight,
-        color: primaryColor,
+        color: LoginPage.primaryColor,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -125,50 +147,75 @@ class LoginPage extends StatelessWidget {
   }
 
   Widget _buildMobileLoginForm() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 0.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // ESPACIO EN LA PARTE SUPERIOR
-          const SizedBox(height: 10),
+    return BlocListener<LoginBloc, LoginState>(
+      listener: (context, state) {
+        if (state.isSuccess) {
+          // Navegar a la siguiente pantalla
+          print('Login exitoso! Navegando...');
+          // TODO: Agregar navegación aquí
+          // Navigator.pushReplacementNamed(context, '/home');
+        }
+        if (state.error != null) {
+          // Mostrar error
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.error!),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 0.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ESPACIO EN LA PARTE SUPERIOR
+            const SizedBox(height: 10),
 
-          // TEXTO CENTRADO CON MEJOR ESPACIADO
-          const Center(
-            child: Text(
-              'JHT TRANSPORT\nCOMPANY',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.w800,
-                color: LoginPage.primaryColor,
-                letterSpacing: 1.5,
-                height: 1.2, // Mejor interlineado
+            // TEXTO CENTRADO CON MEJOR ESPACIADO
+            const Center(
+              child: Text(
+                'JHT TRANSPORT\nCOMPANY',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w800,
+                  color: LoginPage.primaryColor,
+                  letterSpacing: 1.5,
+                  height: 1.2, // Mejor interlineado
+                ),
               ),
             ),
-          ),
 
-          // ESPACIO ENTRE TEXTO Y PRIMER CAMPO
-          const SizedBox(height: 45),
+            // ESPACIO ENTRE TEXTO Y PRIMER CAMPO
+            const SizedBox(height: 45),
 
-          _LoginFormField(
-            labelText: 'Username',
-            icon: FontAwesomeIcons.solidUser,
-          ),
-          const SizedBox(height: 30),
-          _LoginFormField(
-            labelText: 'Password',
-            icon: FontAwesomeIcons.lock,
-            isPassword: true,
-          ),
-          const SizedBox(height: 50),
-          _LoginButton(color: buttonColor),
+            _LoginFormField(
+              labelText: 'Username',
+              icon: FontAwesomeIcons.solidUser,
+              controller: _usernameController,
+            ),
+            const SizedBox(height: 30),
+            _LoginFormField(
+              labelText: 'Password',
+              icon: FontAwesomeIcons.lock,
+              isPassword: true,
+              controller: _passwordController,
+            ),
+            const SizedBox(height: 50),
+            _LoginButton(
+              color: LoginPage.buttonColor,
+              usernameController: _usernameController,
+              passwordController: _passwordController,
+            ),
 
-          // Agregar espacio antes del copyright
-          const SizedBox(height: 40),
-          // Llamar al widget de derechos de autor
-          CopyrightFooter(),
-        ],
+            // Agregar espacio antes del copyright
+            const SizedBox(height: 40),
+            // Llamar al widget de derechos de autor
+            CopyrightFooter(),
+          ],
+        ),
       ),
     );
   }
@@ -180,16 +227,20 @@ class _LoginFormField extends StatelessWidget {
   final String labelText;
   final IconData icon;
   final bool isPassword;
+  final TextEditingController controller;
 
   const _LoginFormField({
     required this.labelText,
     required this.icon,
+    required this.controller,
     this.isPassword = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    
     return TextFormField(
+      controller: controller,
       obscureText: isPassword,
       decoration: InputDecoration(
         labelText: labelText,
@@ -230,58 +281,54 @@ class CopyrightFooter extends StatelessWidget {
   }
 }
 
-// Y lo usas así en tu pantalla:
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Tu contenido de login...
-                  _LoginButton(color: Colors.blue),
-                ],
-              ),
-            ),
-          ),
-          CopyrightFooter(),
-        ],
-      ),
-    );
-  }
-}
-
 class _LoginButton extends StatelessWidget {
   final Color color;
+  final TextEditingController usernameController;
+  final TextEditingController passwordController;
 
-  const _LoginButton({required this.color});
+  const _LoginButton({
+    required this.color,
+    required this.usernameController,
+    required this.passwordController,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () {
-        print('Intentando iniciar sesión...');
+    return BlocBuilder<LoginBloc, LoginState>(
+      builder: (context, state) {
+        return ElevatedButton(
+          onPressed: state.isLoading 
+              ? null 
+              : () {
+                  context.read<LoginBloc>().add(LoginButtonPressed(
+                    username: usernameController.text,
+                    password: passwordController.text,
+                  ));
+                },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: color,
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          child: state.isLoading
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Text(
+                  'LOGIN',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+        );
       },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-      child: const Text(
-        'LOGIN',
-        style: TextStyle(
-          fontSize: 18,
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
     );
   }
 }
@@ -418,66 +465,99 @@ class _WebWelcomeSectionState extends State<_WebWelcomeSection>
 
 // --- TARJETA DE FORMULARIO SOLO WEB ---
 class _WebLoginFormCard extends StatelessWidget {
+  final TextEditingController usernameController;
+  final TextEditingController passwordController;
+
+  const _WebLoginFormCard({
+    required this.usernameController,
+    required this.passwordController,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 25,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      color: Colors.white.withOpacity(0.95),
-      child: Padding(
-        padding: const EdgeInsets.all(40.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // TEXTO CENTRADO
-            const Center(
-              child: Text(
-                'JHT TRANSPORT COMPANY',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 25,
-                  fontWeight: FontWeight.w800,
-                  color: LoginPage.primaryColor,
+    return BlocListener<LoginBloc, LoginState>(
+      listener: (context, state) {
+        if (state.isSuccess) {
+          // Navegar a la siguiente pantalla
+          print('Login exitoso! Navegando...');
+          // TODO: Agregar navegación aquí
+          // Navigator.pushReplacementNamed(context, '/home');
+        }
+        if (state.error != null) {
+          // Mostrar error
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.error!),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      child: Card(
+        elevation: 25,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        color: Colors.white.withOpacity(0.95),
+        child: Padding(
+          padding: const EdgeInsets.all(40.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // TEXTO CENTRADO
+              const Center(
+                child: Text(
+                  'JHT TRANSPORT COMPANY',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.w800,
+                    color: LoginPage.primaryColor,
+                  ),
                 ),
               ),
-            ),
-            const Divider(
-              color: Colors.grey,
-              thickness: 1,
-              height: 15,
-              indent: 70,
-              endIndent: 70,
-            ),
-            const SizedBox(height: 40),
+              const Divider(
+                color: Colors.grey,
+                thickness: 1,
+                height: 15,
+                indent: 70,
+                endIndent: 70,
+              ),
+              const SizedBox(height: 40),
 
-            // Campos del formulario
-            _LoginFormField(
-              labelText: 'User Name',
-              icon: FontAwesomeIcons.solidUser,
-            ),
-            const SizedBox(height: 30),
-            _LoginFormField(
-              labelText: 'Password',
-              icon: FontAwesomeIcons.lock,
-              isPassword: true,
-            ),
-            const SizedBox(height: 20),
+              // Campos del formulario
+              _LoginFormField(
+                labelText: 'User Name',
+                icon: FontAwesomeIcons.solidUser,
+                controller: usernameController,
+              ),
+              const SizedBox(height: 30),
+              _LoginFormField(
+                labelText: 'Password',
+                icon: FontAwesomeIcons.lock,
+                isPassword: true,
+                controller: passwordController,
+              ),
+              const SizedBox(height: 20),
 
-            const SizedBox(height: 50),
+              const SizedBox(height: 50),
 
-            // Botón de Login
-            _LoginButton(color: LoginPage.buttonColor),
+              // Botón de Login
+              _LoginButton(
+                color: LoginPage.buttonColor,
+                usernameController: usernameController,
+                passwordController: passwordController,
+              ),
 
-            const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-            // Derechos de autor
-            const Text(
-              '© 2025 JHT Transport Company. All rights reserved.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-          ],
+              // Derechos de autor
+              const Text(
+                '© 2025 JHT Transport Company. All rights reserved.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,5 +1,26 @@
+## 1. arrancar proyecto
 flutter pub get
+flutter pub run build_runner build --delete-conflicting-outputs
 flutter run -d chrome
 flutter run -d web-server
 
+## 2. Inicia el método de trabajo y crea las ramas
+git flow init
+8.- Crear ramas en la consola del proyecto
+git flow feature start “Nombre del cambio”
 
+
+## 3. COMPILAR ANDROID produccion--
+flutter clean
+flutter pub get  regenera si hay errores masivos
+flutter build apk
+
+
+## 4. SI AGREGAS DEPENCIAS Y NO AGARRAN 
+flutter pub add carousel_slider
+
+## FRONT PLANTILLAS
+-- MOVIL LOGIN ---
+https://www.figma.com/design/8JToHlfCggOXy8gmDc0Cj2/Simple-Login-%E2%9C%A8--Community-?node-id=0-1&p=f&t=Q2Pyobv6QMaZ99uF-0
+
+https://www.shutterstock.com/tr/search/similar/2459649029
