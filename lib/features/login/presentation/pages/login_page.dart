@@ -35,6 +35,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+
   // Controllers para capturar los datos
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -45,7 +46,6 @@ class _LoginPageState extends State<LoginPage> {
     _passwordController.dispose();
     super.dispose();
   }
-
  
 
   @override
@@ -92,6 +92,15 @@ class _LoginPageState extends State<LoginPage> {
                     Expanded(flex: 3, child: _WebLoginFormCard(
                       usernameController: _usernameController,
                       passwordController: _passwordController,
+                      onLoginSuccess: () {
+                        // Limpiar campos después del login exitoso en web
+                        _usernameController.clear();
+                        _passwordController.clear();
+                        print('✅ Login web exitoso - Campos limpiados');
+                        
+                        // TODO: Navegación para web
+                        // Navigator.pushReplacementNamed(context, '/home');
+                      },
                     )),
                   ],
                 ),
@@ -146,80 +155,107 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildMobileLoginForm() {
-    return BlocListener<LoginBloc, LoginState>(
-      listener: (context, state) {
-        if (state.isSuccess) {
-          // Navegar a la siguiente pantalla
-          print('Login exitoso! Navegando...');
-          // TODO: Agregar navegación aquí
-          // Navigator.pushReplacementNamed(context, '/home');
-        }
-        if (state.error != null) {
-          // Mostrar error
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.error!),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 0.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ESPACIO EN LA PARTE SUPERIOR
-            const SizedBox(height: 10),
+// En tu _buildMobileLoginForm - REEMPLAZA solo esta parte:
+Widget _buildMobileLoginForm() {
+  return BlocListener<LoginBloc, LoginState>(
+    listener: (context, state) {
+      if (state.isSuccess) {
+        // Navegar a la siguiente pantalla
+        print('Login exitoso! Navegando Movil...');
+        // TODO: Agregar navegación aquí
+        // Navigator.pushReplacementNamed(context, '/home');
+        
+        // LIMPIAR CAMPOS después del login exitoso
+        _usernameController.clear();
+        _passwordController.clear();
+      }
+      if (state.error != null && state.error!.isNotEmpty) {
+        // Mostrar error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(state.error!),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    },
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 0.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ESPACIO EN LA PARTE SUPERIOR
+          const SizedBox(height: 10),
 
-            // TEXTO CENTRADO CON MEJOR ESPACIADO
-            const Center(
-              child: Text(
-                'JHT TRANSPORT\nCOMPANY',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 25,
-                  fontWeight: FontWeight.w800,
-                  color: LoginPage.primaryColor,
-                  letterSpacing: 1.5,
-                  height: 1.2, // Mejor interlineado
-                ),
+          // TEXTO CENTRADO CON MEJOR ESPACIADO
+          const Center(
+            child: Text(
+              'JHT TRANSPORT\nCOMPANY',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 25,
+                fontWeight: FontWeight.w800,
+                color: LoginPage.primaryColor,
+                letterSpacing: 1.5,
+                height: 1.2,
               ),
             ),
+          ),
 
-            // ESPACIO ENTRE TEXTO Y PRIMER CAMPO
-            const SizedBox(height: 45),
+          // ESPACIO ENTRE TEXTO Y PRIMER CAMPO
+          const SizedBox(height: 45),
 
-            _LoginFormField(
-              labelText: 'Username',
-              icon: FontAwesomeIcons.solidUser,
-              controller: _usernameController,
-            ),
-            const SizedBox(height: 30),
-            _LoginFormField(
-              labelText: 'Password',
-              icon: FontAwesomeIcons.lock,
-              isPassword: true,
-              controller: _passwordController,
-            ),
-            const SizedBox(height: 50),
-            _LoginButton(
-              color: LoginPage.buttonColor,
-              usernameController: _usernameController,
-              passwordController: _passwordController,
-            ),
+          _LoginFormField(
+            labelText: 'Username',
+            icon: FontAwesomeIcons.solidUser,
+            controller: _usernameController,
+          ),
+          const SizedBox(height: 30),
+          _LoginFormField(
+            labelText: 'Password',
+            icon: FontAwesomeIcons.lock,
+            isPassword: true,
+            controller: _passwordController,
+          ),
 
-            // Agregar espacio antes del copyright
-            const SizedBox(height: 40),
-            // Llamar al widget de derechos de autor
-            CopyrightFooter(),
-          ],
-        ),
+          // MOSTRAR ERRORES DE FORMA VISIBLE
+          BlocBuilder<LoginBloc, LoginState>(
+            builder: (context, state) {
+              if (state.error != null && state.error!.isNotEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 20.0, bottom: 10.0),
+                  child: Text(
+                    state.error!,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              }
+              return const SizedBox(height: 30); // Espacio reservado
+            },
+          ),
+
+          _LoginButton(
+            color: LoginPage.buttonColor,
+            usernameController: _usernameController,
+            passwordController: _passwordController,
+          ),
+
+          // Agregar espacio antes del copyright
+          const SizedBox(height: 40),
+          CopyrightFooter(),
+        ],
       ),
-    );
-  }
+    ),
+  );
 }
+
+  }
 
 // --- WIDGETS REUTILIZABLES ---
 
@@ -464,13 +500,17 @@ class _WebWelcomeSectionState extends State<_WebWelcomeSection>
 }
 
 // --- TARJETA DE FORMULARIO SOLO WEB ---
+
+// --- TARJETA DE FORMULARIO SOLO WEB ---
 class _WebLoginFormCard extends StatelessWidget {
   final TextEditingController usernameController;
   final TextEditingController passwordController;
+  final VoidCallback onLoginSuccess; // ← Nuevo callback
 
   const _WebLoginFormCard({
     required this.usernameController,
     required this.passwordController,
+    required this.onLoginSuccess, // ← Recibir callback
   });
 
   @override
@@ -478,13 +518,10 @@ class _WebLoginFormCard extends StatelessWidget {
     return BlocListener<LoginBloc, LoginState>(
       listener: (context, state) {
         if (state.isSuccess) {
-          // Navegar a la siguiente pantalla
-          print('Login exitoso! Navegando...');
-          // TODO: Agregar navegación aquí
-          // Navigator.pushReplacementNamed(context, '/home');
+          print('Login exitoso! Navegando Web...');
+          onLoginSuccess(); // ← Ejecutar callback del padre
         }
         if (state.error != null) {
-          // Mostrar error
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.error!),
@@ -529,6 +566,7 @@ class _WebLoginFormCard extends StatelessWidget {
                 labelText: 'User Name',
                 icon: FontAwesomeIcons.solidUser,
                 controller: usernameController,
+                
               ),
               const SizedBox(height: 30),
               _LoginFormField(
@@ -563,3 +601,4 @@ class _WebLoginFormCard extends StatelessWidget {
     );
   }
 }
+

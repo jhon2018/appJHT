@@ -5,10 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/welcome/presentation/pages/welcome_page.dart';
 import 'features/login/presentation/bloc/login_bloc.dart';
-// import 'core/di/injection_container.dart'; // Si ya tienes la inyección lista
+
 
 void main() {
-  // initDependencies(); // Llamada a tu función de inyección
+  // DevHttpClient.ignoreSslErrors(); // Ignorar errores SSL en desarrollo temporalmente
+
   runApp(const MyApp());
 }
 

@@ -3,15 +3,15 @@
 
 class LoginRequestModel {
   final String usuario;
-  final String password;
+  final String contrasena;
 
   LoginRequestModel({
     required this.usuario,
-    required this.password,
+    required this.contrasena,
   });
 
   Map<String, dynamic> toJson() => {
     'usuario': usuario,
-    'password': password,
+    'contrasena': contrasena,
   };
 }
