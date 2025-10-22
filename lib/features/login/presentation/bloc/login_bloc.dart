@@ -1,6 +1,7 @@
 // Ruta: lib/features/login/presentation/bloc/login_bloc.dart
 // Objetivo: Implementar el BLoC de inicio de sesión para manejar eventos y estados relacionados con el login y la autenticación.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -21,10 +22,21 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
     try {
       print('🔵 Iniciando login para usuario: ${event.username}');
-
+     
+     String getBaseUrl() {
+      if (kIsWeb) {
+        return 'http://localhost:7030'; // Web funciona con localhost
+      } else {
+        // Para móvil, usar IP de la laptop
+        return 'http://192.168.1.16:7030'; // ← Cambia por tu IP y agregalo en el CORS
+      }
+    }
+     
       // LLAMADA REAL A TU API
       final response = await http.post(
-        Uri.parse('https://jht-backendapi.onrender.com/api/Auth/login'),
+       
+        // Uri.parse('https://jht-backendapi.onrender.com/api/Auth/login'),  // PRODUCCION
+        Uri.parse('${getBaseUrl()}/api/Auth/login'),
         headers: {'Content-Type': 'application/json', 'accept': '*/*'},
         body: json.encode(
           LoginRequestModel(

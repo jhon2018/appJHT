@@ -1,10 +1,12 @@
 //ruta: lib/main.dart
 //descripción: Punto de entrada principal de la aplicación Flutter, configurando el tema y la pantalla inicial.
 
+// import 'package:app_jht_front/core/network/http_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/welcome/presentation/pages/welcome_page.dart';
 import 'features/login/presentation/bloc/login_bloc.dart';
+
 
 
 void main() {

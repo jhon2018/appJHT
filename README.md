@@ -3,6 +3,8 @@ flutter pub get
 flutter pub run build_runner build --delete-conflicting-outputs
 flutter run -d chrome
 flutter run -d web-server
+flutter run -d chrome --web-browser-flag "--ignore-certificate-errors" --web-browser-flag "--disable-web-security"
+flutter run -d web-server --web-port=5000
 
 ## 2. Inicia el método de trabajo y crea las ramas
 git flow init
@@ -12,7 +14,7 @@ git flow feature start “Nombre del cambio”
 
 ## 3. COMPILAR ANDROID produccion--
 flutter clean
-flutter pub get  regenera si hay errores masivos
+flutter pub get  regenera si hay errores masivosç
 flutter build apk
 
 
