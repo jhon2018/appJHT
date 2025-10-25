@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/welcome/presentation/pages/welcome_page.dart';
 import 'features/login/presentation/bloc/login_bloc.dart';
+import 'features/login/presentation/pages/login_page.dart';
+import 'features/home/presentation/pages/home_page.dart';
 
 
 
@@ -15,6 +17,7 @@ void main() {
   runApp(const MyApp());
 }
 
+// En tu main.dart
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -23,16 +26,22 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => LoginBloc()),
-        // Aquí puedes agregar más Blocs en el futuro
       ],
       child: MaterialApp(
-        title: 'JHT Transport', // Cambié el título para que coincida con tu app
+        title: 'JHT Transport',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: WelcomePage.primaryColor),
           useMaterial3: true,
         ),
         debugShowCheckedModeBanner: false,
-        home: const WelcomePage(), 
+        
+        // AGREGAR ESTAS RUTAS:
+        routes: {
+          '/welcome': (context) => const WelcomePage(),
+          '/login': (context) => LoginPage(), // ← Asegúrate de tener esta importación
+          '/home': (context) => HomePage(),   // ← Necesitas crear esta página
+        },
+        initialRoute: '/welcome',
       ),
     );
   }

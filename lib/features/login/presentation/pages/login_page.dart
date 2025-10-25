@@ -1,5 +1,5 @@
 // ruta: lib/features/login/presentation/pages/login_page.dart
-//descripción: Página de login con diseño responsivo para web y móvil
+//descripción: Página de login con diseño responsivo para web y móvil logrando una experiencia de usuario óptima en ambas plataformas.
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 // Importamos el clipper
@@ -8,26 +8,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/login_bloc.dart';
 import '../bloc/login_event.dart';
 import '../bloc/login_state.dart';
+import '../../../admin/presentation/pages/admin_dashboard.dart';
+import '../../../conductor/presentation/pages/conductor_dashboard.dart';
 
 class LoginPage extends StatefulWidget {
-  
-
   const LoginPage({super.key});
 
   // Colores definidos para el login, basados en el diseño web (Azul Oscuro/Blue Background).
-  static const Color primaryColor = Color.fromARGB(255, 48, 51, 98);// Azul oscuro (Botón/Texto)
-  static const Color webBackgroundColor = Color.fromARGB(
-    255,
-    70,
-    130,
-    180,
-  ); // Fondo azul para la vista web
-  static const Color accentColor = Color.fromARGB(
-    255,
-    34,
-    35,
-    90,
-  ); // Azul oscuro (Texto, Íconos)
+  static const Color primaryColor = Color.fromARGB(255, 48, 51, 98); // Azul oscuro (Botón/Texto)
+  static const Color webBackgroundColor = Color.fromARGB(255, 70, 130, 180); // Fondo azul para la vista web
+  static const Color accentColor = Color.fromARGB(255, 34, 35, 90); // Azul oscuro (Texto, Íconos)
   static const Color buttonColor = primaryColor; // Color del botón
 
   @override
@@ -35,7 +25,6 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-
   // Controllers para capturar los datos
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -46,81 +35,147 @@ class _LoginPageState extends State<LoginPage> {
     _passwordController.dispose();
     super.dispose();
   }
- 
+
+  // MÉTODO DE NAVEGACIÓN COMÚN PARA WEB Y MÓVIL - ACTUALIZADO
+  void _handleLoginSuccess(BuildContext context, LoginState state) {
+    print(' 1 Login exitoso! Navegando...');
+    print('Estado actual: $state');
+    print('nivelAcceso: ${state.nivelAcceso}');
+    print('usuario: ${state.usuario}');
+    print('error: ${state.error}');    
+    
+    // Usar WidgetsBinding para asegurar que el contexto esté disponible
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Navegación por rol
+      if (state.nivelAcceso == 1) {
+        // Admin
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const AdminDashboard()),
+        );
+      } else if (state.nivelAcceso == 2) {
+        // Conductor
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const ConductorDashboard()),
+        );
+      } else {
+        // Rol no reconocido
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tu Usuario no tiene un rol asignado, comunicate con el administrador de jht transport.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 5)),
+        );
+      }
+      
+      // Limpiar campos después del login exitoso
+      _usernameController.clear();
+      _passwordController.clear();
+    });
+  }
+
+  void _handleLoginError(BuildContext context, String error) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Usamos MediaQuery para obtener las dimensiones y determinar la plataforma.
-    final size = MediaQuery.of(context).size;
-    // La lógica de responsividad se basa en el ancho
-    final isWebOrTablet =
-        size.width > 800; // Aumentamos el breakpoint para dos columnas
+    return BlocListener<LoginBloc, LoginState>(
+      listener: (context, state) {
+         print(' 2 Estado actual: $state');
+          print('nivelAcceso: ${state.nivelAcceso}');
+          print('usuario: ${state.usuario}');
+          print('error: ${state.error}');
+        if (state.isSuccess) {
+          _handleLoginSuccess(context, state);
+        }
+        if (state.error != null && state.error!.isNotEmpty) {
+          _handleLoginError(context, state.error!);
+        }
+      },
+      child: _buildResponsiveLayout(context),
+    );
+  }
 
-    // --- VERSIÓN WEB CON FONDO COMPLETO ---
+  Widget _buildResponsiveLayout(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isWebOrTablet = size.width > 800;
+
     if (isWebOrTablet) {
-      return Scaffold(
-        body: Stack(
-          children: [
-            // FONDO COMPLETO CON LA IMAGEN
-            Container(
-              width: double.infinity,
-              height: double.infinity,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/images/LoginWebFondo.png'),
-                  fit: BoxFit.cover,
-                ),
+      return _buildWebLayout();
+    } else {
+      return _buildMobileLayout(context, size.height);
+    }
+  }
+
+  // --- VERSIÓN WEB ---
+  Widget _buildWebLayout() {
+    return Scaffold(
+      body: Stack(
+        children: [
+          // FONDO COMPLETO CON LA IMAGEN
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/LoginWebFondo.png'),
+                fit: BoxFit.cover,
               ),
             ),
+          ),
 
-            // CONTENIDO PRINCIPAL CENTRADO
-            Center(
-              child: Container(
-                constraints: const BoxConstraints(
-                  maxWidth: 1200,
-                  maxHeight: 800,
-                ),
-                padding: const EdgeInsets.all(40),
-                child: Row(
-                  children: [
-                    // SECCIÓN DE BIENVENIDA (IZQUIERDA)
-                    const Expanded(flex: 5, child: _WebWelcomeSection()),
-
-                    const SizedBox(width: 60),
-
-                    // FORMULARIO (DERECHA)
-                    Expanded(flex: 3, child: _WebLoginFormCard(
+          // CONTENIDO PRINCIPAL CENTRADO
+          Center(
+            child: Container(
+              constraints: const BoxConstraints(
+                maxWidth: 1200,
+                maxHeight: 800,
+              ),
+              padding: const EdgeInsets.all(40),
+              child: Row(
+                children: [
+                  // SECCIÓN DE BIENVENIDA (IZQUIERDA)
+                  const Expanded(flex: 5, child: _WebWelcomeSection()),
+                  const SizedBox(width: 60),
+                  // FORMULARIO (DERECHA)
+                  Expanded(
+                    flex: 3,
+                    child: _WebLoginFormCard(
                       usernameController: _usernameController,
                       passwordController: _passwordController,
                       onLoginSuccess: () {
-                        // Limpiar campos después del login exitoso en web
                         _usernameController.clear();
                         _passwordController.clear();
                         print('✅ Login web exitoso - Campos limpiados');
-                        
-                        // TODO: Navegación para web
-                        // Navigator.pushReplacementNamed(context, '/home');
                       },
-                    )),
-                  ],
-                ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      );
-    }
+          ),
+        ],
+      ),
+    );
+  }
 
-    // Si es móvil/pantalla pequeña, mantenemos el diseño vertical con la onda
+  // --- VERSIÓN MÓVIL ---
+  Widget _buildMobileLayout(BuildContext context, double totalHeight) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. HEADER con la onda usando ClipPath (Diseño Móvil)
-            _buildMobileHeader(context, size.height),
-
-            // 2. FORMULARIO DE LOGIN (Diseño Móvil)
+            // 1. HEADER con la onda usando ClipPath
+            _buildMobileHeader(totalHeight),
+            // 2. FORMULARIO DE LOGIN
             _buildMobileLoginForm(),
           ],
         ),
@@ -128,13 +183,11 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // --- WIDGETS DE CONSTRUCCIÓN (MÓVIL) ---
-
-  Widget _buildMobileHeader(BuildContext context, double totalHeight) {
-    final double headerHeight = totalHeight * 0.45; // Altura para móvil
+  Widget _buildMobileHeader(double totalHeight) {
+    final double headerHeight = totalHeight * 0.45;
 
     return ClipPath(
-      clipper: LoginWaveClipper(), // Usamos el clipper de onda
+      clipper: LoginWaveClipper(),
       child: Container(
         width: double.infinity,
         height: headerHeight,
@@ -142,7 +195,6 @@ class _LoginPageState extends State<LoginPage> {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // IMAGEN DE FONDO
             Positioned.fill(
               child: Image.asset(
                 'assets/images/loginFondo.png',
@@ -155,40 +207,13 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-// En tu _buildMobileLoginForm - REEMPLAZA solo esta parte:
-Widget _buildMobileLoginForm() {
-  return BlocListener<LoginBloc, LoginState>(
-    listener: (context, state) {
-      if (state.isSuccess) {
-        // Navegar a la siguiente pantalla
-        print('Login exitoso! Navegando Movil...');
-        // TODO: Agregar navegación aquí
-        // Navigator.pushReplacementNamed(context, '/home');
-        
-        // LIMPIAR CAMPOS después del login exitoso
-        _usernameController.clear();
-        _passwordController.clear();
-      }
-      if (state.error != null && state.error!.isNotEmpty) {
-        // Mostrar error
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(state.error!),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    },
-    child: Padding(
+  Widget _buildMobileLoginForm() {
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 0.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ESPACIO EN LA PARTE SUPERIOR
           const SizedBox(height: 10),
-
-          // TEXTO CENTRADO CON MEJOR ESPACIADO
           const Center(
             child: Text(
               'JHT TRANSPORT\nCOMPANY',
@@ -202,10 +227,7 @@ Widget _buildMobileLoginForm() {
               ),
             ),
           ),
-
-          // ESPACIO ENTRE TEXTO Y PRIMER CAMPO
           const SizedBox(height: 45),
-
           _LoginFormField(
             labelText: 'Username',
             icon: FontAwesomeIcons.solidUser,
@@ -218,7 +240,6 @@ Widget _buildMobileLoginForm() {
             isPassword: true,
             controller: _passwordController,
           ),
-
           // MOSTRAR ERRORES DE FORMA VISIBLE
           BlocBuilder<LoginBloc, LoginState>(
             builder: (context, state) {
@@ -236,29 +257,23 @@ Widget _buildMobileLoginForm() {
                   ),
                 );
               }
-              return const SizedBox(height: 30); // Espacio reservado
+              return const SizedBox(height: 30);
             },
           ),
-
           _LoginButton(
             color: LoginPage.buttonColor,
             usernameController: _usernameController,
             passwordController: _passwordController,
           ),
-
-          // Agregar espacio antes del copyright
           const SizedBox(height: 40),
           CopyrightFooter(),
         ],
       ),
-    ),
-  );
+    );
+  }
 }
 
-  }
-
 // --- WIDGETS REUTILIZABLES ---
-
 class _LoginFormField extends StatelessWidget {
   final String labelText;
   final IconData icon;
@@ -274,7 +289,6 @@ class _LoginFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     return TextFormField(
       controller: controller,
       obscureText: isPassword,
@@ -370,7 +384,6 @@ class _LoginButton extends StatelessWidget {
 }
 
 // --- WIDGETS ESPECÍFICOS SOLO WEB (CON ANIMACIONES) ---
-
 class _WebWelcomeSection extends StatefulWidget {
   const _WebWelcomeSection();
 
@@ -388,33 +401,19 @@ class _WebWelcomeSectionState extends State<_WebWelcomeSection>
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.0, 1.0, curve: Curves.easeInOut),
-      ),
+      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 1.0, curve: Curves.easeInOut)),
     );
-
     _slideAnimation = Tween<double>(begin: 50.0, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
-      ),
+      CurvedAnimation(parent: _controller, curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic)),
     );
-
     _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.3, 1.0, curve: Curves.elasticOut),
-      ),
+      CurvedAnimation(parent: _controller, curve: const Interval(0.3, 1.0, curve: Curves.elasticOut)),
     );
-
     Future.delayed(const Duration(milliseconds: 300), () {
       _controller.forward();
     });
@@ -434,8 +433,7 @@ class _WebWelcomeSectionState extends State<_WebWelcomeSection>
         return Container(
           padding: const EdgeInsets.all(40),
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start, // WELCOME a la izquierda
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Transform.translate(
@@ -446,46 +444,35 @@ class _WebWelcomeSectionState extends State<_WebWelcomeSection>
                     opacity: _fadeAnimation.value,
                     child: const Text(
                       'INCIA SESIÓN',
-                      textAlign: TextAlign.left, // Alineado a la izquierda
+                      textAlign: TextAlign.left,
                       style: TextStyle(
                         fontSize: 42,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                         letterSpacing: 2.0,
                         shadows: [
-                          Shadow(
-                            blurRadius: 15.0,
-                            color: Colors.black87,
-                            offset: Offset(3, 3),
-                          ),
+                          Shadow(blurRadius: 15.0, color: Colors.black87, offset: Offset(3, 3)),
                         ],
                       ),
                     ),
                   ),
                 ),
               ),
-
               const SizedBox(height: 30),
-
-              // Descripción alineada a la izquierda
               Transform.translate(
                 offset: Offset(_slideAnimation.value * 0.8, 0),
                 child: Opacity(
                   opacity: _fadeAnimation.value,
                   child: const Text(
                     'Soluciones logísticas confiables y eficientes para un transporte sin interrupciones. Inicia sesión y descubre cómo podemos optimizar tus operaciones de transporte.',
-                    textAlign: TextAlign.left, // Alineado a la izquierda
+                    textAlign: TextAlign.left,
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.white,
                       height: 1.5,
                       letterSpacing: 0.5,
                       shadows: [
-                        Shadow(
-                          blurRadius: 10.0,
-                          color: Colors.black87,
-                          offset: Offset(2, 2),
-                        ),
+                        Shadow(blurRadius: 10.0, color: Colors.black87, offset: Offset(2, 2)),
                       ],
                     ),
                   ),
@@ -500,17 +487,15 @@ class _WebWelcomeSectionState extends State<_WebWelcomeSection>
 }
 
 // --- TARJETA DE FORMULARIO SOLO WEB ---
-
-// --- TARJETA DE FORMULARIO SOLO WEB ---
 class _WebLoginFormCard extends StatelessWidget {
   final TextEditingController usernameController;
   final TextEditingController passwordController;
-  final VoidCallback onLoginSuccess; // ← Nuevo callback
+  final VoidCallback onLoginSuccess;
 
   const _WebLoginFormCard({
     required this.usernameController,
     required this.passwordController,
-    required this.onLoginSuccess, // ← Recibir callback
+    required this.onLoginSuccess,
   });
 
   @override
@@ -518,15 +503,12 @@ class _WebLoginFormCard extends StatelessWidget {
     return BlocListener<LoginBloc, LoginState>(
       listener: (context, state) {
         if (state.isSuccess) {
-          print('Login exitoso! Navegando Web...');
-          onLoginSuccess(); // ← Ejecutar callback del padre
+          print('Login exitoso en formulario web!');
+          onLoginSuccess();
         }
         if (state.error != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.error!),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(state.error!), backgroundColor: Colors.red),
           );
         }
       },
@@ -540,7 +522,6 @@ class _WebLoginFormCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // TEXTO CENTRADO
               const Center(
                 child: Text(
                   'JHT TRANSPORT COMPANY',
@@ -552,21 +533,12 @@ class _WebLoginFormCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const Divider(
-                color: Colors.grey,
-                thickness: 1,
-                height: 15,
-                indent: 70,
-                endIndent: 70,
-              ),
+              const Divider(color: Colors.grey, thickness: 1, height: 15, indent: 70, endIndent: 70),
               const SizedBox(height: 40),
-
-              // Campos del formulario
               _LoginFormField(
                 labelText: 'User Name',
                 icon: FontAwesomeIcons.solidUser,
                 controller: usernameController,
-                
               ),
               const SizedBox(height: 30),
               _LoginFormField(
@@ -576,19 +548,13 @@ class _WebLoginFormCard extends StatelessWidget {
                 controller: passwordController,
               ),
               const SizedBox(height: 20),
-
               const SizedBox(height: 50),
-
-              // Botón de Login
               _LoginButton(
                 color: LoginPage.buttonColor,
                 usernameController: usernameController,
                 passwordController: passwordController,
               ),
-
               const SizedBox(height: 40),
-
-              // Derechos de autor
               const Text(
                 '© 2025 JHT Transport Company. All rights reserved.',
                 textAlign: TextAlign.center,
@@ -601,4 +567,3 @@ class _WebLoginFormCard extends StatelessWidget {
     );
   }
 }
-

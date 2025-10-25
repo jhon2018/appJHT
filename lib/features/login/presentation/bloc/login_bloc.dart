@@ -21,7 +21,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     emit(state.copyWith(isLoading: true, error: null));
 
     try {
-      print('🔵 Iniciando login para usuario: ${event.username}');
+      print('🔵 Iniciando login_bloc.dart para usuario: ${event.username}');
      
      String getBaseUrl() {
       if (kIsWeb) {
@@ -57,10 +57,14 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
             isLoading: false,
             isSuccess: true,
             error: null, // ← LIMPIAR ERROR EXPLÍCITAMENTE
+            nivelAcceso: responseData['nivelAcceso'], // ← GUARDAR NIVEL ACCESO
+            usuario: responseData['usuario'],         // ← GUARDAR USUARIO
           ),
         );
 
-        print('✅ Mensaje Api: ${responseData['mensaje']}');
+            print('✅ Mensaje Api: ${responseData['mensaje']}');
+            print('✅ Nivel Acceso: ${responseData['nivelAcceso']}');
+            print('✅ Usuario: ${responseData['usuario']}');
       } else {
         final errorData = json.decode(response.body);
         final errorMessage = _getErrorMessage(errorData);

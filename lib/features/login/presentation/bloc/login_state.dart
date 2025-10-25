@@ -7,30 +7,39 @@ class LoginState {
   final bool isLoading;
   final String? error;
   final bool isSuccess;
+  final int? nivelAcceso;
+  final String? usuario;
 
   const LoginState({
     this.isLoading = false,
     this.error,
     this.isSuccess = false,
+    this.nivelAcceso, 
+    this.usuario,      
   });
 
   // Método helper para verificar si hay error
   bool get hasError => error != null && error!.isNotEmpty;
 
+  // CORRECCIÓN: Los parámetros deben ser nombrados y opcionales
   LoginState copyWith({
     bool? isLoading,
-    String? error, // ← Si pasas null, se limpia el error
+    String? error,
     bool? isSuccess,
+    int? nivelAcceso,  // ← QUITA el "required"
+    String? usuario,   // ← QUITA el "required"
   }) {
     return LoginState(
       isLoading: isLoading ?? this.isLoading,
-      error: error, // ← Esto permite limpiar el error
+      error: error, // Permite limpiar el error con null
       isSuccess: isSuccess ?? this.isSuccess,
+      nivelAcceso: nivelAcceso ?? this.nivelAcceso, 
+      usuario: usuario ?? this.usuario,             
     );
   }
 
   @override
   String toString() {
-    return 'LoginState(isLoading: $isLoading, error: $error, isSuccess: $isSuccess)';
+    return 'LoginState(isLoading: $isLoading, error: $error, isSuccess: $isSuccess, nivelAcceso: $nivelAcceso, usuario: $usuario)';
   }
 }
