@@ -1,6 +1,7 @@
 // Ruta: lib/features/login/presentation/bloc/login_bloc.dart
 // Objetivo: Implementar el BLoC de inicio de sesión para manejar eventos y estados relacionados con el login y la autenticación.
 
+import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
@@ -51,6 +52,13 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
+        final String token = responseData['token']; // ← EXTRAER TOKEN
+        await TokenService.saveToken(token); // ← GUARDAR TOKEN
+        await TokenService.saveUserData(      // ← GUARDAR DATOS USUARIO
+          responseData['usuario'], 
+          responseData['nivelAcceso']
+        );
+
         // SOLO CAMBIA ESTA LÍNEA: mantener copyWith pero limpiar error
         emit(
           state.copyWith(

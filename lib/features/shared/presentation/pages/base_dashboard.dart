@@ -1,5 +1,6 @@
 // lib/features/shared/presentation/pages/base_dashboard.dart
 
+import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:flutter/material.dart';
 
 class BaseDashboard extends StatefulWidget {
@@ -645,36 +646,99 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
     );
   }
 
-  void _showLogoutConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Cerrar Sesión'),
+
+void _showLogoutConfirmation(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text(
+          'Cerrar Sesión',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF303366),
+          ),
+        ),
+        content: Text(
+          '¿Estás seguro usuario ${widget.userName}? ¿que deseas cerrar sesión?',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.black87,
+          ),
+        ),
+        actions: [
+          // Botón Cancelar
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey[600],
+            ),
+            child: const Text('Cancelar'),
+          ),
           
-          content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
+          // Botón Cerrar Sesión - ACTUALIZADO
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Cerrar diálogo
+              _performRealLogout(context); // ← LOGOUT REAL
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF303366),
             ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Sesión cerrada'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              },
-              child: const Text('Cerrar Sesión', style: TextStyle(color:  Color(0xFF303366),)),
+            child: const Text(
+              'Cerrar Sesión',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ],
-        );
-      },
+          ),
+        ],
+      );
+    },
+  );
+}
+
+// NUEVO MÉTODO PARA LOGOUT REAL
+void _performRealLogout(BuildContext context) async {
+  // GUARDAR REFERENCIAS ANTES DE CUALQUIER OPERACIÓN ASÍNCRONA
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  final navigator = Navigator.of(context);
+  
+  try {
+    await TokenService.deleteToken();
+    
+    // Navegar primero
+    navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+    
+    // Luego mostrar mensaje (esto puede necesitar un pequeño delay)
+    Future.delayed(const Duration(milliseconds: 100), () {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Sesión cerrada correctamente'),
+          backgroundColor: Color(0xFF303366),
+          duration: Duration(seconds: 4),
+        ),
+      );
+    });
+    
+  } catch (e) {
+    // Para errores, mostrar en el contexto actual
+    scaffoldMessenger.showSnackBar(
+      SnackBar(
+        content: Text('Error al cerrar sesión: $e'),
+        backgroundColor: Colors.red,
+      ),
     );
   }
+}
+
+
 }
 
 class MenuItem {
