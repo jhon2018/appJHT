@@ -1,6 +1,7 @@
 // lib/features/shared/presentation/pages/base_dashboard.dart
-
 import 'package:app_jht_front/core/utils/token_service.dart';
+import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
+import 'package:app_jht_front/features/vehicle/presentation/pages/vehicle_page.dart';
 import 'package:flutter/material.dart';
 
 class BaseDashboard extends StatefulWidget {
@@ -72,24 +73,10 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
     });
   }
 
-  // Items del menú según el nivel de acceso
-  List<MenuItem> _getMenuItems() {
-    final baseItems = [
-      MenuItem(icon: '🔧', title: 'Mantenimiento', enabled: true),
-      MenuItem(icon: '🚗', title: 'Vehículo', enabled: widget.nivelAcceso == 1),
-      MenuItem(icon: '🏢', title: 'Proveedor', enabled: widget.nivelAcceso == 1),
-      MenuItem(icon: '👨‍💼', title: 'Conductores', enabled: widget.nivelAcceso == 1),
-      MenuItem(icon: '🔩', title: 'Accesorios', enabled: true),
-      MenuItem(icon: '❓', title: 'Ayuda', enabled: true),
-    ];
-    
-    return baseItems;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Fondo blanco limpio
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           // Contenido principal
@@ -112,7 +99,7 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
         return Transform.scale(
           scale: _scaleAnimation.value,
           child: Container(
-            color: Colors.white, // Fondo blanco
+            color: Colors.white,
             child: Column(
               children: [
                 // Header - ESTILO JHT TRANSPORT
@@ -151,18 +138,16 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Título estilo JHT TRANSPORT
             const Text(
               'JHT TRANSPORT \n COMPANY',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF303366), // Azul corporativo
+                color: Color(0xFF303366),
                 letterSpacing: 1.0,
               ),
             ),
             
-            // Botón de menú con tres puntos
             InkWell(
               onTap: _toggleMenu,
               borderRadius: BorderRadius.circular(20),
@@ -174,27 +159,21 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      width: 4,
-                      height: 4,
+                      width: 4, height: 4,
                       decoration: const BoxDecoration(
-                        color: Colors.black87,
-                        shape: BoxShape.circle,
+                        color: Colors.black87, shape: BoxShape.circle,
                       ),
                     ),
                     Container(
-                      width: 4,
-                      height: 4,
+                      width: 4, height: 4,
                       decoration: const BoxDecoration(
-                        color: Colors.black87,
-                        shape: BoxShape.circle,
+                        color: Colors.black87, shape: BoxShape.circle,
                       ),
                     ),
                     Container(
-                      width: 4,
-                      height: 4,
+                      width: 4, height: 4,
                       decoration: const BoxDecoration(
-                        color: Colors.black87,
-                        shape: BoxShape.circle,
+                        color: Colors.black87, shape: BoxShape.circle,
                       ),
                     ),
                   ],
@@ -211,7 +190,6 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Sección de dashboard
         const Padding(
           padding: EdgeInsets.only(bottom: 15),
           child: Text(
@@ -225,7 +203,6 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
           ),
         ),
 
-        // Grid de características estilo CATEGORY
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -236,29 +213,27 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
             _buildCategoryCard(
               'MANTENIMIENTO',
               'Gestión y control de mantenimiento preventivo y correctivo de la flota vehicular.',
-              const Color(0xFF303366), // Azul corporativo
+              const Color(0xFF303366),
             ),
             _buildCategoryCard(
               'VEHÍCULOS',
               'Administración completa de la flota vehicular, seguros y documentación.',
-              const Color(0xFF4CAF50), // Verde
+              const Color(0xFF4CAF50),
             ),
             _buildCategoryCard(
               'CONDUCTORES',
               'Gestión de conductores, licencias, capacitaciones y asignaciones.',
-              const Color(0xFF2196F3), // Azul
+              const Color(0xFF2196F3),
             ),
             _buildCategoryCard(
               'REPORTES',
               'Generación de reportes operativos, financieros y de desempeño.',
-              const Color(0xFFFF9800), // Naranja
+              const Color(0xFFFF9800),
             ),
           ],
         ),
 
         const SizedBox(height: 10),
-
-        // Sección de estadísticas rápidas
         const Text(
           'ESTADÍSTICAS RÁPIDAS',
           style: TextStyle(
@@ -285,8 +260,6 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
         ),
 
         const SizedBox(height: 40),
-
-        // Footer de copyright
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 20),
@@ -328,10 +301,7 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Colors.grey[200]!,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey[200]!, width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.2),
@@ -379,20 +349,13 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Colors.grey[200]!,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey[200]!, width: 1),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: const Color(0xFF303366),
-          ),
+          Icon(icon, size: 20, color: const Color(0xFF303366)),
           const SizedBox(height: 8),
           Text(
             value,
@@ -405,10 +368,7 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
           ),
         ],
       ),
@@ -430,208 +390,68 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
       builder: (context, child) {
         return Transform.translate(
           offset: Offset(_slideAnimation.value, 0),
-          child: Container(
-            width: 280,
-            color: Colors.white,
-            child: SafeArea(
-              child: Column(
-                children: [
-                  // Header del menú
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'MENÚ',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: _closeMenu,
-                          icon: const Icon(Icons.close, size: 20),
-                          padding: EdgeInsets.zero,
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  // Tarjeta de usuario
-                  _buildUserCard(),
-                  
-                  // Items del menú
-                  Expanded(
-                    child: _buildMenuItems(),
-                  ),
-                  
-                  // Botón salir
-                  _buildLogoutButton(),
-                ],
-              ),
-            ),
+          child: SideMenu(
+            userName: widget.userName,
+            userRole: widget.userRole,
+            nivelAcceso: widget.nivelAcceso,
+            onClose: _closeMenu,
+            onItemSelected: (itemTitle) {
+              _closeMenu();
+              _showNavigationMessage(itemTitle);
+              _navigateToPage(itemTitle);
+            },
           ),
         );
       },
     );
   }
 
-  Widget _buildUserCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF303366),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          // Avatar del usuario
-          Container(
-            width: 70,
-            height: 70,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.person,
-              size: 40,
-              color: Color(0xFF303366),
+  // FUNCIÓN QUE FALTABA - AGREGADA
+  void _navigateToPage(String pageName) {
+    switch (pageName) {
+      case 'Vehículo':
+        Navigator.push(
+          context, 
+          MaterialPageRoute(
+            builder: (_) => VehiclePage(
+              userName: widget.userName,
+              userRole: widget.userRole,
+              nivelAcceso: widget.nivelAcceso,
             ),
           ),
-          
-          const SizedBox(height: 12),
-          
-          // Información del usuario
-          Column(
-            children: [
-              Text(
-                'JHT TRANSPORT COMPANY',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.white.withOpacity(0.9),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                widget.userName,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.white.withOpacity(0.8),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.userRole,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withOpacity(0.7),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+        );
+        break;
+      case 'Mantenimiento':
+        // Navigator.push(context, MaterialPageRoute(builder: (_) => MaintenancePage()));
+        _showNotImplementedMessage(pageName);
+        break;
+      case 'Proveedor':
+        // Navigator.push(context, MaterialPageRoute(builder: (_) => ProviderPage()));
+        _showNotImplementedMessage(pageName);
+        break;
+      case 'Conductores':
+        // Navigator.push(context, MaterialPageRoute(builder: (_) => DriversPage()));
+        _showNotImplementedMessage(pageName);
+        break;
+      case 'Accesorios':
+        // Navigator.push(context, MaterialPageRoute(builder: (_) => AccessoriesPage()));
+        _showNotImplementedMessage(pageName);
+        break;
+      case 'Ayuda':
+        // Navigator.push(context, MaterialPageRoute(builder: (_) => HelpPage()));
+        _showNotImplementedMessage(pageName);
+        break;
+      default:
+        _showNotImplementedMessage(pageName);
+    }
   }
 
-  Widget _buildMenuItems() {
-    final menuItems = _getMenuItems();
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: ListView.separated(
-        itemCount: menuItems.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 8),
-        itemBuilder: (context, index) {
-          final item = menuItems[index];
-          return Opacity(
-            opacity: item.enabled ? 1.0 : 0.5,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: item.enabled ? () {
-                  _closeMenu();
-                  _showNavigationMessage(item.title);
-                } : null,
-                borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    color: item.enabled ? Colors.grey[50] : Colors.grey[100],
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        item.icon,
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        item.title,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildLogoutButton() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: Colors.grey[300]!,
-            width: 1,
-          ),
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            _closeMenu();
-            _showLogoutConfirmation(context);
-          },
-          borderRadius: BorderRadius.circular(6),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
-              color: Colors.red[50],
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.logout, size: 18, color: Colors.red),
-                SizedBox(width: 12),
-                Text(
-                  'Cerrar Sesión',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+  void _showNotImplementedMessage(String pageName) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$pageName - Página en desarrollo'),
+        backgroundColor: Colors.orange,
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -640,105 +460,78 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Navegando a: $pageName'),
-        backgroundColor: Colors.green,
+        backgroundColor: const Color(0xFF303366),
         duration: const Duration(seconds: 2),
       ),
     );
   }
 
-
-void _showLogoutConfirmation(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        title: const Text(
-          'Cerrar Sesión',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF303366),
-          ),
-        ),
-        content: Text(
-          '¿Estás seguro usuario ${widget.userName}? ¿que deseas cerrar sesión?',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.black87,
-          ),
-        ),
-        actions: [
-          // Botón Cancelar
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.grey[600],
-            ),
-            child: const Text('Cancelar'),
-          ),
-          
-          // Botón Cerrar Sesión - ACTUALIZADO
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Cerrar diálogo
-              _performRealLogout(context); // ← LOGOUT REAL
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF303366),
-            ),
-            child: const Text(
-              'Cerrar Sesión',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-              ),
+  void _showLogoutConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: const Text(
+            'Cerrar Sesión',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF303366),
             ),
           ),
-        ],
-      );
-    },
-  );
-}
-
-// NUEVO MÉTODO PARA LOGOUT REAL
-void _performRealLogout(BuildContext context) async {
-  // GUARDAR REFERENCIAS ANTES DE CUALQUIER OPERACIÓN ASÍNCRONA
-  final scaffoldMessenger = ScaffoldMessenger.of(context);
-  final navigator = Navigator.of(context);
-  
-  try {
-    await TokenService.deleteToken();
-    
-    // Navegar primero
-    navigator.pushNamedAndRemoveUntil('/login', (route) => false);
-    
-    // Luego mostrar mensaje (esto puede necesitar un pequeño delay)
-    Future.delayed(const Duration(milliseconds: 100), () {
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('Sesión cerrada correctamente'),
-          backgroundColor: Color(0xFF303366),
-          duration: Duration(seconds: 4),
-        ),
-      );
-    });
-    
-  } catch (e) {
-    // Para errores, mostrar en el contexto actual
-    scaffoldMessenger.showSnackBar(
-      SnackBar(
-        content: Text('Error al cerrar sesión: $e'),
-        backgroundColor: Colors.red,
-      ),
+          content: Text(
+            '¿Estás seguro usuario ${widget.userName}? ¿que deseas cerrar sesión?',
+            style: TextStyle(fontSize: 14, color: Colors.black87),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(foregroundColor: Colors.grey[600]),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _performRealLogout(context);
+              },
+              style: TextButton.styleFrom(foregroundColor: const Color(0xFF303366)),
+              child: const Text('Cerrar Sesión', style: TextStyle(fontWeight: FontWeight.w600)),
+            ),
+          ],
+        );
+      },
     );
   }
-}
 
-
+  void _performRealLogout(BuildContext context) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    
+    try {
+      await TokenService.deleteToken();
+      navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+      
+      Future.delayed(const Duration(milliseconds: 100), () {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('Sesión cerrada correctamente'),
+            backgroundColor: Color(0xFF303366),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      });
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Error al cerrar sesión: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 }
 
 class MenuItem {
