@@ -1,6 +1,7 @@
 // lib/features/vehicle/presentation/pages/vehicle_page.dart
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
+import 'package:app_jht_front/features/vehicle/presentation/widgets/add_vehicle_modal.dart';
 
 class VehiclePage extends StatefulWidget {
   final String userName;
@@ -21,6 +22,28 @@ class VehiclePage extends StatefulWidget {
 class _VehiclePageState extends State<VehiclePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _horizontalScrollController = ScrollController();
+
+  void _openAddVehicleModal() {
+    showDialog(
+      context: context,
+      builder: (context) => AddVehicleModal(
+        onVehicleAdded: (nrVin, placa, fechaFabrica, marca, estado) {
+          // Aquí manejas la lógica para agregar el vehículo
+          // Por ahora solo mostramos un snackbar
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Vehículo $placa agregado exitosamente'),
+              backgroundColor: const Color(0xFF303366),
+            ),
+          );
+          
+          // Aquí llamarás al BLOC/UseCase para agregar el vehículo
+          // context.read<VehicleBloc>().add(AddVehicleEvent(...));
+        },
+      ),
+    );
+  }
+
 
   void _handleMenuSelection(String itemTitle) {
     ScaffoldMessenger.of(_scaffoldKey.currentContext!).showSnackBar(
@@ -229,7 +252,9 @@ class _VehiclePageState extends State<VehiclePage> {
     return Column(
       children: [
         // Botón AGREGAR - Toma todo el ancho
-        Container(
+      InkWell(
+        onTap: _openAddVehicleModal,
+        child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -252,6 +277,7 @@ class _VehiclePageState extends State<VehiclePage> {
             ],
           ),
         ),
+      ),
         const SizedBox(height: 12),
         // Barra de búsqueda - Toma todo el ancho
         Container(
@@ -290,29 +316,32 @@ class _VehiclePageState extends State<VehiclePage> {
     return Row(
       children: [
         // Botón AGREGAR - tamaño fijo
-        Container(
-          width: 220,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFF303366),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.add, color: Colors.white, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'AGREGAR VEHÍCULO',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+        InkWell(
+            onTap: _openAddVehicleModal,
+            child: Container(
+              width: 220,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF303366),
+                borderRadius: BorderRadius.circular(8),
               ),
-            ],
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add, color: Colors.white, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'AGREGAR VEHÍCULO',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
         const SizedBox(width: 16),
         // Barra de búsqueda - ocupa el espacio restante
         Expanded(

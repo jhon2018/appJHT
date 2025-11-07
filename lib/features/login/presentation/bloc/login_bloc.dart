@@ -29,7 +29,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         return 'http://localhost:7030'; // Web funciona con localhost
       } else {
         // Para móvil, usar IP de la laptop
-        return 'http://192.168.1.20:7030'; // ← Cambia por tu IP y agregalo en el CORS
+        return 'http://192.168.1.27:7030'; // ← Cambia por tu IP y agregalo en el CORS
       }
     }
      
