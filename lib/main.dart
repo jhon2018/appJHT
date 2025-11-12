@@ -8,6 +8,13 @@ import 'features/welcome/presentation/pages/welcome_page.dart';
 import 'features/login/presentation/bloc/login_bloc.dart';
 import 'features/login/presentation/pages/login_page.dart';
 import 'features/home/presentation/pages/home_page.dart';
+// En tu main.dart
+// main.dart
+import 'package:app_jht_front/core/network/http_client.dart';
+import 'package:app_jht_front/features/vehicle/data/datasources/vehicle_remote_data_source.dart';
+import 'package:app_jht_front/features/vehicle/data/repositories/vehicle_repository_impl.dart';
+import 'package:app_jht_front/features/vehicle/domain/usecases/registrar_vehiculo_usecase.dart';
+import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
 
 
 
@@ -17,7 +24,7 @@ void main() {
   runApp(const MyApp());
 }
 
-// En tu main.dart
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -26,6 +33,16 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => LoginBloc()),
+        // Agrega el VehicleBloc y su configuración aquí
+        BlocProvider(create: (context) => VehicleBloc(
+          registrarVehiculoUseCase: RegistrarVehiculoUseCase(
+            repository: VehicleRepositoryImpl(
+              remoteDataSource: VehicleRemoteDataSourceImpl(
+                httpClient: DevHttpClient(), // ← Agregado aquí
+              ),
+            ),
+          ),
+        )),
       ],
       child: MaterialApp(
         title: 'JHT Transport',
@@ -34,12 +51,10 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         debugShowCheckedModeBanner: false,
-        
-        // AGREGAR ESTAS RUTAS:
         routes: {
           '/welcome': (context) => const WelcomePage(),
-          '/login': (context) => LoginPage(), // ← Asegúrate de tener esta importación
-          '/home': (context) => HomePage(),   // ← Necesitas crear esta página
+          '/login': (context) => LoginPage(),
+          '/home': (context) => HomePage(),
         },
         initialRoute: '/welcome',
       ),

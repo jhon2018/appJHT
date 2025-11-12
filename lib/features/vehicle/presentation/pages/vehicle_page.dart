@@ -3,16 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
 import 'package:app_jht_front/features/vehicle/presentation/widgets/add_vehicle_modal.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
+
 class VehiclePage extends StatefulWidget {
+  
   final String userName;
   final String userRole;
-  final int nivelAcceso;
 
   const VehiclePage({
     super.key,
     required this.userName,
     required this.userRole,
-    required this.nivelAcceso,
   });
 
   @override
@@ -23,26 +25,28 @@ class _VehiclePageState extends State<VehiclePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _horizontalScrollController = ScrollController();
 
-  void _openAddVehicleModal() {
-    showDialog(
-      context: context,
-      builder: (context) => AddVehicleModal(
-        onVehicleAdded: (nrVin, placa, fechaFabrica, marca, estado) {
-          // Aquí manejas la lógica para agregar el vehículo
-          // Por ahora solo mostramos un snackbar
+void _openAddVehicleModal() {
+  final vehicleBloc = BlocProvider.of<VehicleBloc>(context); // Obtener la instancia del VehicleBloc PARA PASARLA AL MODAL
+  
+  // Mostrar el modal de agregar vehículo
+  showDialog(
+    context: context,
+    builder: (context) => BlocProvider.value(
+      value: vehicleBloc,
+      child: AddVehicleModal(
+        onVehicleAdded: (vehiculoRegistrado) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Vehículo $placa agregado exitosamente'),
+              content: Text('Vehículo ${vehiculoRegistrado.vehVplaca} registrado exitosamente'),
               backgroundColor: const Color(0xFF303366),
             ),
           );
-          
-          // Aquí llamarás al BLOC/UseCase para agregar el vehículo
-          // context.read<VehicleBloc>().add(AddVehicleEvent(...));
         },
       ),
-    );
-  }
+    ),
+  );
+}
+  
 
 
   void _handleMenuSelection(String itemTitle) {
@@ -77,7 +81,6 @@ class _VehiclePageState extends State<VehiclePage> {
         child: SideMenu(
           userName: widget.userName,
           userRole: widget.userRole,
-          nivelAcceso: widget.nivelAcceso,
           onClose: () => Navigator.pop(context),
           onItemSelected: _handleMenuSelection,
         ),
