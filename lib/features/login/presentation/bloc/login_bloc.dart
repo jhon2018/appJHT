@@ -29,7 +29,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         return 'http://localhost:7030'; // Web funciona con localhost
       } else {
         // Para móvil, usar IP de la laptop
-        return 'http://192.168.1.27:7030'; // ← Cambia por tu IP y agregalo en el CORS
+        return 'http://192.168.1.2:7030'; // ← Cambia por tu IP y agregalo en el CORS
       }
     }
      
@@ -56,7 +56,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         await TokenService.saveToken(token); // ← GUARDAR TOKEN
         await TokenService.saveUserData(      // ← GUARDAR DATOS USUARIO
           responseData['usuario'], 
-          responseData['nivelAcceso']
+          responseData['cargo']
         );
 
         // SOLO CAMBIA ESTA LÍNEA: mantener copyWith pero limpiar error
@@ -65,13 +65,13 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
             isLoading: false,
             isSuccess: true,
             error: null, // ← LIMPIAR ERROR EXPLÍCITAMENTE
-            nivelAcceso: responseData['nivelAcceso'], // ← GUARDAR NIVEL ACCESO
+            cargo: responseData['cargo'], // ← GUARDAR ROL
             usuario: responseData['usuario'],         // ← GUARDAR USUARIO
           ),
         );
 
             print('✅ Mensaje Api: ${responseData['mensaje']}');
-            print('✅ Nivel Acceso: ${responseData['nivelAcceso']}');
+            print('✅ Cargo: ${responseData['cargo']}');  
             print('✅ Usuario: ${responseData['usuario']}');
       } else {
         final errorData = json.decode(response.body);
@@ -79,8 +79,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         emit(state.copyWith(isLoading: false, error: errorMessage));
       }
     } catch (e) {
-        print('❌ ERROR COMPLETO: $e');
-        print('❌ TIPO DE ERROR: ${e.runtimeType}');
+        print('❌ ERROR COMPLETO login_bloc.dart : $e');
+        print('❌ TIPO DE ERROR login_bloc.dart: ${e.runtimeType}');
 
       // Mensaje más específico
       String errorMsg = 'Error de conexión';

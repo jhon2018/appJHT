@@ -32,21 +32,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
           );
         }
 
-        if (snapshot.hasError || snapshot.data == null) {
-          // Fallback seguro si no hay datos
+       if (snapshot.hasError || snapshot.data == null) {
           return BaseDashboard(
             userName: 'Usuario',
-            userRole: 'Administrador', 
-            nivelAcceso: 1,
+            userRole: 'Administrador', // ✅ SOLO CARGO
           );
         }
 
         final userData = snapshot.data!;
         return BaseDashboard(
-          userName: userData['usuario'] ?? 'Usuario',
-          userRole: userData['nivelAcceso'] == 1 ? 'Administrador' : 'Conductor',
-          nivelAcceso: userData['nivelAcceso'] ?? 1,
-        );
+            userName: userData['usuario'] ?? 'Usuario',
+            userRole: userData['cargo'] ?? 'Administrador', // ← CAMBIO
+          );
       },
     );
   }

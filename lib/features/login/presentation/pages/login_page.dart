@@ -40,19 +40,19 @@ class _LoginPageState extends State<LoginPage> {
   void _handleLoginSuccess(BuildContext context, LoginState state) {
     print(' 1 Login exitoso! Navegando...');
     print('Estado actual: $state');
-    print('nivelAcceso: ${state.nivelAcceso}');
+    print('cargo: ${state.cargo}');
     print('usuario: ${state.usuario}');
     print('error: ${state.error}');    
     
     // Usar WidgetsBinding para asegurar que el contexto esté disponible
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Navegación por rol
-      if (state.nivelAcceso == 1) {
+      if (state.cargo == 'Administrador') {
         // Admin
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const AdminDashboard()),
         );
-      } else if (state.nivelAcceso == 2) {
+      } else if (state.cargo == 'Conductor') {
         // Conductor
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const ConductorDashboard()),
@@ -89,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
     return BlocListener<LoginBloc, LoginState>(
       listener: (context, state) {
          print(' 2 Estado actual: $state');
-          print('nivelAcceso: ${state.nivelAcceso}');
+          print('Cargo: ${state.cargo}');
           print('usuario: ${state.usuario}');
           print('error: ${state.error}');
         if (state.isSuccess) {

@@ -5,7 +5,6 @@ import 'package:app_jht_front/core/utils/token_service.dart';
 class SideMenu extends StatelessWidget {
   final String userName;
   final String userRole;
-  final int nivelAcceso;
   final VoidCallback onClose;
   final Function(String) onItemSelected;
 
@@ -13,7 +12,6 @@ class SideMenu extends StatelessWidget {
     super.key,
     required this.userName,
     required this.userRole,
-    required this.nivelAcceso,
     required this.onClose,
     required this.onItemSelected,
   });
@@ -22,9 +20,9 @@ class SideMenu extends StatelessWidget {
   List<MenuItem> _getMenuItems() {
     final baseItems = [
       MenuItem(icon: '🔧', title: 'Mantenimiento', enabled: true),
-      MenuItem(icon: '🚗', title: 'Vehículo', enabled: nivelAcceso == 1),
-      MenuItem(icon: '🏢', title: 'Proveedor', enabled: nivelAcceso == 1),
-      MenuItem(icon: '👨‍💼', title: 'Conductores', enabled: nivelAcceso == 1),
+      MenuItem(icon: '🚗', title: 'Vehículo', enabled: userRole == 'Administrador'), 
+      MenuItem(icon: '🏢', title: 'Proveedor', enabled: userRole == 'Administrador'), 
+      MenuItem(icon: '👨‍💼', title: 'Conductores', enabled: userRole == 'Administrador'),
       MenuItem(icon: '🔩', title: 'Accesorios', enabled: true),
       MenuItem(icon: '❓', title: 'Ayuda', enabled: true),
     ];

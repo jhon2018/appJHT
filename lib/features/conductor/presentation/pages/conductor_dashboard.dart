@@ -35,16 +35,14 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
         if (snapshot.hasError || snapshot.data == null) {
           return BaseDashboard(
             userName: 'Usuario',
-            userRole: 'Conductor',
-            nivelAcceso: 2,
+            userRole: 'Conductor', // ✅ SOLO CARGO
           );
         }
 
         final userData = snapshot.data!;
         return BaseDashboard(
           userName: userData['usuario'] ?? 'Usuario',
-          userRole: userData['nivelAcceso'] == 1 ? 'Administrador' : 'Conductor',
-          nivelAcceso: userData['nivelAcceso'] ?? 2,
+          userRole: userData['cargo'] ?? 'Conductor', // ✅ SOLO CARGO
         );
       },
     );

@@ -4,16 +4,21 @@ import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dar
 import 'package:app_jht_front/features/vehicle/presentation/pages/vehicle_page.dart';
 import 'package:flutter/material.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
+import 'package:app_jht_front/features/vehicle/domain/usecases/registrar_vehiculo_usecase.dart';
+import 'package:app_jht_front/features/vehicle/data/repositories/vehicle_repository_impl.dart';
+import 'package:app_jht_front/features/vehicle/data/datasources/vehicle_remote_data_source.dart';
+import 'package:app_jht_front/core/network/http_client.dart';
+
 class BaseDashboard extends StatefulWidget {
   final String userName;
   final String userRole;
-  final int nivelAcceso;
 
   const BaseDashboard({
     super.key,
     required this.userName,
     required this.userRole,
-    required this.nivelAcceso,
   });
 
   @override
@@ -393,7 +398,6 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
           child: SideMenu(
             userName: widget.userName,
             userRole: widget.userRole,
-            nivelAcceso: widget.nivelAcceso,
             onClose: _closeMenu,
             onItemSelected: (itemTitle) {
               _closeMenu();
@@ -411,15 +415,25 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
     switch (pageName) {
       case 'Vehículo':
         Navigator.push(
-          context, 
-          MaterialPageRoute(
-            builder: (_) => VehiclePage(
-              userName: widget.userName,
-              userRole: widget.userRole,
-              nivelAcceso: widget.nivelAcceso,
-            ),
-          ),
-        );
+                context, 
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider(
+                    create: (context) => VehicleBloc(
+                      registrarVehiculoUseCase: RegistrarVehiculoUseCase(
+                        repository: VehicleRepositoryImpl(
+                          remoteDataSource: VehicleRemoteDataSourceImpl(
+                            httpClient: DevHttpClient(), // ✅ CLIENTE HTTP
+                          ),
+                        ),
+                      ),
+                    ),
+                    child: VehiclePage(
+                      userName: widget.userName,
+                      userRole: widget.userRole,
+                    ),
+                  ),
+                ),
+              );
         break;
       case 'Mantenimiento':
         // Navigator.push(context, MaterialPageRoute(builder: (_) => MaintenancePage()));

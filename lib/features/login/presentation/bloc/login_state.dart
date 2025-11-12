@@ -7,14 +7,14 @@ class LoginState {
   final bool isLoading;
   final String? error;
   final bool isSuccess;
-  final int? nivelAcceso;
+  final String? cargo;
   final String? usuario;
 
   const LoginState({
     this.isLoading = false,
     this.error,
     this.isSuccess = false,
-    this.nivelAcceso, 
+    this.cargo,
     this.usuario,      
   });
 
@@ -26,20 +26,20 @@ class LoginState {
     bool? isLoading,
     String? error,
     bool? isSuccess,
-    int? nivelAcceso,  // ← QUITA el "required"
-    String? usuario,   // ← QUITA el "required"
+    String? cargo, 
+    String? usuario,  
   }) {
     return LoginState(
       isLoading: isLoading ?? this.isLoading,
       error: error, // Permite limpiar el error con null
       isSuccess: isSuccess ?? this.isSuccess,
-      nivelAcceso: nivelAcceso ?? this.nivelAcceso, 
+      cargo: cargo ?? this.cargo, 
       usuario: usuario ?? this.usuario,             
     );
   }
 
   @override
   String toString() {
-    return 'LoginState(isLoading: $isLoading, error: $error, isSuccess: $isSuccess, nivelAcceso: $nivelAcceso, usuario: $usuario)';
+    return 'LoginState(isLoading: $isLoading, error: $error, isSuccess: $isSuccess, cargo: $cargo, usuario: $usuario)';
   }
 }
