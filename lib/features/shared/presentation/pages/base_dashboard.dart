@@ -11,6 +11,8 @@ import 'package:app_jht_front/features/vehicle/data/repositories/vehicle_reposit
 import 'package:app_jht_front/features/vehicle/data/datasources/vehicle_remote_data_source.dart';
 import 'package:app_jht_front/core/network/http_client.dart';
 
+import 'package:app_jht_front/features/accessory/presentation/pages/accessory_page.dart';
+
 class BaseDashboard extends StatefulWidget {
   final String userName;
   final String userRole;
@@ -25,7 +27,8 @@ class BaseDashboard extends StatefulWidget {
   State<BaseDashboard> createState() => _BaseDashboardState();
 }
 
-class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProviderStateMixin {
+class _BaseDashboardState extends State<BaseDashboard>
+    with SingleTickerProviderStateMixin {
   bool _isMenuOpen = false;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -35,20 +38,20 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
-    
+
     _slideAnimation = Tween<double>(begin: -300, end: 0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
-    
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
@@ -86,10 +89,10 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
         children: [
           // Contenido principal
           _buildMainContent(),
-          
+
           // Overlay oscuro
           if (_isMenuOpen) _buildOverlay(),
-          
+
           // Menú lateral
           _buildSideMenu(),
         ],
@@ -109,7 +112,7 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
               children: [
                 // Header - ESTILO JHT TRANSPORT
                 _buildHeader(),
-                
+
                 // Contenido
                 Expanded(
                   child: SingleChildScrollView(
@@ -131,12 +134,7 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey[300]!,
-            width: 1,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey[300]!, width: 1)),
       ),
       child: SafeArea(
         bottom: false,
@@ -152,7 +150,7 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
                 letterSpacing: 1.0,
               ),
             ),
-            
+
             InkWell(
               onTap: _toggleMenu,
               borderRadius: BorderRadius.circular(20),
@@ -164,21 +162,27 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      width: 4, height: 4,
+                      width: 4,
+                      height: 4,
                       decoration: const BoxDecoration(
-                        color: Colors.black87, shape: BoxShape.circle,
+                        color: Colors.black87,
+                        shape: BoxShape.circle,
                       ),
                     ),
                     Container(
-                      width: 4, height: 4,
+                      width: 4,
+                      height: 4,
                       decoration: const BoxDecoration(
-                        color: Colors.black87, shape: BoxShape.circle,
+                        color: Colors.black87,
+                        shape: BoxShape.circle,
                       ),
                     ),
                     Container(
-                      width: 4, height: 4,
+                      width: 4,
+                      height: 4,
                       decoration: const BoxDecoration(
-                        color: Colors.black87, shape: BoxShape.circle,
+                        color: Colors.black87,
+                        shape: BoxShape.circle,
                       ),
                     ),
                   ],
@@ -249,7 +253,7 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
           ),
         ),
         const SizedBox(height: 16),
-        
+
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -269,12 +273,7 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
-            border: Border(
-              top: BorderSide(
-                color: Colors.grey[300]!,
-                width: 3,
-              ),
-            ),
+            border: Border(top: BorderSide(color: Colors.grey[300]!, width: 3)),
           ),
           child: Column(
             children: [
@@ -289,10 +288,7 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
               const SizedBox(height: 4),
               Text(
                 'All rights reserved.',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -371,10 +367,7 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          ),
+          Text(title, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
         ],
       ),
     );
@@ -383,9 +376,7 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
   Widget _buildOverlay() {
     return GestureDetector(
       onTap: _closeMenu,
-      child: Container(
-        color: Colors.black.withOpacity(0.5),
-      ),
+      child: Container(color: Colors.black.withOpacity(0.5)),
     );
   }
 
@@ -415,25 +406,25 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
     switch (pageName) {
       case 'Vehículo':
         Navigator.push(
-                context, 
-                MaterialPageRoute(
-                  builder: (_) => BlocProvider(
-                    create: (context) => VehicleBloc(
-                      registrarVehiculoUseCase: RegistrarVehiculoUseCase(
-                        repository: VehicleRepositoryImpl(
-                          remoteDataSource: VehicleRemoteDataSourceImpl(
-                            httpClient: DevHttpClient(), // ✅ CLIENTE HTTP
-                          ),
-                        ),
-                      ),
-                    ),
-                    child: VehiclePage(
-                      userName: widget.userName,
-                      userRole: widget.userRole,
+          context,
+          MaterialPageRoute(
+            builder: (_) => BlocProvider(
+              create: (context) => VehicleBloc(
+                registrarVehiculoUseCase: RegistrarVehiculoUseCase(
+                  repository: VehicleRepositoryImpl(
+                    remoteDataSource: VehicleRemoteDataSourceImpl(
+                      httpClient: DevHttpClient(), // ✅ CLIENTE HTTP
                     ),
                   ),
                 ),
-              );
+              ),
+              child: VehiclePage(
+                userName: widget.userName,
+                userRole: widget.userRole,
+              ),
+            ),
+          ),
+        );
         break;
       case 'Mantenimiento':
         // Navigator.push(context, MaterialPageRoute(builder: (_) => MaintenancePage()));
@@ -448,8 +439,15 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
         _showNotImplementedMessage(pageName);
         break;
       case 'Accesorios':
-        // Navigator.push(context, MaterialPageRoute(builder: (_) => AccessoriesPage()));
-        _showNotImplementedMessage(pageName);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AccessoryPage(
+              userName: widget.userName,
+              userRole: widget.userRole,
+            ),
+          ),
+        );
         break;
       case 'Ayuda':
         // Navigator.push(context, MaterialPageRoute(builder: (_) => HelpPage()));
@@ -487,7 +485,9 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
         return AlertDialog(
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           title: const Text(
             'Cerrar Sesión',
             style: TextStyle(
@@ -511,8 +511,13 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
                 Navigator.pop(context);
                 _performRealLogout(context);
               },
-              style: TextButton.styleFrom(foregroundColor: const Color(0xFF303366)),
-              child: const Text('Cerrar Sesión', style: TextStyle(fontWeight: FontWeight.w600)),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF303366),
+              ),
+              child: const Text(
+                'Cerrar Sesión',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
             ),
           ],
         );
@@ -523,11 +528,11 @@ class _BaseDashboardState extends State<BaseDashboard> with SingleTickerProvider
   void _performRealLogout(BuildContext context) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    
+
     try {
       await TokenService.deleteToken();
       navigator.pushNamedAndRemoveUntil('/login', (route) => false);
-      
+
       Future.delayed(const Duration(milliseconds: 100), () {
         scaffoldMessenger.showSnackBar(
           const SnackBar(
@@ -553,9 +558,5 @@ class MenuItem {
   final String title;
   final bool enabled;
 
-  MenuItem({
-    required this.icon,
-    required this.title,
-    required this.enabled,
-  });
+  MenuItem({required this.icon, required this.title, required this.enabled});
 }
