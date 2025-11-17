@@ -1,6 +1,13 @@
-
+// coverage:ignore-file
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint
+// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'vehicle_bloc.dart';
+
+// **************************************************************************
+// FreezedGenerator
+// **************************************************************************
 
 T _$identity<T>(T value) => value;
 
@@ -69,10 +76,10 @@ class _$VehicleEventCopyWithImpl<$Res, $Val extends VehicleEvent>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? dto = freezed}) {
+  $Res call({Object? dto = null}) {
     return _then(
       _value.copyWith(
-            dto: freezed == dto
+            dto: null == dto
                 ? _value.dto
                 : dto // ignore: cast_nullable_to_non_nullable
                       as VehicleRegistroDto,
@@ -107,10 +114,10 @@ class __$$RegistrarVehiculoImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? dto = freezed}) {
+  $Res call({Object? dto = null}) {
     return _then(
       _$RegistrarVehiculoImpl(
-        dto: freezed == dto
+        dto: null == dto
             ? _value.dto
             : dto // ignore: cast_nullable_to_non_nullable
                   as VehicleRegistroDto,
@@ -137,12 +144,11 @@ class _$RegistrarVehiculoImpl implements _RegistrarVehiculo {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$RegistrarVehiculoImpl &&
-            const DeepCollectionEquality().equals(other.dto, dto));
+            (identical(other.dto, dto) || other.dto == dto));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(dto));
+  int get hashCode => Object.hash(runtimeType, dto);
 
   /// Create a copy of VehicleEvent
   /// with the given fields replaced by the non-null parameter values.
@@ -558,10 +564,10 @@ class __$$RegistroExitosoImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? response = freezed}) {
+  $Res call({Object? response = null}) {
     return _then(
       _$RegistroExitosoImpl(
-        response: freezed == response
+        response: null == response
             ? _value.response
             : response // ignore: cast_nullable_to_non_nullable
                   as VehicleRegistroResponse,
@@ -588,12 +594,12 @@ class _$RegistroExitosoImpl implements _RegistroExitoso {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$RegistroExitosoImpl &&
-            const DeepCollectionEquality().equals(other.response, response));
+            (identical(other.response, response) ||
+                other.response == response));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(response));
+  int get hashCode => Object.hash(runtimeType, response);
 
   /// Create a copy of VehicleState
   /// with the given fields replaced by the non-null parameter values.
