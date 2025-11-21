@@ -40,6 +40,14 @@ lib/
 │   │       ├── pages/             # Screen widgets
 │   │       └── widgets/           # Feature-specific widgets
 │   └── feature_b/                 # Another feature with same structure
+│   ├── login/                
+│   │   ├── presentation/                    
+│   │   │   ├── pages/                     
+│   │   │   └── widgets/   
+│   ├── Welcome/                
+│   │   ├── presentation/                  
+│   │   │   ├── pages/                     
+│   │   │   └── widgets/                      
 └── main.dart                      # Entry point
 ```
 
