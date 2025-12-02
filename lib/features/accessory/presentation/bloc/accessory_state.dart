@@ -37,3 +37,18 @@ class VehiculosLoaded extends AccessoryState {
 
   VehiculosLoaded({required this.vehiculos});
 }
+
+
+class RegistrandoAccesorio extends AccessoryState {}
+
+class AccesorioRegistrado extends AccessoryState {
+  final AccesorioRegistroResponse response;
+  
+  AccesorioRegistrado({required this.response});
+}
+
+class RegistroError extends AccessoryState {
+  final String message;
+  
+  RegistroError({required this.message});
+}

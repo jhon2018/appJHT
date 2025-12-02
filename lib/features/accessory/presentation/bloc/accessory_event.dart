@@ -15,3 +15,10 @@ class LoadTiposAccesorioEvent extends AccessoryEvent {
 }
 
 class LoadVehiculosEvent extends AccessoryEvent {}
+
+// Agrega este evento
+class RegistrarAccesorioEvent extends AccessoryEvent {
+  final AccesorioRegistroDto dto;
+  
+  RegistrarAccesorioEvent({required this.dto});
+}

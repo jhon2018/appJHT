@@ -1,6 +1,9 @@
 // lib/features/accessory/data/datasources/accessory_remote_data_source.dart
 // Descripción: Implementación del datasource remoto para accesorios, incluyendo métodos para listar segmentos, tipos de accesorio y vehículos con autenticación.
 // Objetivo: Completar la implementación del datasource remoto para accesorios.
+import '../models/accesorio_registro_dto.dart';
+import '../models/accesorio_registro_response.dart';
+
 import 'dart:convert';
 import 'package:app_jht_front/core/network/http_client.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
@@ -17,6 +20,7 @@ abstract class AccessoryRemoteDataSource {
     int segmentoId,
   );
   Future<List<VehiculoModel>> listarVehiculos();
+  Future<AccesorioRegistroResponse> insertarAccesorio(AccesorioRegistroDto dto);
 }
 
 // IMPLEMENTACIÓN (igual que en Vehicle)
@@ -24,6 +28,56 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
   final DevHttpClient httpClient;
 
   AccessoryRemoteDataSourceImpl({required this.httpClient});
+
+  @override
+  Future<AccesorioRegistroResponse> insertarAccesorio(
+    AccesorioRegistroDto dto,
+  ) async {
+    try {
+      print('🔵 Iniciando registro de accesorio');
+
+      final String? token = await TokenService.getToken();
+
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación.');
+      }
+
+      String getBaseUrl() {
+        if (kIsWeb) {
+          return 'http://localhost:7030';
+        } else {
+          return 'http://192.168.1.2:7030';
+        }
+      }
+
+      print('📡 Enviando DTO: ${dto.toJson()}');
+
+      final response = await http.post(
+        Uri.parse('${getBaseUrl()}/api/general/insertar-accesorio'),
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': '*/*',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode(dto.toJson()),
+      );
+
+      print('🟡 Response status: ${response.statusCode}');
+      print('🟡 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return AccesorioRegistroResponse.fromJson(responseData);
+      } else if (response.statusCode == 401) {
+        throw Exception('No autorizado. Token inválido o expirado.');
+      } else {
+        throw Exception('Error al registrar accesorio: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ ERROR en insertarAccesorio: $e');
+      rethrow;
+    }
+  }
 
   @override
   Future<List<SegmentoModel>> listarSegmentos() async {
@@ -72,76 +126,71 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
     }
   }
 
+  @override
+  Future<List<TipoAccesorioModel>> listarTiposAccesorioPorSegmento(
+    int segmentoId,
+  ) async {
+    try {
+      print('🔵 Iniciando carga de tipos accesorio para segmento: $segmentoId');
 
+      final String? token = await TokenService.getToken();
 
-@override
-Future<List<TipoAccesorioModel>> listarTiposAccesorioPorSegmento(
-  int segmentoId,
-) async {
-  try {
-    print('🔵 Iniciando carga de tipos accesorio para segmento: $segmentoId');
-
-    final String? token = await TokenService.getToken();
-
-    if (token == null || token.isEmpty) {
-      throw Exception('No hay token de autenticación.');
-    }
-
-    String getBaseUrl() {
-      if (kIsWeb) {
-        return 'http://localhost:7030';
-      } else {
-        return 'http://192.168.1.2:7030';
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación.');
       }
-    }
 
-    final response = await http.get(
-      Uri.parse(
-        '${getBaseUrl()}/api/general/listar-tipos-accesorio-por-segmento/$segmentoId',
-      ),
-      headers: {
-        'Content-Type': 'application/json',
-        'accept': '*/*',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    print('🟡 Response status: ${response.statusCode}');
-    print('🟡 Response body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseData = json.decode(response.body);
-      final List<dynamic> data = responseData['data'];
-      
-      // CORRECCIÓN AQUÍ:
-      if (data.isNotEmpty) {
-        final Map<String, dynamic> firstItem = data[0];
-        final List<dynamic> tiposData = firstItem['tipos'];
-        
-        print('🟡 Tipos encontrados: ${tiposData.length}');
-        
-        return tiposData
-            .map((json) => TipoAccesorioModel.fromJson(json))
-            .toList();
-      } else {
-        print('🟡 No hay datos en la respuesta');
-        return [];
+      String getBaseUrl() {
+        if (kIsWeb) {
+          return 'http://localhost:7030';
+        } else {
+          return 'http://192.168.1.2:7030';
+        }
       }
-    } else if (response.statusCode == 401) {
-      throw Exception('No autorizado. Token inválido o expirado.');
-    } else {
-      throw Exception(
-        'Error al cargar tipos de accesorio: ${response.statusCode}',
+
+      final response = await http.get(
+        Uri.parse(
+          '${getBaseUrl()}/api/general/listar-tipos-accesorio-por-segmento/$segmentoId',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': '*/*',
+          'Authorization': 'Bearer $token',
+        },
       );
+
+      print('🟡 Response status: ${response.statusCode}');
+      print('🟡 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final List<dynamic> data = responseData['data'];
+
+        // CORRECCIÓN AQUÍ:
+        if (data.isNotEmpty) {
+          final Map<String, dynamic> firstItem = data[0];
+          final List<dynamic> tiposData = firstItem['tipos'];
+
+          print('🟡 Tipos encontrados: ${tiposData.length}');
+
+          return tiposData
+              .map((json) => TipoAccesorioModel.fromJson(json))
+              .toList();
+        } else {
+          print('🟡 No hay datos en la respuesta');
+          return [];
+        }
+      } else if (response.statusCode == 401) {
+        throw Exception('No autorizado. Token inválido o expirado.');
+      } else {
+        throw Exception(
+          'Error al cargar tipos de accesorio: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      print('❌ ERROR en listarTiposAccesorioPorSegmento: $e');
+      rethrow;
     }
-  } catch (e) {
-    print('❌ ERROR en listarTiposAccesorioPorSegmento: $e');
-    rethrow;
   }
-}
-
-
-
 
   @override
   Future<List<VehiculoModel>> listarVehiculos() async {

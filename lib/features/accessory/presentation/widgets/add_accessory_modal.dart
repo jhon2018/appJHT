@@ -9,6 +9,9 @@ import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_mode
 import 'package:app_jht_front/features/accessory/data/models/vehiculo_model.dart';
 import 'add_accessory_type_modal.dart';
 
+// Añade esta importación
+import 'package:app_jht_front/features/accessory/data/models/accesorio_registro_dto.dart';
+
 class AddAccessoryModal extends StatefulWidget {
   final Function()? onAccessoryAdded;
 
@@ -49,6 +52,8 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
 
   // Opciones para los dropdowns
   final List<String> _estadoOptions = ['Activo', 'Inactivo'];
+
+  AccesorioRegistroDto? _ultimoDtoEnviado;
 
   @override
   void initState() {
@@ -145,28 +150,85 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
   }
 
   void _registrarAccessory() {
-    // TODO: Implementar lógica de registro con los datos seleccionados
-    print('=== DATOS DEL ACCESORIO ===');
-    print('Segmento ID: $_selectedSegmentoId');
-    print('Tipo Accesorio ID: $_selectedTipoAccesorioId');
-    print('Vehículo ID: $_selectedVehiculoId');
-    print('Descripción: ${_descripcionController.text}');
-    print('Marca: ${_marcaController.text}');
-    print('Código Fabricante: ${_codigoFabricanteController.text}');
-    print('Estado: $_estadoValue');
+    // 1. Validaciones básicas
+    if (_fechaInstalacion == null) {
+      _showErrorSnackbar('Seleccione fecha de instalación');
+      return;
+    }
 
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Accesorio registrado exitosamente'),
-        backgroundColor: const Color(0xFF303366),
-        duration: const Duration(seconds: 5),
-      ),
+    if (_marcaController.text.isEmpty) {
+      _showErrorSnackbar('Ingrese la marca del accesorio');
+      return;
+    }
+
+    if (_codigoFabricanteController.text.isEmpty) {
+      _showErrorSnackbar('Ingrese el código de fabricante');
+      return;
+    }
+
+    if (_selectedVehiculoId == null || _selectedVehiculoId == 0) {
+      _showErrorSnackbar('Seleccione un vehículo válido');
+      return;
+    }
+
+    if (_selectedTipoAccesorioId == null || _selectedTipoAccesorioId == 0) {
+      _showErrorSnackbar('Seleccione un tipo de accesorio válido');
+      return;
+    }
+
+    if (_estadoValue == null || _estadoValue!.isEmpty) {
+      _showErrorSnackbar('Seleccione el estado');
+      return;
+    }
+
+    // 2. Crear DTO con los datos
+    final dto = AccesorioRegistroDto(
+      marca: _marcaController.text.trim(),
+      codigoFabricante: _codigoFabricanteController.text.trim(),
+      fechaInstalacion: _fechaInstalacion!,
+      kilometrajeInstalacion:
+          int.tryParse(_kilometrajeInstalacionController.text) ?? 0,
+      estado: _estadoValue!,
+      observacion: _observacionesController.text.trim(),
+      vehiculoId: _selectedVehiculoId!,
+      tipoAccesorioId: _selectedTipoAccesorioId!,
     );
 
-    if (widget.onAccessoryAdded != null) {
-      widget.onAccessoryAdded!();
-    }
+    // 3. Mostrar datos para debug
+    print('=== ENVIANDO ACCESORIO AL API ===');
+    print('DTO completo: ${dto.toString()}');
+    print('JSON a enviar: ${dto.toJson()}');
+    print('Fecha formateada: ${_formatDateForDebug(_fechaInstalacion!)}');
+
+    // 4. Enviar al Bloc (o directamente al API si no tienes Bloc)
+    _enviarAlApi(dto);
+  }
+
+  // Método auxiliar para mostrar errores
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  // Método auxiliar para formatear fecha (solo debug)
+  String _formatDateForDebug(DateTime date) {
+    return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} "
+        "${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}:${date.second.toString().padLeft(2, '0')}";
+  }
+
+  // Método para enviar al API (temporal - mientras configuras Bloc)
+  void _enviarAlApi(AccesorioRegistroDto dto) {
+    // Enviar evento al Bloc
+    context.read<AccessoryBloc>().add(RegistrarAccesorioEvent(dto: dto));
+
+    _ultimoDtoEnviado = dto;
+
+
   }
 
   void _agregarTipoAccesorio() {
@@ -213,6 +275,55 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
     super.dispose();
   }
 
+  Future<void> _selectDateConHora(
+    BuildContext context,
+    bool isInstalacion,
+  ) async {
+    // Primero seleccionar fecha
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2030),
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
+    );
+
+    if (pickedDate != null) {
+      // Luego seleccionar hora
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: const TimeOfDay(
+          hour: 10,
+          minute: 30,
+        ), // 10:30 AM por defecto
+        builder: (BuildContext context, Widget? child) {
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+            child: child!,
+          );
+        },
+      );
+
+      // Combinar fecha y hora
+      final DateTime fechaCompleta = DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        pickedTime?.hour ?? 10, // Si no selecciona hora, usar 10
+        pickedTime?.minute ?? 30, // Si no selecciona minuto, usar 30
+      );
+
+      setState(() {
+        if (isInstalacion) {
+          _fechaInstalacion = fechaCompleta;
+          print('📅 Fecha instalación seleccionada: $_fechaInstalacion');
+        } else {
+          _fechaRetiro = fechaCompleta;
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 768;
@@ -240,6 +351,51 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
           if (mounted) {
             setState(() {});
           }
+        }
+        // MANEJAR RESULTADO DEL REGISTRO DE ACCESORIO
+        if (state is AccesorioRegistrado) {
+          Navigator.of(context).pop(); // Cerrar modal
+
+          // Crear mensaje personalizado con el DTO guardado
+          final mensaje = _ultimoDtoEnviado != null
+              ? '✅ Accesorio "${_ultimoDtoEnviado!.marca}" '
+                    '(Código: ${_ultimoDtoEnviado!.codigoFabricante}) '
+                    'registrado exitosamente'
+              : state.response.message; // Fallback al mensaje original
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(mensaje),
+              backgroundColor: const Color(0xFF303366),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+
+          if (widget.onAccessoryAdded != null) {
+            widget.onAccessoryAdded!();
+          }
+
+          // Limpiar la variable después de usarla
+          _ultimoDtoEnviado = null;
+        }
+
+        if (state is RegistroError) {
+          // Si hay un DTO guardado, personalizar mensaje de error
+          final mensajeError = _ultimoDtoEnviado != null
+              ? '❌ Error al registrar accesorio "${_ultimoDtoEnviado!.marca}" '
+                    '(Código: ${_ultimoDtoEnviado!.codigoFabricante}): ${state.message}'
+              : '❌ Error: ${state.message}';
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(mensajeError),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+
+          // Limpiar la variable
+          _ultimoDtoEnviado = null;
         }
       },
       child: Dialog(
@@ -378,15 +534,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
                               child: _buildDateField(
                                 'Fecha de Instalación',
                                 _fechaInstalacion,
-                                () => _selectDate(context, true),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildDateField(
-                                'Fecha de Retiro',
-                                _fechaRetiro,
-                                () => _selectDate(context, false),
+                                () => _selectDateConHora(context, true),
                               ),
                             ),
                           ],
@@ -397,12 +545,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
                             _buildDateField(
                               'Fecha de Instalación',
                               _fechaInstalacion,
-                              () => _selectDate(context, true),
-                            ),
-                            _buildDateField(
-                              'Fecha de Retiro',
-                              _fechaRetiro,
-                              () => _selectDate(context, false),
+                              () => _selectDateConHora(context, true),
                             ),
                           ],
                         ),
@@ -424,15 +567,6 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
                                 keyboardType: TextInputType.number,
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildFormField(
-                                'Kilometraje de Retiro',
-                                _kilometrajeRetiroController,
-                                (value) => null,
-                                keyboardType: TextInputType.number,
-                              ),
-                            ),
                           ],
                         )
                       else
@@ -447,12 +581,6 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
                                 }
                                 return null;
                               },
-                              keyboardType: TextInputType.number,
-                            ),
-                            _buildFormField(
-                              'Kilometraje de Retiro',
-                              _kilometrajeRetiroController,
-                              (value) => null,
                               keyboardType: TextInputType.number,
                             ),
                           ],
@@ -715,116 +843,118 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
     );
   }
 
-Widget _buildVehiculosDropdownFromBloc() {
-  return BlocBuilder<AccessoryBloc, AccessoryState>(
-    buildWhen: (previous, current) {
-      // Reconstruir cuando cambien los vehículos o haya error
-      return current is VehiculosLoaded || 
-             current is AccessoryError ||
-             current is AccessoryLoading;
-    },
-    builder: (context, state) {
-      print('🚗 Builder Vehículos - Estado: ${state.runtimeType}');
+  Widget _buildVehiculosDropdownFromBloc() {
+    return BlocBuilder<AccessoryBloc, AccessoryState>(
+      buildWhen: (previous, current) {
+        // Reconstruir cuando cambien los vehículos o haya error
+        return current is VehiculosLoaded ||
+            current is AccessoryError ||
+            current is AccessoryLoading;
+      },
+      builder: (context, state) {
+        print('🚗 Builder Vehículos - Estado: ${state.runtimeType}');
 
-      List<VehiculoModel> vehiculos = [];
-      bool isLoading = false;
+        List<VehiculoModel> vehiculos = [];
+        bool isLoading = false;
 
-      if (state is VehiculosLoaded) {
-        vehiculos = state.vehiculos;
-        print('✅ Vehículos cargados: ${vehiculos.length}');
-      } else if (state is AccessoryLoading) {
-        isLoading = true;
-        print('⏳ Cargando vehículos...');
-      } else if (state is AccessoryError) {
-        print('❌ Error cargando vehículos: ${state.message}');
-      }
+        if (state is VehiculosLoaded) {
+          vehiculos = state.vehiculos;
+          print('✅ Vehículos cargados: ${vehiculos.length}');
+        } else if (state is AccessoryLoading) {
+          isLoading = true;
+          print('⏳ Cargando vehículos...');
+        } else if (state is AccessoryError) {
+          print('❌ Error cargando vehículos: ${state.message}');
+        }
 
-      // Si está cargando y no hay vehículos
-      if (isLoading && vehiculos.isEmpty) {
-        return _buildLoadingDropdown('Cargando vehículos...');
-      }
+        // Si está cargando y no hay vehículos
+        if (isLoading && vehiculos.isEmpty) {
+          return _buildLoadingDropdown('Cargando vehículos...');
+        }
 
-      // Si hay error y no hay vehículos
-      if (state is AccessoryError && vehiculos.isEmpty) {
+        // Si hay error y no hay vehículos
+        if (state is AccessoryError && vehiculos.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.red),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.error, color: Colors.red, size: 16),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Error: ${state.message}',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    context.read<AccessoryBloc>().add(LoadVehiculosEvent());
+                  },
+                  child: Text('Reintentar'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Dropdown normal con vehículos
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.red),
+            border: Border.all(color: Colors.grey),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Row(
-            children: [
-              Icon(Icons.error, color: Colors.red, size: 16),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Error: ${state.message}',
-                  style: TextStyle(color: Colors.red),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<int>(
+              value: _selectedVehiculoId,
+              isExpanded: true,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              hint: const Text('Seleccione vehículo'),
+              items: [
+                DropdownMenuItem<int>(
+                  value: null,
+                  child: Text(
+                    'Seleccione vehículo',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
                 ),
-              ),
-              TextButton(
-                onPressed: () {
-                  context.read<AccessoryBloc>().add(LoadVehiculosEvent());
-                },
-                child: Text('Reintentar'),
-              ),
-            ],
+                ...vehiculos.map((vehiculo) {
+                  return DropdownMenuItem<int>(
+                    value: vehiculo.id,
+                    child: Text(
+                      '${vehiculo.placa} (${vehiculo.kilometraje} km)',
+                    ),
+                  );
+                }).toList(),
+              ],
+              onChanged: (int? newId) {
+                print('🎯 Vehículo seleccionado: $newId');
+
+                final selectedVehiculo = newId != null
+                    ? vehiculos.firstWhere(
+                        (v) => v.id == newId,
+                        orElse: () => VehiculoModel(
+                          id: newId,
+                          placa: 'Vehículo $newId',
+                          kilometraje: 0,
+                        ),
+                      )
+                    : null;
+
+                setState(() {
+                  _selectedVehiculoId = newId;
+                  _selectedVehiculo = selectedVehiculo;
+                });
+              },
+            ),
           ),
         );
-      }
-
-      // Dropdown normal con vehículos
-      return Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<int>(
-            value: _selectedVehiculoId,
-            isExpanded: true,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            hint: const Text('Seleccione vehículo'),
-            items: [
-              DropdownMenuItem<int>(
-                value: null,
-                child: Text(
-                  'Seleccione vehículo',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-              ),
-              ...vehiculos.map((vehiculo) {
-                return DropdownMenuItem<int>(
-                  value: vehiculo.id,
-                  child: Text('${vehiculo.placa} (${vehiculo.kilometraje} km)'),
-                );
-              }).toList(),
-            ],
-            onChanged: (int? newId) {
-              print('🎯 Vehículo seleccionado: $newId');
-
-              final selectedVehiculo = newId != null
-                  ? vehiculos.firstWhere(
-                      (v) => v.id == newId,
-                      orElse: () => VehiculoModel(
-                        id: newId,
-                        placa: 'Vehículo $newId',
-                        kilometraje: 0,
-                      ),
-                    )
-                  : null;
-
-              setState(() {
-                _selectedVehiculoId = newId;
-                _selectedVehiculo = selectedVehiculo;
-              });
-            },
-          ),
-        ),
-      );
-    },
-  );
-}
+      },
+    );
+  }
 
   Widget _buildEstadoDropdown() {
     return Column(
