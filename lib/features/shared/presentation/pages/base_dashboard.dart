@@ -12,6 +12,7 @@ import 'package:app_jht_front/features/vehicle/data/datasources/vehicle_remote_d
 import 'package:app_jht_front/core/network/http_client.dart';
 
 import 'package:app_jht_front/features/accessory/presentation/pages/accessory_page.dart';
+import 'package:app_jht_front/features/supplier/presentation/pages/supplier_page.dart';
 
 class BaseDashboard extends StatefulWidget {
   final String userName;
@@ -431,8 +432,15 @@ class _BaseDashboardState extends State<BaseDashboard>
         _showNotImplementedMessage(pageName);
         break;
       case 'Proveedor':
-        // Navigator.push(context, MaterialPageRoute(builder: (_) => ProviderPage()));
-        _showNotImplementedMessage(pageName);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SupplierPage(
+              userName: widget.userName,
+              userRole: widget.userRole,
+            ),
+          ),
+        );
         break;
       case 'Conductores':
         // Navigator.push(context, MaterialPageRoute(builder: (_) => DriversPage()));
@@ -455,6 +463,8 @@ class _BaseDashboardState extends State<BaseDashboard>
         break;
       default:
         _showNotImplementedMessage(pageName);
+        //imprime en consola
+        print('Navegación a $pageName no implementada.');
     }
   }
 
