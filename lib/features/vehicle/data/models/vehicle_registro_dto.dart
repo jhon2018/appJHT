@@ -1,5 +1,6 @@
 /// Definición: Modelo de datos para el registro de vehículos
 /// Objetivo: Representar la estructura de datos enviada al API
+library;
 
 class VehicleRegistroDto {
   final String vehVplaca;

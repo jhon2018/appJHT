@@ -1,6 +1,8 @@
 // Ruta: lib/features/vehicle/data/repositories/vehicle_repository_impl.dart
 /// Definición: Implementación concreta del repositorio de vehículos
 /// Objetivo: Orquestar las fuentes de datos y manejar errores
+library;
+
 
 import 'package:dartz/dartz.dart';
 import 'package:app_jht_front/core/error/failures.dart';

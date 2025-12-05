@@ -1,5 +1,6 @@
 /// Definición: Maneja los diferentes tipos de fallos que pueden ocurrir en la aplicación
 /// Objetivo: Centralizar y tipificar los errores para un manejo consistente
+library;
 
 class Failure {
   final String message;
@@ -12,21 +13,17 @@ class Failure {
 }
 
 class ServerFailure extends Failure {
-  ServerFailure({String message = 'Error del servidor', int? code})
-      : super(message: message, code: code);
+  ServerFailure({super.message = 'Error del servidor', super.code});
 }
 
 class NetworkFailure extends Failure {
-  NetworkFailure({String message = 'Error de conexión'})
-      : super(message: message);
+  NetworkFailure({super.message = 'Error de conexión'});
 }
 
 class ValidationFailure extends Failure {
-  ValidationFailure({String message = 'Error de validación'})
-      : super(message: message);
+  ValidationFailure({super.message = 'Error de validación'});
 }
 
 class UnauthorizedFailure extends Failure {
-  UnauthorizedFailure({String message = 'No autorizado'})
-      : super(message: message);
+  UnauthorizedFailure({super.message = 'No autorizado'});
 }

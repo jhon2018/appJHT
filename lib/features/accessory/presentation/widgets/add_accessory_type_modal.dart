@@ -248,7 +248,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
                             contenido: _buildContenidoMantenimiento(mantenimiento, index),
                           ),
                         );
-                      }).toList(),
+                      }),
 
                       const SizedBox(height: 32),
 
@@ -387,7 +387,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
   }
 
   Widget _buildAddMaintenanceButton() {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       height: 50,
       child: ElevatedButton(

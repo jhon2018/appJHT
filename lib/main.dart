@@ -18,7 +18,6 @@ import 'package:app_jht_front/features/vehicle/domain/usecases/registrar_vehicul
 import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
 
 import 'package:app_jht_front/features/accessory/presentation/bloc/accessory_bloc.dart';
-import 'package:app_jht_front/features/accessory/domain/repositories/accessory_repository_impl.dart';
 import 'package:app_jht_front/features/accessory/data/datasources/accessory_remote_data_source.dart';
 
 void main() {

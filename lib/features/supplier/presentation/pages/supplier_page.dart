@@ -1,9 +1,15 @@
 // lib/features/supplier/presentation/pages/supplier_page.dart
 // description: Página principal de proveedores con menú lateral, tabla responsiva y paginación.
 
+import 'package:app_jht_front/core/network/http_client.dart';
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
 import 'package:app_jht_front/features/supplier/presentation/widgets/add_supplier_modal.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:app_jht_front/features/supplier/presentation/bloc/supplier_bloc.dart';
+import 'package:app_jht_front/features/supplier/domain/usecases/registrar_supplier_usecase.dart';
+import 'package:app_jht_front/features/supplier/data/repositories/supplier_repository_impl.dart';
+import 'package:app_jht_front/features/supplier/data/datasources/supplier_remote_data_source.dart';
 
 class SupplierPage extends StatefulWidget {
   final String userName;
@@ -20,31 +26,70 @@ class SupplierPage extends StatefulWidget {
 }
 
 class _SupplierPageState extends State<SupplierPage> {
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => SupplierBloc(
+        registrarSupplierUseCase: RegistrarSupplierUseCase(
+          repository: SupplierRepositoryImpl(
+            remoteDataSource: SupplierRemoteDataSourceImpl(
+              httpClient: DevHttpClient(),
+            ),
+          ),
+        ),
+      ),
+      child: _SupplierPageContent(
+        userName: widget.userName,
+        userRole: widget.userRole,
+      ),
+    );
+  }
+}
+
+// NUEVA CLASE PARA EL CONTENIDO QUE ESTÁ DENTRO DEL BLOCPROVIDER
+class _SupplierPageContent extends StatefulWidget {
+  final String userName;
+  final String userRole;
+
+  const _SupplierPageContent({
+    required this.userName,
+    required this.userRole,
+  });
+
+  @override
+  State<_SupplierPageContent> createState() => __SupplierPageContentState();
+}
+
+class __SupplierPageContentState extends State<_SupplierPageContent> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _horizontalScrollController = ScrollController();
 
 void _openAddSupplierModal() {
+  // Obtén el SupplierBloc DEL ÁRBOL ACTUAL
+  final supplierBloc = BlocProvider.of<SupplierBloc>(context);
+  
   showDialog(
     context: context,
     barrierDismissible: false,
-    builder: (context) => AddSupplierModal(
-      onSupplierAdded: () {
-        // TODO: Implementar refresh de lista
-        print('Proveedor agregado - refrescar lista');
-        // Aquí luego puedes llamar a:
-        // _refreshSuppliers();
-        // O mostrar snackbar:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Lista de proveedores actualizada'),
-            backgroundColor: const Color(0xFF303366),
-          ),
-        );
-      },
-    ),
+    builder: (context) {
+      return BlocProvider.value(
+        value: supplierBloc,
+        child: AddSupplierModal(
+          parentContext: this.context, // ← PASA EL CONTEXT DE LA PÁGINA
+          onSupplierAdded: () {
+            print('Proveedor agregado - refrescar lista');
+            ScaffoldMessenger.of(this.context).showSnackBar( // ← Usa this.context
+              SnackBar(
+                content: const Text('Lista de proveedores actualizada'),
+                backgroundColor: const Color(0xFF303366),
+              ),
+            );
+          },
+        ),
+      );
+    },
   );
 }
-
   void _handleMenuSelection(String itemTitle) {
     ScaffoldMessenger.of(_scaffoldKey.currentContext!).showSnackBar(
       SnackBar(

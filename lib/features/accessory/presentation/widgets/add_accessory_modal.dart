@@ -689,7 +689,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
                 value: segmento.id,
                 child: Text(segmento.nombre),
               );
-            }).toList(),
+            }),
           ],
           onChanged: (int? newId) {
             print('🎯 Segmento seleccionado: $newId');
@@ -779,7 +779,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
                               value: tipo.id,
                               child: Text(tipo.nombre),
                             );
-                          }).toList(),
+                          }),
                         ]
                       : null,
                   onChanged:
@@ -928,7 +928,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
                       '${vehiculo.placa} (${vehiculo.kilometraje} km)',
                     ),
                   );
-                }).toList(),
+                }),
               ],
               onChanged: (int? newId) {
                 print('🎯 Vehículo seleccionado: $newId');

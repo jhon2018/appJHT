@@ -1,6 +1,10 @@
 // lib/features/shared/presentation/pages/base_dashboard.dart
 import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
+import 'package:app_jht_front/features/supplier/data/datasources/supplier_remote_data_source.dart';
+import 'package:app_jht_front/features/supplier/data/repositories/supplier_repository_impl.dart';
+import 'package:app_jht_front/features/supplier/domain/usecases/registrar_supplier_usecase.dart';
+import 'package:app_jht_front/features/supplier/presentation/bloc/supplier_bloc.dart';
 import 'package:app_jht_front/features/vehicle/presentation/pages/vehicle_page.dart';
 import 'package:flutter/material.dart';
 
@@ -410,16 +414,17 @@ class _BaseDashboardState extends State<BaseDashboard>
           context,
           MaterialPageRoute(
             builder: (_) => BlocProvider(
-              create: (context) => VehicleBloc(
-                registrarVehiculoUseCase: RegistrarVehiculoUseCase(
-                  repository: VehicleRepositoryImpl(
-                    remoteDataSource: VehicleRemoteDataSourceImpl(
-                      httpClient: DevHttpClient(), // ✅ CLIENTE HTTP
+              create: (context) => SupplierBloc(
+                // ← NUEVA INSTANCIA
+                registrarSupplierUseCase: RegistrarSupplierUseCase(
+                  repository: SupplierRepositoryImpl(
+                    remoteDataSource: SupplierRemoteDataSourceImpl(
+                      httpClient: DevHttpClient(),
                     ),
                   ),
                 ),
               ),
-              child: VehiclePage(
+              child: SupplierPage(
                 userName: widget.userName,
                 userRole: widget.userRole,
               ),
@@ -431,17 +436,18 @@ class _BaseDashboardState extends State<BaseDashboard>
         // Navigator.push(context, MaterialPageRoute(builder: (_) => MaintenancePage()));
         _showNotImplementedMessage(pageName);
         break;
-      case 'Proveedor':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => SupplierPage(
-              userName: widget.userName,
-              userRole: widget.userRole,
-            ),
-          ),
-        );
-        break;
+// En base_dashboard.dart
+case 'Proveedor':
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => SupplierPage( // ← QUITA EL BlocProvider de aquí
+        userName: widget.userName,
+        userRole: widget.userRole,
+      ),
+    ),
+  );
+  break;
       case 'Conductores':
         // Navigator.push(context, MaterialPageRoute(builder: (_) => DriversPage()));
         _showNotImplementedMessage(pageName);
