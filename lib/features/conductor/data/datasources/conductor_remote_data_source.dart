@@ -107,27 +107,44 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
     }
   }
 
-  String _getErrorMessage(Map<String, dynamic> errorData) {
-    print('🔍 Error data: $errorData');
+String _getErrorMessage(Map<String, dynamic> errorData) {
+  print('🔍 Error data: $errorData');
 
-    if (errorData['mensaje'] != null) return errorData['mensaje'].toString();
-    if (errorData['message'] != null) return errorData['message'].toString();
-
-    if (errorData['errors'] != null) {
-      final errors = errorData['errors'] as Map<String, dynamic>;
-      if (errors.isNotEmpty) {
-        final firstKey = errors.keys.first;
-        final firstError = errors[firstKey];
-        if (firstError is List && firstError.isNotEmpty) {
-          return firstError.first.toString();
-        } else if (firstError is String) {
-          return firstError;
-        }
+  // PRIMERO: Buscar el campo 'error' que contiene el mensaje específico
+  if (errorData['error'] != null) {
+    final errorMessage = errorData['error'].toString();
+    print('🟡 Mensaje del campo "error": $errorMessage');
+    
+    // Extraer solo la parte específica si contiene "Ocurrió un error al registrar el colaborador:"
+    if (errorMessage.contains('Ocurrió un error al registrar el colaborador:')) {
+      final partes = errorMessage.split(':');
+      if (partes.length > 1) {
+        return partes[1].trim(); // Devuelve "Ya existe un colaborador con el mismo dni o nombres."
       }
     }
-
-    if (errorData['title'] != null) return errorData['title'].toString();
-
-    return 'Error en el registro del conductor';
+    return errorMessage;
   }
+
+  // SEGUNDO: Buscar otros campos posibles
+  if (errorData['mensaje'] != null) return errorData['mensaje'].toString();
+  if (errorData['message'] != null) return errorData['message'].toString();
+
+  // TERCERO: Buscar en 'errors' si existe
+  if (errorData['errors'] != null) {
+    final errors = errorData['errors'] as Map<String, dynamic>;
+    if (errors.isNotEmpty) {
+      final firstKey = errors.keys.first;
+      final firstError = errors[firstKey];
+      if (firstError is List && firstError.isNotEmpty) {
+        return firstError.first.toString();
+      } else if (firstError is String) {
+        return firstError;
+      }
+    }
+  }
+
+  if (errorData['title'] != null) return errorData['title'].toString();
+
+  return 'Error en el registro del conductor';
+}
 }

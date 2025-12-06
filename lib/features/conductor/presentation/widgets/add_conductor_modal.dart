@@ -1,5 +1,3 @@
-//Ruta: lib/features/conductor/presentation/widgets/add_conductor_modal.dart
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -120,22 +118,47 @@ class _AddConductorModalState extends State<AddConductorModal> {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
-  print('🟡 Seleccionando fecha para: ${controller.hashCode}');
-  final DateTime? picked = await showDatePicker(
-    context: context,
-    initialDate: DateTime.now(),
-    firstDate: DateTime(1900),
-    lastDate: DateTime(2100),
-  );
-  if (picked != null) {
-    print('🟢 Fecha seleccionada: $picked');
-    controller.text = _formatDate(picked);
-    print('🔵 Controller text actualizado: ${controller.text}');
-  } else {
-    print('🔴 No se seleccionó fecha');
+  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
+    print('🟡 Seleccionando fecha para: ${controller.hashCode}');
+    
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF303366),
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF303366),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    
+    if (picked != null) {
+      // Forzar un rebuild del widget específico
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          controller.text = _formatDate(picked);
+        });
+      });
+      print('🟢 Fecha seleccionada: $picked');
+      print('🔵 Controller text actualizado: ${controller.text}');
+    } else {
+      print('🔴 No se seleccionó fecha');
+    }
   }
-}
+
   @override
   void dispose() {
     _dniController.dispose();
@@ -217,28 +240,84 @@ Future<void> _selectDate(BuildContext context, TextEditingController controller)
     );
   }
 
+  void _mostrarErrorDialog(String message) {
+    String mensajeLimpio = _limpiarMensajeError(message);
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text(
+          'Error de Validación',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Colors.red,
+          ),
+        ),
+        content: Text(
+          mensajeLimpio,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 14),
+        ),
+        actions: [
+          Center(
+            child: _buildDialogButton(
+              text: 'ENTENDIDO',
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _limpiarMensajeError(String message) {
+    if (message.contains('DNI debe ser mayor que 0')) {
+      return 'El DNI debe tener exactamente 8 dígitos numéricos y ser mayor que 0.';
+    } else if (message.contains('Ocurrió un error al registrar')) {
+      final partes = message.split(':');
+      if (partes.length > 1) {
+        return partes.last.trim();
+      }
+    }
+    return message.replaceAll('Exception: ', '');
+  }
+
   void _registrarConductor() {
+    // Validar DNI antes de enviar
+    final dniText = _dniController.text.trim();
+    if (dniText.isEmpty) {
+      _mostrarErrorDialog('El DNI es requerido');
+      return;
+    }
+    
+    if (dniText.length != 8) {
+      _mostrarErrorDialog('El DNI debe tener exactamente 8 dígitos');
+      return;
+    }
+    
+    final dni = int.tryParse(dniText);
+    if (dni == null || dni <= 0) {
+      _mostrarErrorDialog('El DNI debe ser un número válido mayor que 0');
+      return;
+    }
+    
     // Validar campos obligatorios
     for (int i = 0; i < _telefonoControllers.length; i++) {
       if (_telefonoTipos[i] == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Seleccione el tipo y uso para el teléfono ${i + 1}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _mostrarErrorDialog('Seleccione el tipo y uso para el teléfono ${i + 1}');
         return;
       }
     }
 
     // Validar cargo seleccionado
     if (_cargoValue == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Seleccione el cargo'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _mostrarErrorDialog('Seleccione el cargo');
       return;
     }
 
@@ -346,12 +425,7 @@ Future<void> _selectDate(BuildContext context, TextEditingController controller)
             }
           },
           error: (message) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error: $message'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            _mostrarErrorDialog(message);
           },
         );
       },
@@ -1294,4 +1368,4 @@ Widget _buildDateField(
                       ),
                     );
                   }
-                }
+}
