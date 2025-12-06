@@ -20,6 +20,11 @@ import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.da
 import 'package:app_jht_front/features/accessory/presentation/bloc/accessory_bloc.dart';
 import 'package:app_jht_front/features/accessory/data/datasources/accessory_remote_data_source.dart';
 
+import 'package:app_jht_front/features/conductor/data/datasources/conductor_remote_data_source.dart';
+import 'package:app_jht_front/features/conductor/data/repositories/conductor_repository_impl.dart';
+import 'package:app_jht_front/features/conductor/domain/usecases/registrar_conductor_usecase.dart';
+import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_bloc.dart';
+
 void main() {
   // DevHttpClient.ignoreSslErrors(); // Ignorar errores SSL en desarrollo temporalmente
 
@@ -47,13 +52,26 @@ class MyApp extends StatelessWidget {
           ),
         ),
         // AGREGAR ESTE PROVIDER PARA ACCESSORY_BLOC
-        BlocProvider(create: (context) => AccessoryBloc(
-          repository: AccessoryRepositoryImpl(
-            remoteDataSource: AccessoryRemoteDataSourceImpl(
-              httpClient: DevHttpClient(),
+        BlocProvider(
+          create: (context) => AccessoryBloc(
+            repository: AccessoryRepositoryImpl(
+              remoteDataSource: AccessoryRemoteDataSourceImpl(
+                httpClient: DevHttpClient(),
+              ),
             ),
           ),
-        )),
+        ),
+
+        //AGREGAR ESTE CONDUCTOR PARA CONDUCTOR_BLOC
+        BlocProvider(
+          create: (context) => ConductorBloc(
+            registrarConductorUseCase: RegistrarConductorUseCase(
+              repository: ConductorRepositoryImpl(
+                remoteDataSource: ConductorRemoteDataSourceImpl(),
+              ),
+            ),
+          ),
+        ),
       ],
       child: MaterialApp(
         title: 'JHT Transport',

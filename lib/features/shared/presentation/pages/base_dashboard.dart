@@ -1,5 +1,10 @@
 // lib/features/shared/presentation/pages/base_dashboard.dart
 import 'package:app_jht_front/core/utils/token_service.dart';
+import 'package:app_jht_front/features/conductor/data/datasources/conductor_remote_data_source.dart';
+import 'package:app_jht_front/features/conductor/data/repositories/conductor_repository_impl.dart';
+import 'package:app_jht_front/features/conductor/domain/usecases/registrar_conductor_usecase.dart';
+import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_bloc.dart';
+import 'package:app_jht_front/features/conductor/presentation/pages/conductor_page.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
 import 'package:app_jht_front/features/supplier/data/datasources/supplier_remote_data_source.dart';
 import 'package:app_jht_front/features/supplier/data/repositories/supplier_repository_impl.dart';
@@ -448,21 +453,26 @@ case 'Proveedor':
     ),
   );
   break;
-      case 'Conductores':
-        // Navigator.push(context, MaterialPageRoute(builder: (_) => DriversPage()));
-        _showNotImplementedMessage(pageName);
-        break;
-      case 'Accesorios':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => AccessoryPage(
-              userName: widget.userName,
-              userRole: widget.userRole,
+case 'Conductores':
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => BlocProvider(
+        create: (context) => ConductorBloc(
+          registrarConductorUseCase: RegistrarConductorUseCase(
+            repository: ConductorRepositoryImpl(
+              remoteDataSource: ConductorRemoteDataSourceImpl(),
             ),
           ),
-        );
-        break;
+        ),
+        child: ConductorPage(
+          userName: widget.userName,
+          userRole: widget.userRole,
+        ),
+      ),
+    ),
+  );
+  break;
       case 'Ayuda':
         // Navigator.push(context, MaterialPageRoute(builder: (_) => HelpPage()));
         _showNotImplementedMessage(pageName);
