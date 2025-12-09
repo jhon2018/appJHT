@@ -22,3 +22,9 @@ class RegistrarAccesorioEvent extends AccessoryEvent {
   
   RegistrarAccesorioEvent({required this.dto});
 }
+
+class RegistrarTipoAccesorioEvent extends AccessoryEvent {
+  final TipoAccesorioRegistroDto dto;
+  
+  RegistrarTipoAccesorioEvent({required this.dto});
+}

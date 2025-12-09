@@ -52,3 +52,17 @@ class RegistroError extends AccessoryState {
   
   RegistroError({required this.message});
 }
+
+class RegistrandoTipoAccesorio extends AccessoryState {}
+
+class TipoAccesorioRegistrado extends AccessoryState {
+  final dynamic response;
+  
+  TipoAccesorioRegistrado({required this.response});
+}
+
+class TipoAccesorioRegistroError extends AccessoryState {
+  final String message;
+  
+  TipoAccesorioRegistroError({required this.message});
+}

@@ -473,6 +473,17 @@ case 'Conductores':
     ),
   );
   break;
+      case 'Accesorios':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AccessoryPage(
+              userName: widget.userName,
+              userRole: widget.userRole,
+            ),
+          ),
+        );
+  break;
       case 'Ayuda':
         // Navigator.push(context, MaterialPageRoute(builder: (_) => HelpPage()));
         _showNotImplementedMessage(pageName);

@@ -3,6 +3,7 @@
 // objetivo: Implementar la lógica de negocio para manejar eventos y estados relacionados con accesorios.
 import 'package:app_jht_front/features/accessory/data/models/accesorio_registro_dto.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_registro_response.dart';
+import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_registro_dto.dart';
 import 'package:app_jht_front/features/accessory/domain/usecases/registrar_accesorio_usecase.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/accessory/domain/repositories/accessory_repository.dart';
@@ -21,6 +22,7 @@ class AccessoryBloc extends Bloc<AccessoryEvent, AccessoryState> {
     on<LoadTiposAccesorioEvent>(_onLoadTiposAccesorio);
     on<LoadVehiculosEvent>(_onLoadVehiculos);
     on<RegistrarAccesorioEvent>(_onRegistrarAccesorio);
+    on<RegistrarTipoAccesorioEvent>(_onRegistrarTipoAccesorio);
 
   }
 
@@ -45,6 +47,23 @@ Future<void> _onRegistrarAccesorio(
     emit(RegistroError(message: e.toString()));
   }
 }
+
+
+  Future<void> _onRegistrarTipoAccesorio(
+    RegistrarTipoAccesorioEvent event,
+    Emitter<AccessoryState> emit,
+  ) async {
+    emit(RegistrandoTipoAccesorio());
+    try {
+      final response = await repository.registrarTipoAccesorio(event.dto);
+      
+      emit(TipoAccesorioRegistrado(
+        response: response,
+      ));
+    } catch (e) {
+      emit(TipoAccesorioRegistroError(message: e.toString()));
+    }
+  }
 
   Future<void> _onLoadSegmentos(
     LoadSegmentosEvent event,

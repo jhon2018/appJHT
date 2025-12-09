@@ -1,6 +1,7 @@
 // lib/features/accessory/data/repositories/accessory_repository_impl.dart
 import 'package:app_jht_front/features/accessory/data/datasources/accessory_remote_data_source.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_registro_dto.dart';
+import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_registro_dto.dart';
 import 'package:app_jht_front/features/accessory/domain/repositories/accessory_repository.dart';
 import 'package:app_jht_front/features/accessory/data/models/segmento_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_model.dart';
@@ -61,4 +62,23 @@ class AccessoryRepositoryImpl implements AccessoryRepository {
       rethrow;
     }
   }
+
+ @override
+  Future<dynamic> registrarTipoAccesorio(TipoAccesorioRegistroDto dto) async {
+    try {
+      print('🔵 Repository: Registrando tipo de accesorio: ${dto.tipoAccesorio.tipVnombre}');
+      
+      final response = await remoteDataSource.registrarTipoAccesorio(dto);
+      
+      if (response['status'] != 201 && response['status'] != 200) {
+        throw Exception(response['message'] ?? 'Error al registrar tipo de accesorio');
+      }
+      
+      return response;
+    } catch (e) {
+      print('❌ ERROR en repository registrarTipoAccesorio: $e');
+      rethrow;
+    }
+  }
+
 }
