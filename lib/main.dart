@@ -2,7 +2,6 @@
 //descripción: Punto de entrada principal de la aplicación Flutter, configurando el tema y la pantalla inicial.
 
 // import 'package:app_jht_front/core/network/http_client.dart';
-import 'package:app_jht_front/features/accessory/domain/repositories/accessory_repository_impl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/welcome/presentation/pages/welcome_page.dart';
@@ -19,6 +18,7 @@ import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.da
 
 import 'package:app_jht_front/features/accessory/presentation/bloc/accessory_bloc.dart';
 import 'package:app_jht_front/features/accessory/data/datasources/accessory_remote_data_source.dart';
+import 'package:app_jht_front/features/accessory/domain/repositories/accessory_repository_impl.dart';
 
 import 'package:app_jht_front/features/conductor/data/datasources/conductor_remote_data_source.dart';
 import 'package:app_jht_front/features/conductor/data/repositories/conductor_repository_impl.dart';

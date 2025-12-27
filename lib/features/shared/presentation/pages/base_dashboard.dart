@@ -419,17 +419,17 @@ class _BaseDashboardState extends State<BaseDashboard>
           context,
           MaterialPageRoute(
             builder: (_) => BlocProvider(
-              create: (context) => SupplierBloc(
+              create: (context) => VehicleBloc(
                 // ← NUEVA INSTANCIA
-                registrarSupplierUseCase: RegistrarSupplierUseCase(
-                  repository: SupplierRepositoryImpl(
-                    remoteDataSource: SupplierRemoteDataSourceImpl(
+                registrarVehiculoUseCase: RegistrarVehiculoUseCase(
+                  repository: VehicleRepositoryImpl(
+                    remoteDataSource: VehicleRemoteDataSourceImpl(
                       httpClient: DevHttpClient(),
                     ),
                   ),
                 ),
               ),
-              child: SupplierPage(
+              child: VehiclePage(
                 userName: widget.userName,
                 userRole: widget.userRole,
               ),
