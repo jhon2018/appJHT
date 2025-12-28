@@ -5,6 +5,10 @@ import 'package:app_jht_front/features/conductor/data/repositories/conductor_rep
 import 'package:app_jht_front/features/conductor/domain/usecases/registrar_conductor_usecase.dart';
 import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_bloc.dart';
 import 'package:app_jht_front/features/conductor/presentation/pages/conductor_page.dart';
+import 'package:app_jht_front/features/mantenimiento/data/repositories/mantenimiento_repository.dart';
+import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_bloc.dart';
+import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_event.dart';
+import 'package:app_jht_front/features/mantenimiento/presentation/pages/mantenimiento_page.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
 import 'package:app_jht_front/features/supplier/data/datasources/supplier_remote_data_source.dart';
 import 'package:app_jht_front/features/supplier/data/repositories/supplier_repository_impl.dart';
@@ -438,41 +442,57 @@ class _BaseDashboardState extends State<BaseDashboard>
         );
         break;
       case 'Mantenimiento':
-        // Navigator.push(context, MaterialPageRoute(builder: (_) => MaintenancePage()));
-        _showNotImplementedMessage(pageName);
-        break;
-// En base_dashboard.dart
-case 'Proveedor':
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => SupplierPage( // ← QUITA EL BlocProvider de aquí
+// En tu side_menu.dart o donde tengas la navegación
+Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (context) => BlocProvider(
+      create: (context) => MantenimientoBloc(
+        repository: MantenimientoRepository(),
+      )..add(LoadMantenimientosEvent()),
+      child: MantenimientoPage(
         userName: widget.userName,
         userRole: widget.userRole,
+        baseUrl: '', // Ya no es necesario pasar el baseUrl
       ),
     ),
-  );
-  break;
-case 'Conductores':
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => BlocProvider(
-        create: (context) => ConductorBloc(
-          registrarConductorUseCase: RegistrarConductorUseCase(
-            repository: ConductorRepositoryImpl(
-              remoteDataSource: ConductorRemoteDataSourceImpl(),
+  ),
+);
+     
+        break;
+      // En base_dashboard.dart
+      case 'Proveedor':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SupplierPage(
+              // ← QUITA EL BlocProvider de aquí
+              userName: widget.userName,
+              userRole: widget.userRole,
             ),
           ),
-        ),
-        child: ConductorPage(
-          userName: widget.userName,
-          userRole: widget.userRole,
-        ),
-      ),
-    ),
-  );
-  break;
+        );
+        break;
+      case 'Conductores':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BlocProvider(
+              create: (context) => ConductorBloc(
+                registrarConductorUseCase: RegistrarConductorUseCase(
+                  repository: ConductorRepositoryImpl(
+                    remoteDataSource: ConductorRemoteDataSourceImpl(),
+                  ),
+                ),
+              ),
+              child: ConductorPage(
+                userName: widget.userName,
+                userRole: widget.userRole,
+              ),
+            ),
+          ),
+        );
+        break;
       case 'Accesorios':
         Navigator.push(
           context,
@@ -483,7 +503,7 @@ case 'Conductores':
             ),
           ),
         );
-  break;
+        break;
       case 'Ayuda':
         // Navigator.push(context, MaterialPageRoute(builder: (_) => HelpPage()));
         _showNotImplementedMessage(pageName);
