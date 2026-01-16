@@ -45,18 +45,19 @@ class _EditMantenimientoModalState extends State<EditMantenimientoModal> {
       );
     });
   }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (picked != null) {
+Future<void> _selectDate(BuildContext context) async {
+  final DateTime? picked = await showDatePicker(
+    context: context,
+    initialDate: DateTime.now(),
+    firstDate: DateTime(2000),
+    lastDate: DateTime(2100),
+  );
+  if (picked != null) {
+    setState(() { 
       _proximaFechaController.text = _formatDate(picked);
-    }
+    });
   }
+}
 
   String _formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -127,30 +128,30 @@ class _EditMantenimientoModalState extends State<EditMantenimientoModal> {
     );
   }
 
-  void _actualizarMantenimiento() {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isSaving = true;
-      });
+void _actualizarMantenimiento() {
+  if (_formKey.currentState!.validate()) {
+    setState(() {
+      _isSaving = true;
+    });
 
-      final request = ActualizarMantenimientoRequest(
-        bitacoraId: widget.mantenimiento.bitacoraId,
-        accesorioId: widget.mantenimiento.accesorioId,
-        descripcion: _descripcionController.text,
-        proximoKilometraje: int.parse(_proximoKilometrajeController.text),
-        proximaFecha: _proximaFechaController.text,
-        estado: _estadoController.text,
-      );
+    // Deshabilitar el formulario mientras se guarda
+    _formKey.currentState?.save();
 
-      // Disparar el evento de actualización
-      context.read<MantenimientoBloc>().add(
-        UpdateMantenimientoEvent(request: request),
-      );
+    final request = ActualizarMantenimientoRequest(
+      bitacoraId: widget.mantenimiento.bitacoraId,
+      accesorioId: widget.mantenimiento.accesorioId,
+      descripcion: _descripcionController.text,
+      proximoKilometraje: int.parse(_proximoKilometrajeController.text),
+      proximaFecha: _proximaFechaController.text,
+      estado: _estadoController.text,
+    );
 
-      // El BLoC se encargará de mostrar mensajes y cerrar el modal
-      // a través de los listeners
-    }
+    // Disparar el evento de actualización
+    context.read<MantenimientoBloc>().add(
+      UpdateMantenimientoEvent(request: request),
+    );
   }
+}
 
   Widget _buildFieldNoEditable(String label, String value) {
     return Column(
@@ -316,43 +317,49 @@ class _EditMantenimientoModalState extends State<EditMantenimientoModal> {
     return BlocConsumer<MantenimientoBloc, MantenimientoState>(
       listener: (context, state) {
         // Llenar los controladores cuando se cargue el detalle
-        if (state is DetalleMantenimientoSuccess) {
-          _descripcionController.text = state.detalle.descripcion;
-          _proximoKilometrajeController.text = state.detalle.proximoKilometraje.toString();
-          _proximaFechaController.text = state.detalle.proximaFecha;
-          _estadoController.text = state.detalle.estado;
-        }
-        
-        // Manejar actualización exitosa
-        if (state is MantenimientoUpdated) {
-          Navigator.of(context).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('✅ ${state.message}'),
-              backgroundColor: const Color(0xFF303366),
-              duration: const Duration(seconds: 3),
-            ),
-          );
-          
-          if (widget.onMantenimientoActualizado != null) {
-            widget.onMantenimientoActualizado!();
-          }
-        }
-        
-        // Manejar error en actualización
-        if (state is MantenimientoUpdateError) {
-          setState(() {
-            _isSaving = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('❌ ${state.message}'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-      },
+ if (state is DetalleMantenimientoSuccess) {
+    _descripcionController.text = state.detalle.descripcion;
+    _proximoKilometrajeController.text = state.detalle.proximoKilometraje.toString();
+    _proximaFechaController.text = state.detalle.proximaFecha;
+    _estadoController.text = state.detalle.estado;
+  }
+  
+  // Manejar actualización exitosa
+  if (state is MantenimientoUpdated) {
+    // ✅ PRIMERO llamar al callback para refrescar
+    if (widget.onMantenimientoActualizado != null) {
+      widget.onMantenimientoActualizado!();
+    }
+    
+    // ✅ MOSTRAR MENSAJE
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✅ ${state.message}'),
+        backgroundColor: const Color(0xFF303366),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+    
+    // ✅ ESPERAR UN MOMENTO antes de cerrar
+    Future.delayed(const Duration(milliseconds: 500), () {
+      Navigator.of(context).pop();
+    });
+  }
+  
+  // Manejar error en actualización
+  if (state is MantenimientoUpdateError) {
+    setState(() {
+      _isSaving = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('❌ ${state.message}'),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+},
       builder: (context, state) {
         return Dialog(
           backgroundColor: Colors.white,
