@@ -5,19 +5,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/widgets/add_mantenimiento_modal.dart';
-import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_bloc.dart';
+import 'package:app_jht_front/features/mantenimiento/presentation/widgets/edit_mantenimiento_modal.dart';
 import 'package:app_jht_front/features/mantenimiento/data/models/mantenimiento_model.dart';
+import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_bloc.dart';
+
+// ... resto del código
 
 class MantenimientoPage extends StatefulWidget {
   final String userName;
   final String userRole;
-  final String baseUrl;
 
   const MantenimientoPage({
     super.key,
     required this.userName,
     required this.userRole,
-    required this.baseUrl,
   });
 
   @override
@@ -33,6 +34,42 @@ class _MantenimientoPageState extends State<MantenimientoPage> {
     super.initState();
     // El bloc se inicializará automáticamente cuando se construya el BlocProvider
   }
+
+// En mantenimiento_page.dart, en el método _buildDataRow:
+// En mantenimiento_page.dart, en el método _openEditMantenimientoModal:
+void _openEditMantenimientoModal(MantenimientoModel mantenimiento) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => BlocProvider.value(
+      value: context.read<MantenimientoBloc>(), // ✅ ESTA ES LA LÍNEA CLAVE
+      child: EditMantenimientoModal(
+        mantenimiento: mantenimiento,
+        onMantenimientoActualizado: () {
+          // La lista se actualizará automáticamente a través del BLoC
+          context.read<MantenimientoBloc>().add(RefreshMantenimientosEvent());
+        },
+      ),
+    ),
+  );
+}
+
+DataRow _buildDataRow(MantenimientoModel mantenimiento) {
+  return DataRow(cells: [
+    // ... otras celdas ...
+    DataCell(Container(
+      child: InkWell(
+        onTap: () {
+          _openEditMantenimientoModal(mantenimiento);
+        },
+        child: const Padding(
+          padding: EdgeInsets.all(4.0),
+          child: Icon(Icons.edit, color: Colors.grey, size: 18),
+        ),
+      ),
+    )),
+  ]);
+}
 
   void _openAddMantenimientoModal() {
     showDialog(
@@ -397,7 +434,7 @@ class _MantenimientoPageState extends State<MantenimientoPage> {
                       ),
                     ],
               rows: mantenimientos.map((mantenimiento) {
-                return _buildDataRow(mantenimiento);
+                return _buildDataRow2(mantenimiento);
               }).toList(),
             ),
           ),
@@ -406,59 +443,59 @@ class _MantenimientoPageState extends State<MantenimientoPage> {
     );
   }
 
-  DataRow _buildDataRow(MantenimientoModel mantenimiento) {
-    return DataRow(cells: [
-      DataCell(Container(
-        child: Text(
-          mantenimiento.tipoAccesorio,
-          style: const TextStyle(fontSize: 12),
-          overflow: TextOverflow.ellipsis,
-        ),
-      )),
-      DataCell(Text(
-        mantenimiento.vehiculoPlaca,
-        style: const TextStyle(fontSize: 12),
-      )),
-      DataCell(Text(
-        mantenimiento.diccionarioMantenimiento,
+DataRow _buildDataRow2(MantenimientoModel mantenimiento) {
+  return DataRow(cells: [
+    DataCell(Container(
+      child: Text(
+        mantenimiento.tipoAccesorio,
         style: const TextStyle(fontSize: 12),
         overflow: TextOverflow.ellipsis,
-      )),
-      DataCell(
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: _getEstadoColor(mantenimiento.estado),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            mantenimiento.estado,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
+      ),
+    )),
+    DataCell(Text(
+      mantenimiento.vehiculoPlaca,
+      style: const TextStyle(fontSize: 12),
+    )),
+    DataCell(Text(
+      mantenimiento.diccionarioMantenimiento,
+      style: const TextStyle(fontSize: 12),
+      overflow: TextOverflow.ellipsis,
+    )),
+    DataCell(
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: _getEstadoColor(mantenimiento.estado),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          mantenimiento.estado,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
-      DataCell(Text(
-        _formatFechaRegistro(mantenimiento.fechaRegistro),
-        style: const TextStyle(fontSize: 12),
-      )),
-      DataCell(Container(
-        child: InkWell(
-          onTap: () {
-            print('Editar mantenimiento: ${mantenimiento.bitacoraId}');
-          },
-          child: const Padding(
-            padding: EdgeInsets.all(4.0),
-            child: Icon(Icons.edit, color: Colors.grey, size: 18),
-          ),
+    ),
+    DataCell(Text(
+      _formatFechaRegistro(mantenimiento.fechaRegistro),
+      style: const TextStyle(fontSize: 12),
+    )),
+    // ✅ SOLO UNA CELDA DE EDITAR - ELIMINAR LA DUPLICADA
+    DataCell(Container(
+      child: InkWell(
+        onTap: () {
+          _openEditMantenimientoModal(mantenimiento);
+        },
+        child: const Padding(
+          padding: EdgeInsets.all(4.0),
+          child: Icon(Icons.edit, color: Colors.grey, size: 18),
         ),
-      )),
-    ]);
-  }
-
+      ),
+    )),
+  ]);
+}
   Color _getEstadoColor(String estado) {
     switch (estado.toLowerCase()) {
       case 'pendiente':

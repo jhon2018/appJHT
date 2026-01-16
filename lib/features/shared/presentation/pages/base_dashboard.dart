@@ -441,25 +441,22 @@ class _BaseDashboardState extends State<BaseDashboard>
           ),
         );
         break;
-      case 'Mantenimiento':
-// En tu side_menu.dart o donde tengas la navegación
-Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => BlocProvider(
-      create: (context) => MantenimientoBloc(
-        repository: MantenimientoRepository(),
-      )..add(LoadMantenimientosEvent()),
-      child: MantenimientoPage(
-        userName: widget.userName,
-        userRole: widget.userRole,
-        baseUrl: '', // Ya no es necesario pasar el baseUrl
+case 'Mantenimiento':
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => BlocProvider(
+        create: (context) => MantenimientoBloc(
+          repository: MantenimientoRepository(),
+        )..add(LoadMantenimientosEvent()),
+        child: MantenimientoPage(
+          userName: widget.userName,
+          userRole: widget.userRole,
+        ),
       ),
     ),
-  ),
-);
-     
-        break;
+  );
+  break;
       // En base_dashboard.dart
       case 'Proveedor':
         Navigator.push(

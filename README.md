@@ -21,8 +21,49 @@ flutter build apk
 ## 4. SI AGREGAS DEPENCIAS Y NO AGARRAN 
 flutter pub add carousel_slider
 
+## GIT
+whoami
+git config --global user.name
+git config --global user.email
+
 ## FRONT PLANTILLAS
 -- MOVIL LOGIN ---
 https://www.figma.com/design/8JToHlfCggOXy8gmDc0Cj2/Simple-Login-%E2%9C%A8--Community-?node-id=0-1&p=f&t=Q2Pyobv6QMaZ99uF-0
 
 https://www.shutterstock.com/tr/search/similar/2459649029
+
+
+## VERSION FRONT DE FLUTTER
+flutter --version
+Flutter 3.32.8 • channel stable • https://github.com/flutter/flutter.git
+Framework • revision edada7c56e (3 months ago) • 2025-07-25 14:08:03 +0000
+Engine • revision ef0cd00091 (3 months ago) • 2025-07-24 12:23:50 -0700
+Tools • Dart 3.8.1 • DevTools 2.45.1
+
+
+
+PARA VEHICULO
+lib/features/vehicle/
+├── data/
+│   ├── datasources/
+│   │   └── vehicle_remote_data_source.dart
+│   ├── models/
+│   │   └── vehicle_model.dart
+│   └── repositories/
+│       └── vehicle_repository_impl.dart
+├── domain/
+│   ├── entities/
+│   │   └── vehicle_entity.dart
+│   ├── repositories/
+│   │   └── vehicle_repository.dart
+│   └── usecases/
+│       └── get_vehicles_usecase.dart
+└── presentation/
+    ├── bloc/
+    │   ├── vehicle_bloc.dart
+    │   ├── vehicle_event.dart
+    │   └── vehicle_state.dart
+    ├── pages/
+    │   └── vehicle_page.dart  // ← Donde estamos trabajando
+    └── widgets/
+        └── vehicle_card.dart

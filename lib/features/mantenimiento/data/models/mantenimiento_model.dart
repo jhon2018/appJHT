@@ -1,4 +1,7 @@
 // Ruta: lib/features/mantenimiento/data/models/mantenimiento_model.dart
+import 'package:flutter/foundation.dart';
+
+@immutable
 class MantenimientoModel {
   final int bitacoraId;
   final int accesorioId;
@@ -8,7 +11,7 @@ class MantenimientoModel {
   final String diccionarioMantenimiento;
   final String tipoAccesorio;
 
-  MantenimientoModel({
+  const MantenimientoModel({
     required this.bitacoraId,
     required this.accesorioId,
     required this.fechaRegistro,
@@ -44,12 +47,13 @@ class MantenimientoModel {
 }
 
 // Modelo para la respuesta de la API
+@immutable
 class MantenimientoResponse {
   final String status;
   final String message;
   final List<MantenimientoModel> data;
 
-  MantenimientoResponse({
+  const MantenimientoResponse({
     required this.status,
     required this.message,
     required this.data,

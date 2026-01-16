@@ -2,6 +2,8 @@
 //descripción: Punto de entrada principal de la aplicación Flutter, configurando el tema y la pantalla inicial.
 
 // import 'package:app_jht_front/core/network/http_client.dart';
+import 'package:app_jht_front/features/mantenimiento/data/repositories/mantenimiento_repository.dart';
+import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/welcome/presentation/pages/welcome_page.dart';
@@ -70,6 +72,11 @@ class MyApp extends StatelessWidget {
                 remoteDataSource: ConductorRemoteDataSourceImpl(),
               ),
             ),
+          ),
+        ),
+                BlocProvider(
+          create: (context) => MantenimientoBloc(
+            repository: MantenimientoRepository(), // ✅ Usando el repositorio real
           ),
         ),
       ],

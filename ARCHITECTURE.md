@@ -41,7 +41,8 @@ lib/
 │   │       └── widgets/           # Feature-specific widgets
 │   └── feature_b/                 # Another feature with same structure
 │   ├── login/                
-│   │   ├── presentation/                    
+│   │   ├── presentation/ 
+│   │   │   ├── bloc/                   
 │   │   │   ├── pages/                     
 │   │   │   └── widgets/   
 │   ├── Welcome/                

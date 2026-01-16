@@ -1,4 +1,5 @@
 // Ruta: lib/features/mantenimiento/presentation/bloc/mantenimiento_bloc.dart
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/mantenimiento/data/repositories/mantenimiento_repository.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_event.dart';
@@ -10,6 +11,8 @@ class MantenimientoBloc extends Bloc<MantenimientoEvent, MantenimientoState> {
   MantenimientoBloc({required this.repository}) : super(MantenimientoInitial()) {
     on<LoadMantenimientosEvent>(_onLoadMantenimientos);
     on<RefreshMantenimientosEvent>(_onRefreshMantenimientos);
+    on<LoadDetalleMantenimientoEvent>(_onLoadDetalleMantenimiento);
+    on<UpdateMantenimientoEvent>(_onUpdateMantenimiento);
   }
 
   Future<void> _onLoadMantenimientos(
@@ -38,6 +41,37 @@ class MantenimientoBloc extends Bloc<MantenimientoEvent, MantenimientoState> {
       if (state is MantenimientoSuccess) {
         emit(state);
       }
+    }
+  }
+
+  Future<void> _onLoadDetalleMantenimiento(
+    LoadDetalleMantenimientoEvent event,
+    Emitter<MantenimientoState> emit,
+  ) async {
+    emit(DetalleMantenimientoLoading());
+    try {
+      final response = await repository.getDetalleMantenimiento(
+        event.bitacoraId,
+        event.accesorioId,
+      );
+      emit(DetalleMantenimientoSuccess(response.data));
+    } catch (e) {
+      emit(DetalleMantenimientoError(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateMantenimiento(
+    UpdateMantenimientoEvent event,
+    Emitter<MantenimientoState> emit,
+  ) async {
+    emit(MantenimientoUpdating());
+    try {
+      final response = await repository.actualizarMantenimiento(event.request);
+      emit(MantenimientoUpdated(response.message));
+      // Después de actualizar, recargar la lista
+      add(RefreshMantenimientosEvent());
+    } catch (e) {
+      emit(MantenimientoUpdateError(e.toString()));
     }
   }
 }
