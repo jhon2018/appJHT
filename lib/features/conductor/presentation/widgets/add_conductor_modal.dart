@@ -1,4 +1,8 @@
+//Ruta: lib/features/conductor/presentation/widgets/add_conductor_modal.dart
 import 'dart:convert';
+import 'package:app_jht_front/features/conductor/data/models/persona_model.dart';
+import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_event.dart';
+import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
@@ -404,31 +408,38 @@ class _AddConductorModalState extends State<AddConductorModal> {
     final bool isMobile = MediaQuery.of(context).size.width < 768;
 
     return BlocListener<ConductorBloc, ConductorState>(
-      listener: (context, state) {
-        state.when(
-          initial: () {},
-          loading: () {
-            // Podrías mostrar un loading aquí
-          },
-          success: (response) {
-            Navigator.of(context).pop(); // Cierra el modal
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('${_primerNombreController.text} ${_apellidoPaternoController.text} (DNI: ${_dniController.text}) registrado como $_cargoValue correctamente'),
-                backgroundColor: const Color(0xFF303366),
-                duration: const Duration(seconds: 5),
-              ),
-            );
-            
-            if (widget.onConductorAdded != null) {
-              widget.onConductorAdded!();
-            }
-          },
-          error: (message) {
-            _mostrarErrorDialog(message);
-          },
-        );
+ listener: (context, state) {
+    // Solo manejar estados de REGISTRO, no de listar personas
+    state.when(
+      initial: () {},
+      loading: () {
+        // Podrías mostrar un loading aquí
       },
+      success: (response) {
+        Navigator.of(context).pop(); // Cierra el modal
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${_primerNombreController.text} ${_apellidoPaternoController.text} (DNI: ${_dniController.text}) registrado como $_cargoValue correctamente'),
+            backgroundColor: const Color(0xFF303366),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        
+        if (widget.onConductorAdded != null) {
+          widget.onConductorAdded!();
+        }
+      },
+      error: (message) {
+        _mostrarErrorDialog(message);
+      },
+      // NO incluir los otros estados, no son relevantes para este modal
+      personasCargando: () {}, 
+      personasCargadas: (_) {}, 
+      personaDetalleCargando: () {}, 
+      personaDetalleCargado: (_) {}, 
+      personaDetalleError: (_) {},
+    );
+  },
       child: Dialog(
         backgroundColor: Colors.white,
         insetPadding: const EdgeInsets.all(20),

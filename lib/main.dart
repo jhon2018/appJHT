@@ -2,6 +2,8 @@
 //descripción: Punto de entrada principal de la aplicación Flutter, configurando el tema y la pantalla inicial.
 
 // import 'package:app_jht_front/core/network/http_client.dart';
+import 'package:app_jht_front/features/conductor/domain/usecases/listar_personas_usecase.dart';
+import 'package:app_jht_front/features/conductor/domain/usecases/obtener_persona_detalle_usecase.dart';
 import 'package:app_jht_front/features/mantenimiento/data/repositories/mantenimiento_repository.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_bloc.dart';
 import 'package:flutter/material.dart';
@@ -65,15 +67,21 @@ class MyApp extends StatelessWidget {
         ),
 
         //AGREGAR ESTE CONDUCTOR PARA CONDUCTOR_BLOC
-        BlocProvider(
-          create: (context) => ConductorBloc(
-            registrarConductorUseCase: RegistrarConductorUseCase(
-              repository: ConductorRepositoryImpl(
-                remoteDataSource: ConductorRemoteDataSourceImpl(),
-              ),
-            ),
-          ),
-        ),
+BlocProvider(
+  create: (context) {
+    // Crear el repository primero
+    final repository = ConductorRepositoryImpl(
+      remoteDataSource: ConductorRemoteDataSourceImpl(),
+    );
+    
+    return ConductorBloc(
+      registrarConductorUseCase: RegistrarConductorUseCase(
+        repository: repository,
+      ),
+      repository: repository, listarPersonasUseCase: ListarPersonasUseCase(repository: repository), obtenerPersonaDetalleUseCase: ObtenerPersonaDetalleUseCase(repository: repository), 
+    );
+  },
+),
                 BlocProvider(
           create: (context) => MantenimientoBloc(
             repository: MantenimientoRepository(), // ✅ Usando el repositorio real

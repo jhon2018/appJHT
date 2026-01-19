@@ -1,8 +1,13 @@
-//Ruta: lib/features/conductor/presentation/pages/conductor_page.dart
-
+// Ruta: lib/features/conductor/presentation/pages/conductor_page.dart
+import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_event.dart';
+import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
 import 'package:app_jht_front/features/conductor/presentation/widgets/add_conductor_modal.dart';
+import 'package:app_jht_front/features/conductor/presentation/widgets/persona_detalle_modal.dart';
+import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_bloc.dart';
+import 'package:app_jht_front/features/conductor/data/models/persona_model.dart';
 
 class ConductorPage extends StatefulWidget {
   final String userName;
@@ -21,6 +26,16 @@ class ConductorPage extends StatefulWidget {
 class _ConductorPageState extends State<ConductorPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _horizontalScrollController = ScrollController();
+  bool _isLoadingDetalle = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Cargar personas cuando se inicialice el widget
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ConductorBloc>().add(const ConductorEvent.listarPersonas());
+    });
+  }
 
   void _openAddConductorModal() {
     showDialog(
@@ -28,12 +43,15 @@ class _ConductorPageState extends State<ConductorPage> {
       barrierDismissible: false,
       builder: (context) => AddConductorModal(
         onConductorAdded: () {
-          print('Conductor agregado - refrescar lista');
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Lista de conductores actualizada'),
-              backgroundColor: const Color(0xFF303366),
+            const SnackBar(
+              content: Text('Lista de conductores actualizada'),
+              backgroundColor: Color(0xFF303366),
             ),
+          );
+          // Refrescar la lista después de agregar
+          context.read<ConductorBloc>().add(
+            const ConductorEvent.listarPersonas(),
           );
         },
       ),
@@ -45,6 +63,123 @@ class _ConductorPageState extends State<ConductorPage> {
       SnackBar(
         content: Text('Navegando a: $itemTitle'),
         backgroundColor: const Color(0xFF303366),
+      ),
+    );
+  }
+void _openPersonaDetalleModal(PersonaModel persona) {
+  print("🔵 UI: Abriendo detalle para ${persona.nombreCompleto}");
+
+  // SOLUCIÓN: Mostrar UN solo diálogo y manejar todo dentro
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      // Despachar el evento inmediatamente
+      context.read<ConductorBloc>().add(
+        ConductorEvent.obtenerPersonaDetalle(personaId: persona.personaId),
+      );
+
+      return BlocListener<ConductorBloc, ConductorState>(
+        listenWhen: (previous, current) {
+          // Solo escuchar cuando cambie a estados de detalle
+          return current is ConductorState && 
+                (current.when(
+                  initial: () => false,
+                  loading: () => false,
+                  success: (_) => false,
+                  error: (_) => false,
+                  personasCargando: () => false,
+                  personasCargadas: (_) => false,
+                  personaDetalleCargando: () => false, // No cerrar aquí
+                  personaDetalleCargado: (_) => true,  // ← Cerrar aquí
+                  personaDetalleError: (_) => true,    // ← Cerrar aquí
+                ));
+        },
+        listener: (context, state) {
+          print("🟢 LISTENER: Estado detectado para detalle");
+          
+          // Manejar los estados de detalle
+          state.whenOrNull(
+            personaDetalleCargado: (personaDetalle) {
+              print("✅ LISTENER: Detalle cargado - ${personaDetalle.nombreCompleto}");
+              
+              // 1. Cerrar el diálogo de loading
+              Navigator.of(context).pop();
+              
+              // 2. Mostrar el modal de detalle (con un pequeño delay para evitar problemas)
+              Future.delayed(const Duration(milliseconds: 50), () {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => PersonaDetalleModal(persona: personaDetalle),
+                );
+              });
+            },
+            
+            personaDetalleError: (mensaje) {
+              print("❌ LISTENER: Error en detalle - $mensaje");
+              
+              // 1. Cerrar el diálogo de loading
+              Navigator.of(context).pop();
+              
+              // 2. Mostrar error (con un pequeño delay)
+              Future.delayed(const Duration(milliseconds: 50), () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $mensaje'),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              });
+            },
+          );
+        },
+        child: AlertDialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          content: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: Color(0xFF303366)),
+                const SizedBox(height: 16),
+                Text(
+                  'Cargando detalles de ${persona.nombreCorto}...',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Espere por favor',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
+
+  void _mostrarOpcionEditar(PersonaModel persona) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Editar persona: ${persona.nombreCompleto}'),
+        backgroundColor: const Color(0xFF303366),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -89,7 +224,6 @@ class _ConductorPageState extends State<ConductorPage> {
                   ),
                   actions: [_buildMenuButton()],
                 ),
-
                 SliverList(
                   delegate: SliverChildListDelegate([
                     Padding(
@@ -161,46 +295,6 @@ class _ConductorPageState extends State<ConductorPage> {
     );
   }
 
-  DataRow _buildDataRow(int nr, String documento, String nombreApellido, 
-                        String cargo, String telefono, String fechaIngreso) {
-    return DataRow(cells: [
-      DataCell(Text(
-        documento,
-        style: const TextStyle(fontSize: 12),
-      )),
-      DataCell(Container(
-        child: Text(
-          nombreApellido,
-          style: const TextStyle(fontSize: 12),
-          overflow: TextOverflow.ellipsis,
-        ),
-      )),
-      DataCell(Text(
-        cargo,
-        style: const TextStyle(fontSize: 12),
-      )),
-      DataCell(Text(
-        telefono,
-        style: const TextStyle(fontSize: 12),
-      )),
-      DataCell(Text(
-        fechaIngreso,
-        style: const TextStyle(fontSize: 12),
-      )),
-      DataCell(Container(
-        child: InkWell(
-          onTap: () {
-            print('Editar conductor: $nombreApellido');
-          },
-          child: const Padding(
-            padding: EdgeInsets.all(4.0),
-            child: Icon(Icons.edit, color: Colors.grey, size: 18),
-          ),
-        ),
-      )),
-    ]);
-  }
-
   Widget _buildHeaderWithAddButton(bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,7 +317,6 @@ class _ConductorPageState extends State<ConductorPage> {
   Widget _buildMobileHeaderLayout() {
     return Column(
       children: [
-        // Botón AGREGAR - Toma todo el ancho
         InkWell(
           onTap: _openAddConductorModal,
           child: Container(
@@ -251,8 +344,6 @@ class _ConductorPageState extends State<ConductorPage> {
           ),
         ),
         const SizedBox(height: 12),
-        
-        // Barra de búsqueda - Toma todo el ancho
         Container(
           width: double.infinity,
           height: 50,
@@ -286,10 +377,8 @@ class _ConductorPageState extends State<ConductorPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Fila 1: Botón AGREGAR y Barra de búsqueda
         Row(
           children: [
-            // Botón AGREGAR - tamaño fijo
             InkWell(
               onTap: _openAddConductorModal,
               child: Container(
@@ -317,7 +406,6 @@ class _ConductorPageState extends State<ConductorPage> {
               ),
             ),
             const SizedBox(width: 16),
-            // Barra de búsqueda - ocupa el espacio restante
             Expanded(
               child: Container(
                 height: 50,
@@ -336,7 +424,10 @@ class _ConductorPageState extends State<ConductorPage> {
                         decoration: InputDecoration(
                           border: InputBorder.none,
                           hintText: 'Buscar por DNI, nombre o teléfono...',
-                          hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
+                          hintStyle: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ),
@@ -364,7 +455,7 @@ class _ConductorPageState extends State<ConductorPage> {
           color: isActive ? Colors.white : Colors.grey[700],
           fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
         ),
-      ),
+      )
     );
   }
 
@@ -405,6 +496,44 @@ class _ConductorPageState extends State<ConductorPage> {
   }
 
   Widget _buildResponsiveTable(bool isMobile) {
+    return BlocBuilder<ConductorBloc, ConductorState>(
+      builder: (context, state) {
+        return state.when(
+          initial: () => _buildLoadingIndicator(),
+          loading: () => _buildLoadingIndicator(),
+          success: (_) => _buildLoadingIndicator(),
+          error: (message) => _buildErrorWidget(message),
+          personasCargando: () => _buildLoadingIndicator(),
+          personasCargadas: (personas) => _buildDataTable(personas, isMobile),
+          personaDetalleCargando: () => _buildLoadingIndicator(),
+          personaDetalleCargado: (_) => _buildLoadingIndicator(),
+          personaDetalleError: (message) => _buildErrorWidget(message),
+        );
+      },
+    );
+  }
+
+  Widget _buildDataTable(List<PersonaModel> personas, bool isMobile) {
+    if (personas.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(40),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: const Column(
+          children: [
+            Icon(Icons.inbox_outlined, color: Colors.grey, size: 60),
+            SizedBox(height: 10),
+            Text(
+              'No hay personas registradas',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
@@ -426,114 +555,10 @@ class _ConductorPageState extends State<ConductorPage> {
               horizontalMargin: isMobile ? 12 : 16,
               columnSpacing: isMobile ? 8 : 24,
               headingRowColor: WidgetStateProperty.all(const Color(0xFF303366)),
-              columns: isMobile 
-                  ? const [
-                      DataColumn(
-                        label: SizedBox(
-                          width: 80,
-                          child: Text('Documento', 
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 130,
-                          child: Text('Nombre Apellido', 
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 100,
-                          child: Text('Cargo', 
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 90,
-                          child: Text('Teléfono', 
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 100,
-                          child: Text('Fecha Ingreso', 
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 70,
-                          child: Text('Editar', 
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                    ]
-                  : const [
-                      DataColumn(
-                        label: SizedBox(
-                          width: 120,
-                          child: Text('Documento', 
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 200,
-                          child: Text('Nombre Apellido', 
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 150,
-                          child: Text('Cargo', 
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 120,
-                          child: Text('Teléfono', 
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 140,
-                          child: Text('Fecha Ingreso', 
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 100,
-                          child: Text('Editar', 
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                          ),
-                        ),
-                      ),
-                    ],
-              rows: [
-                _buildDataRow(1, '45781236', 'Juan Pérez López', 'Conductor', '987654321', '15/01/2023'),
-                _buildDataRow(2, '78945612', 'María Gómez Sánchez', 'Administrador', '912345678', '20/03/2023'),
-                _buildDataRow(3, '65412378', 'Carlos Rodríguez Díaz', 'Conductor', '934567890', '10/05/2023'),
-                _buildDataRow(4, '32198745', 'Ana Torres Mendoza', 'Conductor', '956789012', '05/07/2023'),
-                _buildDataRow(5, '85214796', 'Luis Fernández Castro', 'Administrador', '978901234', '25/09/2023'),
-              ],
+              columns: _buildTableColumns(isMobile),
+              rows: personas.map((persona) {
+                return _buildDataRowFromPersona(persona);
+              }).toList(),
             ),
           ),
         ),
@@ -541,65 +566,327 @@ class _ConductorPageState extends State<ConductorPage> {
     );
   }
 
-  Widget _buildPagination() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Mostrando 1 al 5 de 25 conductores',
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+  List<DataColumn> _buildTableColumns(bool isMobile) {
+    if (isMobile) {
+      return const [
+        DataColumn(
+          label: SizedBox(
+            width: 80,
+            child: Text(
+              'Documento',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
               ),
+            ),
+          ),
+        ),
+        DataColumn(
+          label: SizedBox(
+            width: 130,
+            child: Text(
+              'Nombre Apellido',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        DataColumn(
+          label: SizedBox(
+            width: 100,
+            child: Text(
+              'Cargo',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        DataColumn(
+          label: SizedBox(
+            width: 90,
+            child: Text(
+              'Teléfono',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        DataColumn(
+          label: SizedBox(
+            width: 100,
+            child: Text(
+              'Fecha Ingreso',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        DataColumn(
+          label: SizedBox(
+            width: 50,
+            child: Text(
+              'Detalle',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        DataColumn(
+          label: SizedBox(
+            width: 50,
+            child: Text(
+              'Editar',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ];
+    } else {
+      return const [
+        DataColumn(
+          label: SizedBox(
+            width: 120,
+            child: Text(
+              'Documento',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        DataColumn(
+          label: SizedBox(
+            width: 200,
+            child: Text(
+              'Nombre Apellido',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        DataColumn(
+          label: SizedBox(
+            width: 150,
+            child: Text(
+              'Cargo',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        DataColumn(
+          label: SizedBox(
+            width: 120,
+            child: Text(
+              'Teléfono',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        DataColumn(
+          label: SizedBox(
+            width: 140,
+            child: Text(
+              'Fecha Ingreso',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        DataColumn(
+          label: SizedBox(
+            width: 80,
+            child: Text(
+              'Detalle',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        DataColumn(
+          label: SizedBox(
+            width: 80,
+            child: Text(
+              'Editar',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+  }
+
+  DataRow _buildDataRowFromPersona(PersonaModel persona) {
+    return DataRow(
+      cells: [
+        DataCell(
+          Text(persona.dni.toString(), style: const TextStyle(fontSize: 12)),
+        ),
+        DataCell(
+          Container(
+            child: Text(
+              persona.nombreCorto,
+              style: const TextStyle(fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+        DataCell(
+          Text(
+            persona.cargo ?? 'No asignado',
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+        DataCell(
+          Text(
+            persona.primerTelefono ?? 'No registrado',
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+        DataCell(
+          Text(
+            persona.fechaIngresoFormateada,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+        // Botón DETALLE
+        DataCell(
+          IconButton(
+            icon: const Icon(
+              Icons.remove_red_eye,
+              color: Colors.grey,
+              size: 18,
+            ),
+            onPressed: () => _openPersonaDetalleModal(persona),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ),
+        // Botón EDITAR
+        DataCell(
+          IconButton(
+            icon: const Icon(Icons.edit, color: Colors.grey, size: 18),
+            onPressed: () => _mostrarOpcionEditar(persona),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPagination() {
+    return BlocBuilder<ConductorBloc, ConductorState>(
+      builder: (context, state) {
+        int itemCount = 0;
+        
+        state.whenOrNull(
+          personasCargadas: (personas) => itemCount = personas.length,
+        );
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Por página:',
+                    itemCount > 0
+                        ? 'Mostrando 1 al $itemCount de $itemCount personas'
+                        : 'No hay datos para mostrar',
                     style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[400]!),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      '5',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        'Por página:',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[400]!),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '10',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildPaginationButton('Anterior', isActive: false),
+                    _buildPaginationButton('1', isActive: true),
+                    _buildPaginationButton('Siguiente', isActive: false),
+                  ],
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildPaginationButton('Anterior', isActive: false),
-                _buildPaginationButton('1', isActive: true),
-                _buildPaginationButton('2', isActive: false),
-                _buildPaginationButton('3', isActive: false),
-                _buildPaginationButton('4', isActive: false),
-                _buildPaginationButton('5', isActive: false),
-                _buildPaginationButton('Siguiente', isActive: false),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -619,7 +906,7 @@ class _ConductorPageState extends State<ConductorPage> {
           fontSize: 12,
           fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
         ),
-      ),
+      )
     );
   }
 
@@ -637,6 +924,65 @@ class _ConductorPageState extends State<ConductorPage> {
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.grey[600], fontSize: 12, height: 1.4),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: const Center(
+        child: CircularProgressIndicator(color: Color(0xFF303366)),
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget(String message) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red[300]!),
+        color: Colors.red[50],
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 40),
+          const SizedBox(height: 10),
+          const Text(
+            'Error al cargar personas',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.red,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.red),
+          ),
+          const SizedBox(height: 15),
+          ElevatedButton(
+            onPressed: () {
+              context.read<ConductorBloc>().add(
+                const ConductorEvent.listarPersonas(),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF303366),
+            ),
+            child: const Text(
+              'Reintentar',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
       ),
     );
   }

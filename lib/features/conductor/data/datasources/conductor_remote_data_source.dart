@@ -7,10 +7,16 @@ import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/features/conductor/data/models/conductor_registro_dto.dart';
 import 'package:app_jht_front/features/conductor/data/models/conductor_registro_response.dart';
 import 'package:app_jht_front/features/supplier/data/models/tipo_telefono_model.dart';
+import 'package:app_jht_front/features/conductor/data/models/persona_list_response.dart';
+import 'package:app_jht_front/features/conductor/data/models/persona_detalle_response.dart';
+
 
 abstract class ConductorRemoteDataSource {
   Future<ConductorRegistroResponse> registrarConductor(ConductorRegistroDto dto);
   Future<List<TipoTelefonoModel>> getTiposTelefono();
+  
+  Future<PersonaListResponse> listarPersonas();
+  Future<PersonaDetalleResponse> obtenerPersonaDetalle(int personaId);
 }
 
 class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
@@ -146,5 +152,106 @@ String _getErrorMessage(Map<String, dynamic> errorData) {
   if (errorData['title'] != null) return errorData['title'].toString();
 
   return 'Error en el registro del conductor';
+}
+
+
+
+@override
+Future<PersonaListResponse> listarPersonas() async {
+  try {
+          String getBaseUrl() {
+        if (kIsWeb) {
+          return 'http://localhost:7030';
+        } else {
+          return 'http://192.168.1.2:7030';
+        }
+      }
+    print('🔵 Listando personas...');
+    
+    final String? token = await TokenService.getToken();
+    
+    if (token == null || token.isEmpty) {
+      throw Exception('No hay token de autenticación.');
+    }
+    
+    print('🟡 Token obtenido: ${token.substring(0, 20)}...');
+
+    final response = await http.get(
+      Uri.parse('${getBaseUrl()}/api/admin/Listar-personas'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'accept': 'application/json',
+      },
+    );
+
+    print('🟡 Response status listar personas: ${response.statusCode}');
+    print('🟡 Response body listar personas: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      return PersonaListResponse.fromJson(responseData);
+    } else if (response.statusCode == 401) {
+      throw Exception('No autorizado. Token inválido o expirado.');
+    } else if (response.statusCode == 403) {
+      throw Exception('No tienes permisos para listar personas.');
+    } else {
+      final errorData = json.decode(response.body);
+      throw Exception('Error al listar personas: ${response.statusCode} - ${errorData['message']}');
+    }
+  } catch (e) {
+    print('❌ ERROR en listarPersonas: $e');
+    rethrow;
+  }
+}
+
+@override
+Future<PersonaDetalleResponse> obtenerPersonaDetalle(int personaId) async {
+  try {
+    print('🔵 Obteniendo detalle de persona ID: $personaId');
+    
+    final String? token = await TokenService.getToken();
+          String getBaseUrl() {
+        if (kIsWeb) {
+          return 'http://localhost:7030';
+        } else {
+          return 'http://192.168.1.2:7030';
+        }
+      }
+    if (token == null || token.isEmpty) {
+      throw Exception('No hay token de autenticación.');
+    }
+    
+    print('🟡 Token obtenido: ${token.substring(0, 20)}...');
+
+    final response = await http.get(
+      Uri.parse('${getBaseUrl()}/api/admin/persona/$personaId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'accept': 'application/json',
+      },
+    );
+
+    print('🟡 Response status detalle persona: ${response.statusCode}');
+    print('🟡 Response body detalle persona: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      return PersonaDetalleResponse.fromJson(responseData);
+    } else if (response.statusCode == 404) {
+      throw Exception('Persona no encontrada.');
+    } else if (response.statusCode == 401) {
+      throw Exception('No autorizado. Token inválido o expirado.');
+    } else if (response.statusCode == 403) {
+      throw Exception('No tienes permisos para ver detalles de persona.');
+    } else {
+      final errorData = json.decode(response.body);
+      throw Exception('Error al obtener detalle: ${response.statusCode} - ${errorData['message']}');
+    }
+  } catch (e) {
+    print('❌ ERROR en obtenerPersonaDetalle: $e');
+    rethrow;
+  }
+
+
 }
 }

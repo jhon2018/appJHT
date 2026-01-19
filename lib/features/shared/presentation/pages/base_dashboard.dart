@@ -2,8 +2,11 @@
 import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/features/conductor/data/datasources/conductor_remote_data_source.dart';
 import 'package:app_jht_front/features/conductor/data/repositories/conductor_repository_impl.dart';
+import 'package:app_jht_front/features/conductor/domain/usecases/listar_personas_usecase.dart';
+import 'package:app_jht_front/features/conductor/domain/usecases/obtener_persona_detalle_usecase.dart';
 import 'package:app_jht_front/features/conductor/domain/usecases/registrar_conductor_usecase.dart';
 import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_bloc.dart';
+import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_event.dart';
 import 'package:app_jht_front/features/conductor/presentation/pages/conductor_page.dart';
 import 'package:app_jht_front/features/mantenimiento/data/repositories/mantenimiento_repository.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_bloc.dart';
@@ -441,22 +444,22 @@ class _BaseDashboardState extends State<BaseDashboard>
           ),
         );
         break;
-case 'Mantenimiento':
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => BlocProvider(
-        create: (context) => MantenimientoBloc(
-          repository: MantenimientoRepository(),
-        )..add(LoadMantenimientosEvent()),
-        child: MantenimientoPage(
-          userName: widget.userName,
-          userRole: widget.userRole,
-        ),
-      ),
-    ),
-  );
-  break;
+      case 'Mantenimiento':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BlocProvider(
+              create: (context) =>
+                  MantenimientoBloc(repository: MantenimientoRepository())
+                    ..add(LoadMantenimientosEvent()),
+              child: MantenimientoPage(
+                userName: widget.userName,
+                userRole: widget.userRole,
+              ),
+            ),
+          ),
+        );
+        break;
       // En base_dashboard.dart
       case 'Proveedor':
         Navigator.push(
@@ -470,26 +473,34 @@ case 'Mantenimiento':
           ),
         );
         break;
-      case 'Conductores':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => BlocProvider(
-              create: (context) => ConductorBloc(
-                registrarConductorUseCase: RegistrarConductorUseCase(
-                  repository: ConductorRepositoryImpl(
-                    remoteDataSource: ConductorRemoteDataSourceImpl(),
-                  ),
-                ),
-              ),
-              child: ConductorPage(
-                userName: widget.userName,
-                userRole: widget.userRole,
-              ),
-            ),
+case 'Conductores':
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) {
+        // Crear las dependencias
+        final remoteDataSource = ConductorRemoteDataSourceImpl();
+        final repository = ConductorRepositoryImpl(
+          remoteDataSource: remoteDataSource,
+        );
+        final useCase = RegistrarConductorUseCase(
+          repository: repository,
+        );
+        
+        return BlocProvider(
+          create: (context) => ConductorBloc(
+            registrarConductorUseCase: useCase,
+            repository: repository, listarPersonasUseCase: ListarPersonasUseCase(repository: repository), obtenerPersonaDetalleUseCase: ObtenerPersonaDetalleUseCase(repository: repository),
+          )..add(const ConductorEvent.listarPersonas()),
+          child: ConductorPage(
+            userName: widget.userName,
+            userRole: widget.userRole,
           ),
         );
-        break;
+      },
+    ),
+  );
+  break;
       case 'Accesorios':
         Navigator.push(
           context,
