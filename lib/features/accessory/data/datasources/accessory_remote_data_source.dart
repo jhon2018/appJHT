@@ -1,6 +1,7 @@
 // lib/features/accessory/data/datasources/accessory_remote_data_source.dart
 // Descripción: Implementación del datasource remoto para accesorios, incluyendo métodos para listar segmentos, tipos de accesorio y vehículos con autenticación.
 // Objetivo: Completar la implementación del datasource remoto para accesorios.
+import 'package:app_jht_front/features/accessory/data/models/accesorio_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_registro_dto.dart';
 
 import '../models/accesorio_registro_dto.dart';
@@ -25,6 +26,10 @@ abstract class AccessoryRemoteDataSource {
   Future<AccesorioRegistroResponse> insertarAccesorio(AccesorioRegistroDto dto);
 
   Future registrarTipoAccesorio(TipoAccesorioRegistroDto dto) async {}
+
+Future<List<AccesorioModel>> listarAccesoriosPorVehiculo(int vehId);
+  Future<AccesorioModel> obtenerDetalleAccesorio(int accId);
+
 }
 
 // IMPLEMENTACIÓN (igual que en Vehicle)
@@ -280,4 +285,57 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
       );
     }
   }
+
+
+@override
+  Future<List<AccesorioModel>> listarAccesoriosPorVehiculo(int vehId) async {
+    try {
+      final token = await TokenService.getToken();
+      final baseUrl = kIsWeb ? 'http://localhost:7030' : 'http://192.168.1.2:7030';
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/general/vehiculo/$vehId/accesorios'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final List<dynamic> data = responseData['data'];
+        return data.map((json) => AccesorioModel.fromJson(json)).toList();
+      } else {
+        throw Exception('Error al cargar accesorios: ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<AccesorioModel> obtenerDetalleAccesorio(int accId) async {
+    try {
+      final token = await TokenService.getToken();
+      final baseUrl = kIsWeb ? 'http://localhost:7030' : 'http://192.168.1.2:7030';
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/general/accesorio/$accId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return AccesorioModel.fromJson(responseData['data']);
+      } else {
+        throw Exception('Error al obtener detalle: ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
 }

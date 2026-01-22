@@ -28,3 +28,19 @@ class RegistrarTipoAccesorioEvent extends AccessoryEvent {
   
   RegistrarTipoAccesorioEvent({required this.dto});
 }
+
+
+// Evento inicial para cargar el dropdown de vehículos (API04)
+class OnFetchVehiculos extends AccessoryEvent {}
+
+// Evento cuando el usuario selecciona un vehículo (API26)
+class OnFetchAccesoriosByVehiculo extends AccessoryEvent {
+  final int vehiculoId;
+  OnFetchAccesoriosByVehiculo(this.vehiculoId);
+}
+
+// Evento para ver el detalle de un accesorio (API27)
+class OnFetchDetalleAccesorio extends AccessoryEvent {
+  final int accesorioId;
+  OnFetchDetalleAccesorio(this.accesorioId);
+}
