@@ -22,18 +22,24 @@ mixin _$ConductorEvent {
     required TResult Function(ConductorRegistroDto dto) registrarConductor,
     required TResult Function() listarPersonas,
     required TResult Function(int personaId) obtenerPersonaDetalle,
+    required TResult Function(PersonaActualizarDto dto) actualizarPersona,
+    required TResult Function() cargarTiposTelefono,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(ConductorRegistroDto dto)? registrarConductor,
     TResult? Function()? listarPersonas,
     TResult? Function(int personaId)? obtenerPersonaDetalle,
+    TResult? Function(PersonaActualizarDto dto)? actualizarPersona,
+    TResult? Function()? cargarTiposTelefono,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(ConductorRegistroDto dto)? registrarConductor,
     TResult Function()? listarPersonas,
     TResult Function(int personaId)? obtenerPersonaDetalle,
+    TResult Function(PersonaActualizarDto dto)? actualizarPersona,
+    TResult Function()? cargarTiposTelefono,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -42,18 +48,24 @@ mixin _$ConductorEvent {
     required TResult Function(_ListarPersonas value) listarPersonas,
     required TResult Function(_ObtenerPersonaDetalle value)
     obtenerPersonaDetalle,
+    required TResult Function(_ActualizarPersona value) actualizarPersona,
+    required TResult Function(_CargarTiposTelefono value) cargarTiposTelefono,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_RegistrarConductor value)? registrarConductor,
     TResult? Function(_ListarPersonas value)? listarPersonas,
     TResult? Function(_ObtenerPersonaDetalle value)? obtenerPersonaDetalle,
+    TResult? Function(_ActualizarPersona value)? actualizarPersona,
+    TResult? Function(_CargarTiposTelefono value)? cargarTiposTelefono,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_RegistrarConductor value)? registrarConductor,
     TResult Function(_ListarPersonas value)? listarPersonas,
     TResult Function(_ObtenerPersonaDetalle value)? obtenerPersonaDetalle,
+    TResult Function(_ActualizarPersona value)? actualizarPersona,
+    TResult Function(_CargarTiposTelefono value)? cargarTiposTelefono,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
 }
@@ -156,6 +168,8 @@ class _$RegistrarConductorImpl implements _RegistrarConductor {
     required TResult Function(ConductorRegistroDto dto) registrarConductor,
     required TResult Function() listarPersonas,
     required TResult Function(int personaId) obtenerPersonaDetalle,
+    required TResult Function(PersonaActualizarDto dto) actualizarPersona,
+    required TResult Function() cargarTiposTelefono,
   }) {
     return registrarConductor(dto);
   }
@@ -166,6 +180,8 @@ class _$RegistrarConductorImpl implements _RegistrarConductor {
     TResult? Function(ConductorRegistroDto dto)? registrarConductor,
     TResult? Function()? listarPersonas,
     TResult? Function(int personaId)? obtenerPersonaDetalle,
+    TResult? Function(PersonaActualizarDto dto)? actualizarPersona,
+    TResult? Function()? cargarTiposTelefono,
   }) {
     return registrarConductor?.call(dto);
   }
@@ -176,6 +192,8 @@ class _$RegistrarConductorImpl implements _RegistrarConductor {
     TResult Function(ConductorRegistroDto dto)? registrarConductor,
     TResult Function()? listarPersonas,
     TResult Function(int personaId)? obtenerPersonaDetalle,
+    TResult Function(PersonaActualizarDto dto)? actualizarPersona,
+    TResult Function()? cargarTiposTelefono,
     required TResult orElse(),
   }) {
     if (registrarConductor != null) {
@@ -191,6 +209,8 @@ class _$RegistrarConductorImpl implements _RegistrarConductor {
     required TResult Function(_ListarPersonas value) listarPersonas,
     required TResult Function(_ObtenerPersonaDetalle value)
     obtenerPersonaDetalle,
+    required TResult Function(_ActualizarPersona value) actualizarPersona,
+    required TResult Function(_CargarTiposTelefono value) cargarTiposTelefono,
   }) {
     return registrarConductor(this);
   }
@@ -201,6 +221,8 @@ class _$RegistrarConductorImpl implements _RegistrarConductor {
     TResult? Function(_RegistrarConductor value)? registrarConductor,
     TResult? Function(_ListarPersonas value)? listarPersonas,
     TResult? Function(_ObtenerPersonaDetalle value)? obtenerPersonaDetalle,
+    TResult? Function(_ActualizarPersona value)? actualizarPersona,
+    TResult? Function(_CargarTiposTelefono value)? cargarTiposTelefono,
   }) {
     return registrarConductor?.call(this);
   }
@@ -211,6 +233,8 @@ class _$RegistrarConductorImpl implements _RegistrarConductor {
     TResult Function(_RegistrarConductor value)? registrarConductor,
     TResult Function(_ListarPersonas value)? listarPersonas,
     TResult Function(_ObtenerPersonaDetalle value)? obtenerPersonaDetalle,
+    TResult Function(_ActualizarPersona value)? actualizarPersona,
+    TResult Function(_CargarTiposTelefono value)? cargarTiposTelefono,
     required TResult orElse(),
   }) {
     if (registrarConductor != null) {
@@ -279,6 +303,8 @@ class _$ListarPersonasImpl implements _ListarPersonas {
     required TResult Function(ConductorRegistroDto dto) registrarConductor,
     required TResult Function() listarPersonas,
     required TResult Function(int personaId) obtenerPersonaDetalle,
+    required TResult Function(PersonaActualizarDto dto) actualizarPersona,
+    required TResult Function() cargarTiposTelefono,
   }) {
     return listarPersonas();
   }
@@ -289,6 +315,8 @@ class _$ListarPersonasImpl implements _ListarPersonas {
     TResult? Function(ConductorRegistroDto dto)? registrarConductor,
     TResult? Function()? listarPersonas,
     TResult? Function(int personaId)? obtenerPersonaDetalle,
+    TResult? Function(PersonaActualizarDto dto)? actualizarPersona,
+    TResult? Function()? cargarTiposTelefono,
   }) {
     return listarPersonas?.call();
   }
@@ -299,6 +327,8 @@ class _$ListarPersonasImpl implements _ListarPersonas {
     TResult Function(ConductorRegistroDto dto)? registrarConductor,
     TResult Function()? listarPersonas,
     TResult Function(int personaId)? obtenerPersonaDetalle,
+    TResult Function(PersonaActualizarDto dto)? actualizarPersona,
+    TResult Function()? cargarTiposTelefono,
     required TResult orElse(),
   }) {
     if (listarPersonas != null) {
@@ -314,6 +344,8 @@ class _$ListarPersonasImpl implements _ListarPersonas {
     required TResult Function(_ListarPersonas value) listarPersonas,
     required TResult Function(_ObtenerPersonaDetalle value)
     obtenerPersonaDetalle,
+    required TResult Function(_ActualizarPersona value) actualizarPersona,
+    required TResult Function(_CargarTiposTelefono value) cargarTiposTelefono,
   }) {
     return listarPersonas(this);
   }
@@ -324,6 +356,8 @@ class _$ListarPersonasImpl implements _ListarPersonas {
     TResult? Function(_RegistrarConductor value)? registrarConductor,
     TResult? Function(_ListarPersonas value)? listarPersonas,
     TResult? Function(_ObtenerPersonaDetalle value)? obtenerPersonaDetalle,
+    TResult? Function(_ActualizarPersona value)? actualizarPersona,
+    TResult? Function(_CargarTiposTelefono value)? cargarTiposTelefono,
   }) {
     return listarPersonas?.call(this);
   }
@@ -334,6 +368,8 @@ class _$ListarPersonasImpl implements _ListarPersonas {
     TResult Function(_RegistrarConductor value)? registrarConductor,
     TResult Function(_ListarPersonas value)? listarPersonas,
     TResult Function(_ObtenerPersonaDetalle value)? obtenerPersonaDetalle,
+    TResult Function(_ActualizarPersona value)? actualizarPersona,
+    TResult Function(_CargarTiposTelefono value)? cargarTiposTelefono,
     required TResult orElse(),
   }) {
     if (listarPersonas != null) {
@@ -425,6 +461,8 @@ class _$ObtenerPersonaDetalleImpl implements _ObtenerPersonaDetalle {
     required TResult Function(ConductorRegistroDto dto) registrarConductor,
     required TResult Function() listarPersonas,
     required TResult Function(int personaId) obtenerPersonaDetalle,
+    required TResult Function(PersonaActualizarDto dto) actualizarPersona,
+    required TResult Function() cargarTiposTelefono,
   }) {
     return obtenerPersonaDetalle(personaId);
   }
@@ -435,6 +473,8 @@ class _$ObtenerPersonaDetalleImpl implements _ObtenerPersonaDetalle {
     TResult? Function(ConductorRegistroDto dto)? registrarConductor,
     TResult? Function()? listarPersonas,
     TResult? Function(int personaId)? obtenerPersonaDetalle,
+    TResult? Function(PersonaActualizarDto dto)? actualizarPersona,
+    TResult? Function()? cargarTiposTelefono,
   }) {
     return obtenerPersonaDetalle?.call(personaId);
   }
@@ -445,6 +485,8 @@ class _$ObtenerPersonaDetalleImpl implements _ObtenerPersonaDetalle {
     TResult Function(ConductorRegistroDto dto)? registrarConductor,
     TResult Function()? listarPersonas,
     TResult Function(int personaId)? obtenerPersonaDetalle,
+    TResult Function(PersonaActualizarDto dto)? actualizarPersona,
+    TResult Function()? cargarTiposTelefono,
     required TResult orElse(),
   }) {
     if (obtenerPersonaDetalle != null) {
@@ -460,6 +502,8 @@ class _$ObtenerPersonaDetalleImpl implements _ObtenerPersonaDetalle {
     required TResult Function(_ListarPersonas value) listarPersonas,
     required TResult Function(_ObtenerPersonaDetalle value)
     obtenerPersonaDetalle,
+    required TResult Function(_ActualizarPersona value) actualizarPersona,
+    required TResult Function(_CargarTiposTelefono value) cargarTiposTelefono,
   }) {
     return obtenerPersonaDetalle(this);
   }
@@ -470,6 +514,8 @@ class _$ObtenerPersonaDetalleImpl implements _ObtenerPersonaDetalle {
     TResult? Function(_RegistrarConductor value)? registrarConductor,
     TResult? Function(_ListarPersonas value)? listarPersonas,
     TResult? Function(_ObtenerPersonaDetalle value)? obtenerPersonaDetalle,
+    TResult? Function(_ActualizarPersona value)? actualizarPersona,
+    TResult? Function(_CargarTiposTelefono value)? cargarTiposTelefono,
   }) {
     return obtenerPersonaDetalle?.call(this);
   }
@@ -480,6 +526,8 @@ class _$ObtenerPersonaDetalleImpl implements _ObtenerPersonaDetalle {
     TResult Function(_RegistrarConductor value)? registrarConductor,
     TResult Function(_ListarPersonas value)? listarPersonas,
     TResult Function(_ObtenerPersonaDetalle value)? obtenerPersonaDetalle,
+    TResult Function(_ActualizarPersona value)? actualizarPersona,
+    TResult Function(_CargarTiposTelefono value)? cargarTiposTelefono,
     required TResult orElse(),
   }) {
     if (obtenerPersonaDetalle != null) {
@@ -500,4 +548,296 @@ abstract class _ObtenerPersonaDetalle implements ConductorEvent {
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ObtenerPersonaDetalleImplCopyWith<_$ObtenerPersonaDetalleImpl>
   get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$ActualizarPersonaImplCopyWith<$Res> {
+  factory _$$ActualizarPersonaImplCopyWith(
+    _$ActualizarPersonaImpl value,
+    $Res Function(_$ActualizarPersonaImpl) then,
+  ) = __$$ActualizarPersonaImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({PersonaActualizarDto dto});
+}
+
+/// @nodoc
+class __$$ActualizarPersonaImplCopyWithImpl<$Res>
+    extends _$ConductorEventCopyWithImpl<$Res, _$ActualizarPersonaImpl>
+    implements _$$ActualizarPersonaImplCopyWith<$Res> {
+  __$$ActualizarPersonaImplCopyWithImpl(
+    _$ActualizarPersonaImpl _value,
+    $Res Function(_$ActualizarPersonaImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of ConductorEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? dto = null}) {
+    return _then(
+      _$ActualizarPersonaImpl(
+        dto: null == dto
+            ? _value.dto
+            : dto // ignore: cast_nullable_to_non_nullable
+                  as PersonaActualizarDto,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$ActualizarPersonaImpl implements _ActualizarPersona {
+  const _$ActualizarPersonaImpl({required this.dto});
+
+  @override
+  final PersonaActualizarDto dto;
+
+  @override
+  String toString() {
+    return 'ConductorEvent.actualizarPersona(dto: $dto)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ActualizarPersonaImpl &&
+            (identical(other.dto, dto) || other.dto == dto));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, dto);
+
+  /// Create a copy of ConductorEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ActualizarPersonaImplCopyWith<_$ActualizarPersonaImpl> get copyWith =>
+      __$$ActualizarPersonaImplCopyWithImpl<_$ActualizarPersonaImpl>(
+        this,
+        _$identity,
+      );
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(ConductorRegistroDto dto) registrarConductor,
+    required TResult Function() listarPersonas,
+    required TResult Function(int personaId) obtenerPersonaDetalle,
+    required TResult Function(PersonaActualizarDto dto) actualizarPersona,
+    required TResult Function() cargarTiposTelefono,
+  }) {
+    return actualizarPersona(dto);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(ConductorRegistroDto dto)? registrarConductor,
+    TResult? Function()? listarPersonas,
+    TResult? Function(int personaId)? obtenerPersonaDetalle,
+    TResult? Function(PersonaActualizarDto dto)? actualizarPersona,
+    TResult? Function()? cargarTiposTelefono,
+  }) {
+    return actualizarPersona?.call(dto);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(ConductorRegistroDto dto)? registrarConductor,
+    TResult Function()? listarPersonas,
+    TResult Function(int personaId)? obtenerPersonaDetalle,
+    TResult Function(PersonaActualizarDto dto)? actualizarPersona,
+    TResult Function()? cargarTiposTelefono,
+    required TResult orElse(),
+  }) {
+    if (actualizarPersona != null) {
+      return actualizarPersona(dto);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_RegistrarConductor value) registrarConductor,
+    required TResult Function(_ListarPersonas value) listarPersonas,
+    required TResult Function(_ObtenerPersonaDetalle value)
+    obtenerPersonaDetalle,
+    required TResult Function(_ActualizarPersona value) actualizarPersona,
+    required TResult Function(_CargarTiposTelefono value) cargarTiposTelefono,
+  }) {
+    return actualizarPersona(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_RegistrarConductor value)? registrarConductor,
+    TResult? Function(_ListarPersonas value)? listarPersonas,
+    TResult? Function(_ObtenerPersonaDetalle value)? obtenerPersonaDetalle,
+    TResult? Function(_ActualizarPersona value)? actualizarPersona,
+    TResult? Function(_CargarTiposTelefono value)? cargarTiposTelefono,
+  }) {
+    return actualizarPersona?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_RegistrarConductor value)? registrarConductor,
+    TResult Function(_ListarPersonas value)? listarPersonas,
+    TResult Function(_ObtenerPersonaDetalle value)? obtenerPersonaDetalle,
+    TResult Function(_ActualizarPersona value)? actualizarPersona,
+    TResult Function(_CargarTiposTelefono value)? cargarTiposTelefono,
+    required TResult orElse(),
+  }) {
+    if (actualizarPersona != null) {
+      return actualizarPersona(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _ActualizarPersona implements ConductorEvent {
+  const factory _ActualizarPersona({required final PersonaActualizarDto dto}) =
+      _$ActualizarPersonaImpl;
+
+  PersonaActualizarDto get dto;
+
+  /// Create a copy of ConductorEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ActualizarPersonaImplCopyWith<_$ActualizarPersonaImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$CargarTiposTelefonoImplCopyWith<$Res> {
+  factory _$$CargarTiposTelefonoImplCopyWith(
+    _$CargarTiposTelefonoImpl value,
+    $Res Function(_$CargarTiposTelefonoImpl) then,
+  ) = __$$CargarTiposTelefonoImplCopyWithImpl<$Res>;
+}
+
+/// @nodoc
+class __$$CargarTiposTelefonoImplCopyWithImpl<$Res>
+    extends _$ConductorEventCopyWithImpl<$Res, _$CargarTiposTelefonoImpl>
+    implements _$$CargarTiposTelefonoImplCopyWith<$Res> {
+  __$$CargarTiposTelefonoImplCopyWithImpl(
+    _$CargarTiposTelefonoImpl _value,
+    $Res Function(_$CargarTiposTelefonoImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of ConductorEvent
+  /// with the given fields replaced by the non-null parameter values.
+}
+
+/// @nodoc
+
+class _$CargarTiposTelefonoImpl implements _CargarTiposTelefono {
+  const _$CargarTiposTelefonoImpl();
+
+  @override
+  String toString() {
+    return 'ConductorEvent.cargarTiposTelefono()';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$CargarTiposTelefonoImpl);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(ConductorRegistroDto dto) registrarConductor,
+    required TResult Function() listarPersonas,
+    required TResult Function(int personaId) obtenerPersonaDetalle,
+    required TResult Function(PersonaActualizarDto dto) actualizarPersona,
+    required TResult Function() cargarTiposTelefono,
+  }) {
+    return cargarTiposTelefono();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(ConductorRegistroDto dto)? registrarConductor,
+    TResult? Function()? listarPersonas,
+    TResult? Function(int personaId)? obtenerPersonaDetalle,
+    TResult? Function(PersonaActualizarDto dto)? actualizarPersona,
+    TResult? Function()? cargarTiposTelefono,
+  }) {
+    return cargarTiposTelefono?.call();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(ConductorRegistroDto dto)? registrarConductor,
+    TResult Function()? listarPersonas,
+    TResult Function(int personaId)? obtenerPersonaDetalle,
+    TResult Function(PersonaActualizarDto dto)? actualizarPersona,
+    TResult Function()? cargarTiposTelefono,
+    required TResult orElse(),
+  }) {
+    if (cargarTiposTelefono != null) {
+      return cargarTiposTelefono();
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_RegistrarConductor value) registrarConductor,
+    required TResult Function(_ListarPersonas value) listarPersonas,
+    required TResult Function(_ObtenerPersonaDetalle value)
+    obtenerPersonaDetalle,
+    required TResult Function(_ActualizarPersona value) actualizarPersona,
+    required TResult Function(_CargarTiposTelefono value) cargarTiposTelefono,
+  }) {
+    return cargarTiposTelefono(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_RegistrarConductor value)? registrarConductor,
+    TResult? Function(_ListarPersonas value)? listarPersonas,
+    TResult? Function(_ObtenerPersonaDetalle value)? obtenerPersonaDetalle,
+    TResult? Function(_ActualizarPersona value)? actualizarPersona,
+    TResult? Function(_CargarTiposTelefono value)? cargarTiposTelefono,
+  }) {
+    return cargarTiposTelefono?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_RegistrarConductor value)? registrarConductor,
+    TResult Function(_ListarPersonas value)? listarPersonas,
+    TResult Function(_ObtenerPersonaDetalle value)? obtenerPersonaDetalle,
+    TResult Function(_ActualizarPersona value)? actualizarPersona,
+    TResult Function(_CargarTiposTelefono value)? cargarTiposTelefono,
+    required TResult orElse(),
+  }) {
+    if (cargarTiposTelefono != null) {
+      return cargarTiposTelefono(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _CargarTiposTelefono implements ConductorEvent {
+  const factory _CargarTiposTelefono() = _$CargarTiposTelefonoImpl;
 }

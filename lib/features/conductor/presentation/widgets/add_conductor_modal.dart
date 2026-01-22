@@ -1,5 +1,6 @@
 //Ruta: lib/features/conductor/presentation/widgets/add_conductor_modal.dart
 import 'dart:convert';
+import 'package:app_jht_front/features/conductor/data/models/persona_actualizar_response.dart';
 import 'package:app_jht_front/features/conductor/data/models/persona_model.dart';
 import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_event.dart';
 import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_state.dart';
@@ -44,19 +45,28 @@ class _AddConductorModalState extends State<AddConductorModal> {
   final _fechaVencimientoLicenciaController = TextEditingController();
 
   // Controladores para teléfonos
-  final List<TextEditingController> _telefonoControllers = [TextEditingController()];
+  final List<TextEditingController> _telefonoControllers = [
+    TextEditingController(),
+  ];
   final List<TipoTelefonoModel?> _telefonoTipos = [null];
 
   // Variables para dropdowns
   String? _estadoValue;
   String? _cargoValue;
-  
+
   // Listas
   final List<String> _estadoOptions = ['Activo', 'Inactivo'];
   final List<String> _cargoOptions = ['Administrador', 'Conductor'];
   final List<String> _claseLicenciaOptions = ['A', 'B', 'C', 'D', 'E'];
-  final List<String> _categoriaLicenciaOptions = ['I', 'II-A', 'II-B', 'III-A', 'III-B', 'III-C'];
-  
+  final List<String> _categoriaLicenciaOptions = [
+    'I',
+    'II-A',
+    'II-B',
+    'III-A',
+    'III-B',
+    'III-C',
+  ];
+
   List<TipoTelefonoModel> _tiposTelefonoList = [];
 
   @override
@@ -69,9 +79,9 @@ class _AddConductorModalState extends State<AddConductorModal> {
   Future<void> _cargarTiposTelefono() async {
     try {
       print('🟡 Cargando tipos de teléfono...');
-      
+
       final String? token = await TokenService.getToken();
-      
+
       if (token == null || token.isEmpty) {
         throw Exception('No hay token de autenticación.');
       }
@@ -97,14 +107,18 @@ class _AddConductorModalState extends State<AddConductorModal> {
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         final data = responseData['data'] as List;
-        final tipos = data.map((item) => TipoTelefonoModel.fromJson(item)).toList();
-        
+        final tipos = data
+            .map((item) => TipoTelefonoModel.fromJson(item))
+            .toList();
+
         setState(() {
           _tiposTelefonoList = tipos;
         });
         print('🟢 Tipos de teléfono cargados: ${tipos.length}');
       } else {
-        throw Exception('Error al obtener tipos de teléfono: ${response.statusCode}');
+        throw Exception(
+          'Error al obtener tipos de teléfono: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('❌ ERROR al cargar tipos de teléfono: $e');
@@ -122,9 +136,12 @@ class _AddConductorModalState extends State<AddConductorModal> {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
+  Future<void> _selectDate(
+    BuildContext context,
+    TextEditingController controller,
+  ) async {
     print('🟡 Seleccionando fecha para: ${controller.hashCode}');
-    
+
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -148,7 +165,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
         );
       },
     );
-    
+
     if (picked != null) {
       // Forzar un rebuild del widget específico
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -180,11 +197,11 @@ class _AddConductorModalState extends State<AddConductorModal> {
     _categoriaLicenciaController.dispose();
     _fechaRegistroLicenciaController.dispose();
     _fechaVencimientoLicenciaController.dispose();
-    
+
     for (var controller in _telefonoControllers) {
       controller.dispose();
     }
-    
+
     super.dispose();
   }
 
@@ -246,7 +263,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
 
   void _mostrarErrorDialog(String message) {
     String mensajeLimpio = _limpiarMensajeError(message);
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -299,22 +316,24 @@ class _AddConductorModalState extends State<AddConductorModal> {
       _mostrarErrorDialog('El DNI es requerido');
       return;
     }
-    
+
     if (dniText.length != 8) {
       _mostrarErrorDialog('El DNI debe tener exactamente 8 dígitos');
       return;
     }
-    
+
     final dni = int.tryParse(dniText);
     if (dni == null || dni <= 0) {
       _mostrarErrorDialog('El DNI debe ser un número válido mayor que 0');
       return;
     }
-    
+
     // Validar campos obligatorios
     for (int i = 0; i < _telefonoControllers.length; i++) {
       if (_telefonoTipos[i] == null) {
-        _mostrarErrorDialog('Seleccione el tipo y uso para el teléfono ${i + 1}');
+        _mostrarErrorDialog(
+          'Seleccione el tipo y uso para el teléfono ${i + 1}',
+        );
         return;
       }
     }
@@ -408,38 +427,46 @@ class _AddConductorModalState extends State<AddConductorModal> {
     final bool isMobile = MediaQuery.of(context).size.width < 768;
 
     return BlocListener<ConductorBloc, ConductorState>(
- listener: (context, state) {
-    // Solo manejar estados de REGISTRO, no de listar personas
-    state.when(
-      initial: () {},
-      loading: () {
-        // Podrías mostrar un loading aquí
-      },
-      success: (response) {
-        Navigator.of(context).pop(); // Cierra el modal
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_primerNombreController.text} ${_apellidoPaternoController.text} (DNI: ${_dniController.text}) registrado como $_cargoValue correctamente'),
-            backgroundColor: const Color(0xFF303366),
-            duration: const Duration(seconds: 5),
-          ),
+      listener: (context, state) {
+        // Solo manejar estados de REGISTRO, no de listar personas
+        state.when(
+          initial: () {},
+          loading: () {
+            // Podrías mostrar un loading aquí
+          },
+          success: (response) {
+            Navigator.of(context).pop(); // Cierra el modal
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '${_primerNombreController.text} ${_apellidoPaternoController.text} (DNI: ${_dniController.text}) registrado como $_cargoValue correctamente',
+                ),
+                backgroundColor: const Color(0xFF303366),
+                duration: const Duration(seconds: 5),
+              ),
+            );
+
+            if (widget.onConductorAdded != null) {
+              widget.onConductorAdded!();
+            }
+          },
+          error: (message) {
+            _mostrarErrorDialog(message);
+          },
+          // NO incluir los otros estados, no son relevantes para este modal
+          personasCargando: () {},
+          personasCargadas: (_) {},
+          personaDetalleCargando: () {},
+          personaDetalleCargado: (_) {},
+          personaDetalleError: (_) {},
+          personaActualizando: () {},
+          personaActualizada: (PersonaActualizarResponse response) {},
+          personaActualizacionError: (String message) {},
+          tiposTelefonoCargando: () {},
+          tiposTelefonoCargados: (List<TipoTelefonoModel> tipos) {},
+          tiposTelefonoError: (String message) {},
         );
-        
-        if (widget.onConductorAdded != null) {
-          widget.onConductorAdded!();
-        }
       },
-      error: (message) {
-        _mostrarErrorDialog(message);
-      },
-      // NO incluir los otros estados, no son relevantes para este modal
-      personasCargando: () {}, 
-      personasCargadas: (_) {}, 
-      personaDetalleCargando: () {}, 
-      personaDetalleCargado: (_) {}, 
-      personaDetalleError: (_) {},
-    );
-  },
       child: Dialog(
         backgroundColor: Colors.white,
         insetPadding: const EdgeInsets.all(20),
@@ -589,7 +616,10 @@ class _AddConductorModalState extends State<AddConductorModal> {
                                 child: _buildDateField(
                                   'Fecha Nacimiento',
                                   _fechaNacimientoController,
-                                  () => _selectDate(context, _fechaNacimientoController),
+                                  () => _selectDate(
+                                    context,
+                                    _fechaNacimientoController,
+                                  ),
                                 ),
                               ),
                             ],
@@ -620,7 +650,10 @@ class _AddConductorModalState extends State<AddConductorModal> {
                               _buildDateField(
                                 'Fecha Nacimiento',
                                 _fechaNacimientoController,
-                                () => _selectDate(context, _fechaNacimientoController),
+                                () => _selectDate(
+                                  context,
+                                  _fechaNacimientoController,
+                                ),
                               ),
                             ],
                           ),
@@ -720,22 +753,22 @@ class _AddConductorModalState extends State<AddConductorModal> {
                                   if (value == null || value.isEmpty) {
                                     return 'Seleccione el estado';
                                   }
-                                    return null;
-                                  },
-                                ),
-                                _buildFormField(
-                                  'Salario (S/)',
-                                  _salarioController,
-                                  (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Ingrese el salario';
-                                    }
-                                    return null;
-                                  },
-                                  keyboardType: TextInputType.number,
-                                ),
-                              ],
-                            ),
+                                  return null;
+                                },
+                              ),
+                              _buildFormField(
+                                'Salario (S/)',
+                                _salarioController,
+                                (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Ingrese el salario';
+                                  }
+                                  return null;
+                                },
+                                keyboardType: TextInputType.number,
+                              ),
+                            ],
+                          ),
 
                         // Fila 4: Email y Fechas
                         if (!isMobile)
@@ -762,7 +795,10 @@ class _AddConductorModalState extends State<AddConductorModal> {
                                 child: _buildDateField(
                                   'Fecha Ingreso',
                                   _fechaIngresoController,
-                                  () => _selectDate(context, _fechaIngresoController),
+                                  () => _selectDate(
+                                    context,
+                                    _fechaIngresoController,
+                                  ),
                                   isRequired: true,
                                 ),
                               ),
@@ -771,7 +807,10 @@ class _AddConductorModalState extends State<AddConductorModal> {
                                 child: _buildDateField(
                                   'Fecha Salida',
                                   _fechaSalidaController,
-                                  () => _selectDate(context, _fechaSalidaController),
+                                  () => _selectDate(
+                                    context,
+                                    _fechaSalidaController,
+                                  ),
                                   isRequired: false,
                                 ),
                               ),
@@ -797,13 +836,19 @@ class _AddConductorModalState extends State<AddConductorModal> {
                               _buildDateField(
                                 'Fecha Ingreso',
                                 _fechaIngresoController,
-                                () => _selectDate(context, _fechaIngresoController),
+                                () => _selectDate(
+                                  context,
+                                  _fechaIngresoController,
+                                ),
                                 isRequired: true,
                               ),
                               _buildDateField(
                                 'Fecha Salida',
                                 _fechaSalidaController,
-                                () => _selectDate(context, _fechaSalidaController),
+                                () => _selectDate(
+                                  context,
+                                  _fechaSalidaController,
+                                ),
                                 isRequired: false,
                               ),
                             ],
@@ -829,7 +874,9 @@ class _AddConductorModalState extends State<AddConductorModal> {
                               onPressed: _agregarTelefono,
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: const Color(0xFF303366),
-                                side: const BorderSide(color: Color(0xFF303366)),
+                                side: const BorderSide(
+                                  color: Color(0xFF303366),
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -878,11 +925,14 @@ class _AddConductorModalState extends State<AddConductorModal> {
                                 Expanded(
                                   child: _buildDropdownField(
                                     'Clase Licencia',
-                                    _claseLicenciaController.text.isEmpty ? null : _claseLicenciaController.text,
+                                    _claseLicenciaController.text.isEmpty
+                                        ? null
+                                        : _claseLicenciaController.text,
                                     _claseLicenciaOptions,
                                     (value) {
                                       setState(() {
-                                        _claseLicenciaController.text = value ?? '';
+                                        _claseLicenciaController.text =
+                                            value ?? '';
                                       });
                                     },
                                     (value) {
@@ -897,11 +947,14 @@ class _AddConductorModalState extends State<AddConductorModal> {
                                 Expanded(
                                   child: _buildDropdownField(
                                     'Categoría Licencia',
-                                    _categoriaLicenciaController.text.isEmpty ? null : _categoriaLicenciaController.text,
+                                    _categoriaLicenciaController.text.isEmpty
+                                        ? null
+                                        : _categoriaLicenciaController.text,
                                     _categoriaLicenciaOptions,
                                     (value) {
                                       setState(() {
-                                        _categoriaLicenciaController.text = value ?? '';
+                                        _categoriaLicenciaController.text =
+                                            value ?? '';
                                       });
                                     },
                                     (value) {
@@ -929,11 +982,14 @@ class _AddConductorModalState extends State<AddConductorModal> {
                                 ),
                                 _buildDropdownField(
                                   'Clase Licencia',
-                                  _claseLicenciaController.text.isEmpty ? null : _claseLicenciaController.text,
+                                  _claseLicenciaController.text.isEmpty
+                                      ? null
+                                      : _claseLicenciaController.text,
                                   _claseLicenciaOptions,
                                   (value) {
                                     setState(() {
-                                      _claseLicenciaController.text = value ?? '';
+                                      _claseLicenciaController.text =
+                                          value ?? '';
                                     });
                                   },
                                   (value) {
@@ -945,11 +1001,14 @@ class _AddConductorModalState extends State<AddConductorModal> {
                                 ),
                                 _buildDropdownField(
                                   'Categoría Licencia',
-                                  _categoriaLicenciaController.text.isEmpty ? null : _categoriaLicenciaController.text,
+                                  _categoriaLicenciaController.text.isEmpty
+                                      ? null
+                                      : _categoriaLicenciaController.text,
                                   _categoriaLicenciaOptions,
                                   (value) {
                                     setState(() {
-                                      _categoriaLicenciaController.text = value ?? '';
+                                      _categoriaLicenciaController.text =
+                                          value ?? '';
                                     });
                                   },
                                   (value) {
@@ -970,7 +1029,10 @@ class _AddConductorModalState extends State<AddConductorModal> {
                                   child: _buildDateField(
                                     'Fecha Registro Licencia',
                                     _fechaRegistroLicenciaController,
-                                    () => _selectDate(context, _fechaRegistroLicenciaController),
+                                    () => _selectDate(
+                                      context,
+                                      _fechaRegistroLicenciaController,
+                                    ),
                                     isRequired: true,
                                   ),
                                 ),
@@ -979,27 +1041,38 @@ class _AddConductorModalState extends State<AddConductorModal> {
                                   child: _buildDateField(
                                     'Fecha Vencimiento Licencia',
                                     _fechaVencimientoLicenciaController,
-                                    () => _selectDate(context, _fechaVencimientoLicenciaController),
+                                    () => _selectDate(
+                                      context,
+                                      _fechaVencimientoLicenciaController,
+                                    ),
                                     isRequired: true,
                                   ),
                                 ),
                                 const SizedBox(width: 16),
-                                const Expanded(child: SizedBox()), // Espacio vacío
+                                const Expanded(
+                                  child: SizedBox(),
+                                ), // Espacio vacío
                               ],
                             )
                           else
                             Column(
                               children: [
-_buildDateField(
-  'Fecha Registro Licencia',
-  _fechaRegistroLicenciaController,
-  () => _selectDate(context, _fechaRegistroLicenciaController),
-  isRequired: true,
-),
+                                _buildDateField(
+                                  'Fecha Registro Licencia',
+                                  _fechaRegistroLicenciaController,
+                                  () => _selectDate(
+                                    context,
+                                    _fechaRegistroLicenciaController,
+                                  ),
+                                  isRequired: true,
+                                ),
                                 _buildDateField(
                                   'Fecha Vencimiento Licencia',
                                   _fechaVencimientoLicenciaController,
-                                  () => _selectDate(context, _fechaVencimientoLicenciaController),
+                                  () => _selectDate(
+                                    context,
+                                    _fechaVencimientoLicenciaController,
+                                  ),
                                   isRequired: true,
                                 ),
                               ],
@@ -1101,61 +1174,66 @@ _buildDateField(
     );
   }
 
-Widget _buildDateField(
-  String label,
-  TextEditingController controller,
-  VoidCallback onTap,  // CAMBIADO: Ahora es VoidCallback
-  {bool isRequired = false}
-) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        label,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF303366),
-        ),
-      ),
-      const SizedBox(height: 8),
-      InkWell(
-        onTap: onTap,  // Ahora recibe directamente el callback
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[400]!),
-            borderRadius: BorderRadius.circular(8),
-            color: Colors.white,
+  Widget _buildDateField(
+    String label,
+    TextEditingController controller,
+    VoidCallback onTap, { // CAMBIADO: Ahora es VoidCallback
+    bool isRequired = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF303366),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  controller.text.isEmpty ? 'Seleccionar fecha' : controller.text,
-                  style: TextStyle(
-                    color: controller.text.isEmpty ? Colors.grey : Colors.black,
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: onTap, // Ahora recibe directamente el callback
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[400]!),
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.white,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    controller.text.isEmpty
+                        ? 'Seleccionar fecha'
+                        : controller.text,
+                    style: TextStyle(
+                      color: controller.text.isEmpty
+                          ? Colors.grey
+                          : Colors.black,
+                    ),
                   ),
                 ),
-              ),
-              const Icon(Icons.calendar_today, size: 20, color: Colors.grey),
-            ],
+                const Icon(Icons.calendar_today, size: 20, color: Colors.grey),
+              ],
+            ),
           ),
         ),
-      ),
-      if (isRequired && controller.text.isEmpty)
-        const Padding(
-          padding: EdgeInsets.only(top: 4),
-          child: Text(
-            'Este campo es requerido',
-            style: TextStyle(color: Colors.red, fontSize: 12),
+        if (isRequired && controller.text.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: Text(
+              'Este campo es requerido',
+              style: TextStyle(color: Colors.red, fontSize: 12),
+            ),
           ),
-        ),
-      const SizedBox(height: 16),
-    ],
-  );
-}
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
   Widget _buildDropdownField(
     String label,
     String? value,
@@ -1189,10 +1267,7 @@ Widget _buildDateField(
             ),
           ),
           items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(item),
-            );
+            return DropdownMenuItem<String>(value: item, child: Text(item));
           }).toList(),
           onChanged: onChanged,
           validator: validator,
@@ -1294,89 +1369,85 @@ Widget _buildDateField(
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Ingrese el teléfono';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-            
-                            // Botón eliminar (solo si hay más de uno)
-                            if (_telefonoControllers.length > 1)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 28, left: 8),
-                                child: InkWell(
-                                  onTap: () => _eliminarTelefono(index),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red[50],
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Icon(
-                                      Icons.delete,
-                                      color: Colors.red[700],
-                                      size: 18,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    );
-                  }
-            
-                  Widget _buildButton({
-                    required String text,
-                    required Color backgroundColor,
-                    required Color textColor,
-                    required VoidCallback onPressed,
-                  }) {
-                    return Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: backgroundColor,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: TextButton(
-                        onPressed: onPressed,
-                        child: Text(
-                          text,
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-            
-                  Widget _buildDialogButton({
-                    required String text,
-                    required Color backgroundColor,
-                    required Color textColor,
-                    required VoidCallback onPressed,
-                  }) {
-                    return Container(
-                      height: 45,
-                      decoration: BoxDecoration(
-                        color: backgroundColor,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: TextButton(
-                        onPressed: onPressed,
-                        child: Text(
-                          text,
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            // Botón eliminar (solo si hay más de uno)
+            if (_telefonoControllers.length > 1)
+              Padding(
+                padding: const EdgeInsets.only(top: 28, left: 8),
+                child: InkWell(
+                  onTap: () => _eliminarTelefono(index),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.red[50],
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(Icons.delete, color: Colors.red[700], size: 18),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildButton({
+    required String text,
+    required Color backgroundColor,
+    required Color textColor,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: TextButton(
+        onPressed: onPressed,
+        child: Text(
+          text,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDialogButton({
+    required String text,
+    required Color backgroundColor,
+    required Color textColor,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      height: 45,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: TextButton(
+        onPressed: onPressed,
+        child: Text(
+          text,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
 }

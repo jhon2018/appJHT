@@ -28,6 +28,14 @@ mixin _$ConductorState {
     required TResult Function() personaDetalleCargando,
     required TResult Function(PersonaModel persona) personaDetalleCargado,
     required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
@@ -40,6 +48,12 @@ mixin _$ConductorState {
     TResult? Function()? personaDetalleCargando,
     TResult? Function(PersonaModel persona)? personaDetalleCargado,
     TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
@@ -52,6 +66,12 @@ mixin _$ConductorState {
     TResult Function()? personaDetalleCargando,
     TResult Function(PersonaModel persona)? personaDetalleCargado,
     TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -67,6 +87,15 @@ mixin _$ConductorState {
     required TResult Function(_PersonaDetalleCargado value)
     personaDetalleCargado,
     required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
@@ -79,6 +108,13 @@ mixin _$ConductorState {
     TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
@@ -91,6 +127,13 @@ mixin _$ConductorState {
     TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
 }
@@ -169,6 +212,14 @@ class _$InitialImpl implements _Initial {
     required TResult Function() personaDetalleCargando,
     required TResult Function(PersonaModel persona) personaDetalleCargado,
     required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
   }) {
     return initial();
   }
@@ -185,6 +236,12 @@ class _$InitialImpl implements _Initial {
     TResult? Function()? personaDetalleCargando,
     TResult? Function(PersonaModel persona)? personaDetalleCargado,
     TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
   }) {
     return initial?.call();
   }
@@ -201,6 +258,12 @@ class _$InitialImpl implements _Initial {
     TResult Function()? personaDetalleCargando,
     TResult Function(PersonaModel persona)? personaDetalleCargado,
     TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (initial != null) {
@@ -223,6 +286,15 @@ class _$InitialImpl implements _Initial {
     required TResult Function(_PersonaDetalleCargado value)
     personaDetalleCargado,
     required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
   }) {
     return initial(this);
   }
@@ -239,6 +311,13 @@ class _$InitialImpl implements _Initial {
     TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
   }) {
     return initial?.call(this);
   }
@@ -255,6 +334,13 @@ class _$InitialImpl implements _Initial {
     TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (initial != null) {
@@ -320,6 +406,14 @@ class _$LoadingImpl implements _Loading {
     required TResult Function() personaDetalleCargando,
     required TResult Function(PersonaModel persona) personaDetalleCargado,
     required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
   }) {
     return loading();
   }
@@ -336,6 +430,12 @@ class _$LoadingImpl implements _Loading {
     TResult? Function()? personaDetalleCargando,
     TResult? Function(PersonaModel persona)? personaDetalleCargado,
     TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
   }) {
     return loading?.call();
   }
@@ -352,6 +452,12 @@ class _$LoadingImpl implements _Loading {
     TResult Function()? personaDetalleCargando,
     TResult Function(PersonaModel persona)? personaDetalleCargado,
     TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (loading != null) {
@@ -374,6 +480,15 @@ class _$LoadingImpl implements _Loading {
     required TResult Function(_PersonaDetalleCargado value)
     personaDetalleCargado,
     required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
   }) {
     return loading(this);
   }
@@ -390,6 +505,13 @@ class _$LoadingImpl implements _Loading {
     TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
   }) {
     return loading?.call(this);
   }
@@ -406,6 +528,13 @@ class _$LoadingImpl implements _Loading {
     TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (loading != null) {
@@ -499,6 +628,14 @@ class _$SuccessImpl implements _Success {
     required TResult Function() personaDetalleCargando,
     required TResult Function(PersonaModel persona) personaDetalleCargado,
     required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
   }) {
     return success(response);
   }
@@ -515,6 +652,12 @@ class _$SuccessImpl implements _Success {
     TResult? Function()? personaDetalleCargando,
     TResult? Function(PersonaModel persona)? personaDetalleCargado,
     TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
   }) {
     return success?.call(response);
   }
@@ -531,6 +674,12 @@ class _$SuccessImpl implements _Success {
     TResult Function()? personaDetalleCargando,
     TResult Function(PersonaModel persona)? personaDetalleCargado,
     TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (success != null) {
@@ -553,6 +702,15 @@ class _$SuccessImpl implements _Success {
     required TResult Function(_PersonaDetalleCargado value)
     personaDetalleCargado,
     required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
   }) {
     return success(this);
   }
@@ -569,6 +727,13 @@ class _$SuccessImpl implements _Success {
     TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
   }) {
     return success?.call(this);
   }
@@ -585,6 +750,13 @@ class _$SuccessImpl implements _Success {
     TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (success != null) {
@@ -686,6 +858,14 @@ class _$ErrorImpl implements _Error {
     required TResult Function() personaDetalleCargando,
     required TResult Function(PersonaModel persona) personaDetalleCargado,
     required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
   }) {
     return error(message);
   }
@@ -702,6 +882,12 @@ class _$ErrorImpl implements _Error {
     TResult? Function()? personaDetalleCargando,
     TResult? Function(PersonaModel persona)? personaDetalleCargado,
     TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
   }) {
     return error?.call(message);
   }
@@ -718,6 +904,12 @@ class _$ErrorImpl implements _Error {
     TResult Function()? personaDetalleCargando,
     TResult Function(PersonaModel persona)? personaDetalleCargado,
     TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (error != null) {
@@ -740,6 +932,15 @@ class _$ErrorImpl implements _Error {
     required TResult Function(_PersonaDetalleCargado value)
     personaDetalleCargado,
     required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
   }) {
     return error(this);
   }
@@ -756,6 +957,13 @@ class _$ErrorImpl implements _Error {
     TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
   }) {
     return error?.call(this);
   }
@@ -772,6 +980,13 @@ class _$ErrorImpl implements _Error {
     TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (error != null) {
@@ -845,6 +1060,14 @@ class _$PersonasCargandoImpl implements _PersonasCargando {
     required TResult Function() personaDetalleCargando,
     required TResult Function(PersonaModel persona) personaDetalleCargado,
     required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
   }) {
     return personasCargando();
   }
@@ -861,6 +1084,12 @@ class _$PersonasCargandoImpl implements _PersonasCargando {
     TResult? Function()? personaDetalleCargando,
     TResult? Function(PersonaModel persona)? personaDetalleCargado,
     TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
   }) {
     return personasCargando?.call();
   }
@@ -877,6 +1106,12 @@ class _$PersonasCargandoImpl implements _PersonasCargando {
     TResult Function()? personaDetalleCargando,
     TResult Function(PersonaModel persona)? personaDetalleCargado,
     TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (personasCargando != null) {
@@ -899,6 +1134,15 @@ class _$PersonasCargandoImpl implements _PersonasCargando {
     required TResult Function(_PersonaDetalleCargado value)
     personaDetalleCargado,
     required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
   }) {
     return personasCargando(this);
   }
@@ -915,6 +1159,13 @@ class _$PersonasCargandoImpl implements _PersonasCargando {
     TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
   }) {
     return personasCargando?.call(this);
   }
@@ -931,6 +1182,13 @@ class _$PersonasCargandoImpl implements _PersonasCargando {
     TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (personasCargando != null) {
@@ -1033,6 +1291,14 @@ class _$PersonasCargadasImpl implements _PersonasCargadas {
     required TResult Function() personaDetalleCargando,
     required TResult Function(PersonaModel persona) personaDetalleCargado,
     required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
   }) {
     return personasCargadas(personas);
   }
@@ -1049,6 +1315,12 @@ class _$PersonasCargadasImpl implements _PersonasCargadas {
     TResult? Function()? personaDetalleCargando,
     TResult? Function(PersonaModel persona)? personaDetalleCargado,
     TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
   }) {
     return personasCargadas?.call(personas);
   }
@@ -1065,6 +1337,12 @@ class _$PersonasCargadasImpl implements _PersonasCargadas {
     TResult Function()? personaDetalleCargando,
     TResult Function(PersonaModel persona)? personaDetalleCargado,
     TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (personasCargadas != null) {
@@ -1087,6 +1365,15 @@ class _$PersonasCargadasImpl implements _PersonasCargadas {
     required TResult Function(_PersonaDetalleCargado value)
     personaDetalleCargado,
     required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
   }) {
     return personasCargadas(this);
   }
@@ -1103,6 +1390,13 @@ class _$PersonasCargadasImpl implements _PersonasCargadas {
     TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
   }) {
     return personasCargadas?.call(this);
   }
@@ -1119,6 +1413,13 @@ class _$PersonasCargadasImpl implements _PersonasCargadas {
     TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (personasCargadas != null) {
@@ -1195,6 +1496,14 @@ class _$PersonaDetalleCargandoImpl implements _PersonaDetalleCargando {
     required TResult Function() personaDetalleCargando,
     required TResult Function(PersonaModel persona) personaDetalleCargado,
     required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
   }) {
     return personaDetalleCargando();
   }
@@ -1211,6 +1520,12 @@ class _$PersonaDetalleCargandoImpl implements _PersonaDetalleCargando {
     TResult? Function()? personaDetalleCargando,
     TResult? Function(PersonaModel persona)? personaDetalleCargado,
     TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
   }) {
     return personaDetalleCargando?.call();
   }
@@ -1227,6 +1542,12 @@ class _$PersonaDetalleCargandoImpl implements _PersonaDetalleCargando {
     TResult Function()? personaDetalleCargando,
     TResult Function(PersonaModel persona)? personaDetalleCargado,
     TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (personaDetalleCargando != null) {
@@ -1249,6 +1570,15 @@ class _$PersonaDetalleCargandoImpl implements _PersonaDetalleCargando {
     required TResult Function(_PersonaDetalleCargado value)
     personaDetalleCargado,
     required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
   }) {
     return personaDetalleCargando(this);
   }
@@ -1265,6 +1595,13 @@ class _$PersonaDetalleCargandoImpl implements _PersonaDetalleCargando {
     TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
   }) {
     return personaDetalleCargando?.call(this);
   }
@@ -1281,6 +1618,13 @@ class _$PersonaDetalleCargandoImpl implements _PersonaDetalleCargando {
     TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (personaDetalleCargando != null) {
@@ -1377,6 +1721,14 @@ class _$PersonaDetalleCargadoImpl implements _PersonaDetalleCargado {
     required TResult Function() personaDetalleCargando,
     required TResult Function(PersonaModel persona) personaDetalleCargado,
     required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
   }) {
     return personaDetalleCargado(persona);
   }
@@ -1393,6 +1745,12 @@ class _$PersonaDetalleCargadoImpl implements _PersonaDetalleCargado {
     TResult? Function()? personaDetalleCargando,
     TResult? Function(PersonaModel persona)? personaDetalleCargado,
     TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
   }) {
     return personaDetalleCargado?.call(persona);
   }
@@ -1409,6 +1767,12 @@ class _$PersonaDetalleCargadoImpl implements _PersonaDetalleCargado {
     TResult Function()? personaDetalleCargando,
     TResult Function(PersonaModel persona)? personaDetalleCargado,
     TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (personaDetalleCargado != null) {
@@ -1431,6 +1795,15 @@ class _$PersonaDetalleCargadoImpl implements _PersonaDetalleCargado {
     required TResult Function(_PersonaDetalleCargado value)
     personaDetalleCargado,
     required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
   }) {
     return personaDetalleCargado(this);
   }
@@ -1447,6 +1820,13 @@ class _$PersonaDetalleCargadoImpl implements _PersonaDetalleCargado {
     TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
   }) {
     return personaDetalleCargado?.call(this);
   }
@@ -1463,6 +1843,13 @@ class _$PersonaDetalleCargadoImpl implements _PersonaDetalleCargado {
     TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (personaDetalleCargado != null) {
@@ -1567,6 +1954,14 @@ class _$PersonaDetalleErrorImpl implements _PersonaDetalleError {
     required TResult Function() personaDetalleCargando,
     required TResult Function(PersonaModel persona) personaDetalleCargado,
     required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
   }) {
     return personaDetalleError(message);
   }
@@ -1583,6 +1978,12 @@ class _$PersonaDetalleErrorImpl implements _PersonaDetalleError {
     TResult? Function()? personaDetalleCargando,
     TResult? Function(PersonaModel persona)? personaDetalleCargado,
     TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
   }) {
     return personaDetalleError?.call(message);
   }
@@ -1599,6 +2000,12 @@ class _$PersonaDetalleErrorImpl implements _PersonaDetalleError {
     TResult Function()? personaDetalleCargando,
     TResult Function(PersonaModel persona)? personaDetalleCargado,
     TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (personaDetalleError != null) {
@@ -1621,6 +2028,15 @@ class _$PersonaDetalleErrorImpl implements _PersonaDetalleError {
     required TResult Function(_PersonaDetalleCargado value)
     personaDetalleCargado,
     required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
   }) {
     return personaDetalleError(this);
   }
@@ -1637,6 +2053,13 @@ class _$PersonaDetalleErrorImpl implements _PersonaDetalleError {
     TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
   }) {
     return personaDetalleError?.call(this);
   }
@@ -1653,6 +2076,13 @@ class _$PersonaDetalleErrorImpl implements _PersonaDetalleError {
     TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
     TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
     TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
     required TResult orElse(),
   }) {
     if (personaDetalleError != null) {
@@ -1672,5 +2102,1339 @@ abstract class _PersonaDetalleError implements ConductorState {
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$PersonaDetalleErrorImplCopyWith<_$PersonaDetalleErrorImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$PersonaActualizandoImplCopyWith<$Res> {
+  factory _$$PersonaActualizandoImplCopyWith(
+    _$PersonaActualizandoImpl value,
+    $Res Function(_$PersonaActualizandoImpl) then,
+  ) = __$$PersonaActualizandoImplCopyWithImpl<$Res>;
+}
+
+/// @nodoc
+class __$$PersonaActualizandoImplCopyWithImpl<$Res>
+    extends _$ConductorStateCopyWithImpl<$Res, _$PersonaActualizandoImpl>
+    implements _$$PersonaActualizandoImplCopyWith<$Res> {
+  __$$PersonaActualizandoImplCopyWithImpl(
+    _$PersonaActualizandoImpl _value,
+    $Res Function(_$PersonaActualizandoImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of ConductorState
+  /// with the given fields replaced by the non-null parameter values.
+}
+
+/// @nodoc
+
+class _$PersonaActualizandoImpl implements _PersonaActualizando {
+  const _$PersonaActualizandoImpl();
+
+  @override
+  String toString() {
+    return 'ConductorState.personaActualizando()';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$PersonaActualizandoImpl);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() initial,
+    required TResult Function() loading,
+    required TResult Function(ConductorRegistroResponse response) success,
+    required TResult Function(String message) error,
+    required TResult Function() personasCargando,
+    required TResult Function(List<PersonaModel> personas) personasCargadas,
+    required TResult Function() personaDetalleCargando,
+    required TResult Function(PersonaModel persona) personaDetalleCargado,
+    required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
+  }) {
+    return personaActualizando();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? initial,
+    TResult? Function()? loading,
+    TResult? Function(ConductorRegistroResponse response)? success,
+    TResult? Function(String message)? error,
+    TResult? Function()? personasCargando,
+    TResult? Function(List<PersonaModel> personas)? personasCargadas,
+    TResult? Function()? personaDetalleCargando,
+    TResult? Function(PersonaModel persona)? personaDetalleCargado,
+    TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
+  }) {
+    return personaActualizando?.call();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? initial,
+    TResult Function()? loading,
+    TResult Function(ConductorRegistroResponse response)? success,
+    TResult Function(String message)? error,
+    TResult Function()? personasCargando,
+    TResult Function(List<PersonaModel> personas)? personasCargadas,
+    TResult Function()? personaDetalleCargando,
+    TResult Function(PersonaModel persona)? personaDetalleCargado,
+    TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
+    required TResult orElse(),
+  }) {
+    if (personaActualizando != null) {
+      return personaActualizando();
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_Initial value) initial,
+    required TResult Function(_Loading value) loading,
+    required TResult Function(_Success value) success,
+    required TResult Function(_Error value) error,
+    required TResult Function(_PersonasCargando value) personasCargando,
+    required TResult Function(_PersonasCargadas value) personasCargadas,
+    required TResult Function(_PersonaDetalleCargando value)
+    personaDetalleCargando,
+    required TResult Function(_PersonaDetalleCargado value)
+    personaDetalleCargado,
+    required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
+  }) {
+    return personaActualizando(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_Initial value)? initial,
+    TResult? Function(_Loading value)? loading,
+    TResult? Function(_Success value)? success,
+    TResult? Function(_Error value)? error,
+    TResult? Function(_PersonasCargando value)? personasCargando,
+    TResult? Function(_PersonasCargadas value)? personasCargadas,
+    TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
+    TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
+    TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
+  }) {
+    return personaActualizando?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_Initial value)? initial,
+    TResult Function(_Loading value)? loading,
+    TResult Function(_Success value)? success,
+    TResult Function(_Error value)? error,
+    TResult Function(_PersonasCargando value)? personasCargando,
+    TResult Function(_PersonasCargadas value)? personasCargadas,
+    TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
+    TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
+    TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
+    required TResult orElse(),
+  }) {
+    if (personaActualizando != null) {
+      return personaActualizando(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _PersonaActualizando implements ConductorState {
+  const factory _PersonaActualizando() = _$PersonaActualizandoImpl;
+}
+
+/// @nodoc
+abstract class _$$PersonaActualizadaImplCopyWith<$Res> {
+  factory _$$PersonaActualizadaImplCopyWith(
+    _$PersonaActualizadaImpl value,
+    $Res Function(_$PersonaActualizadaImpl) then,
+  ) = __$$PersonaActualizadaImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({PersonaActualizarResponse response});
+}
+
+/// @nodoc
+class __$$PersonaActualizadaImplCopyWithImpl<$Res>
+    extends _$ConductorStateCopyWithImpl<$Res, _$PersonaActualizadaImpl>
+    implements _$$PersonaActualizadaImplCopyWith<$Res> {
+  __$$PersonaActualizadaImplCopyWithImpl(
+    _$PersonaActualizadaImpl _value,
+    $Res Function(_$PersonaActualizadaImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of ConductorState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? response = null}) {
+    return _then(
+      _$PersonaActualizadaImpl(
+        response: null == response
+            ? _value.response
+            : response // ignore: cast_nullable_to_non_nullable
+                  as PersonaActualizarResponse,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$PersonaActualizadaImpl implements _PersonaActualizada {
+  const _$PersonaActualizadaImpl({required this.response});
+
+  @override
+  final PersonaActualizarResponse response;
+
+  @override
+  String toString() {
+    return 'ConductorState.personaActualizada(response: $response)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$PersonaActualizadaImpl &&
+            (identical(other.response, response) ||
+                other.response == response));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, response);
+
+  /// Create a copy of ConductorState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$PersonaActualizadaImplCopyWith<_$PersonaActualizadaImpl> get copyWith =>
+      __$$PersonaActualizadaImplCopyWithImpl<_$PersonaActualizadaImpl>(
+        this,
+        _$identity,
+      );
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() initial,
+    required TResult Function() loading,
+    required TResult Function(ConductorRegistroResponse response) success,
+    required TResult Function(String message) error,
+    required TResult Function() personasCargando,
+    required TResult Function(List<PersonaModel> personas) personasCargadas,
+    required TResult Function() personaDetalleCargando,
+    required TResult Function(PersonaModel persona) personaDetalleCargado,
+    required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
+  }) {
+    return personaActualizada(response);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? initial,
+    TResult? Function()? loading,
+    TResult? Function(ConductorRegistroResponse response)? success,
+    TResult? Function(String message)? error,
+    TResult? Function()? personasCargando,
+    TResult? Function(List<PersonaModel> personas)? personasCargadas,
+    TResult? Function()? personaDetalleCargando,
+    TResult? Function(PersonaModel persona)? personaDetalleCargado,
+    TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
+  }) {
+    return personaActualizada?.call(response);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? initial,
+    TResult Function()? loading,
+    TResult Function(ConductorRegistroResponse response)? success,
+    TResult Function(String message)? error,
+    TResult Function()? personasCargando,
+    TResult Function(List<PersonaModel> personas)? personasCargadas,
+    TResult Function()? personaDetalleCargando,
+    TResult Function(PersonaModel persona)? personaDetalleCargado,
+    TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
+    required TResult orElse(),
+  }) {
+    if (personaActualizada != null) {
+      return personaActualizada(response);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_Initial value) initial,
+    required TResult Function(_Loading value) loading,
+    required TResult Function(_Success value) success,
+    required TResult Function(_Error value) error,
+    required TResult Function(_PersonasCargando value) personasCargando,
+    required TResult Function(_PersonasCargadas value) personasCargadas,
+    required TResult Function(_PersonaDetalleCargando value)
+    personaDetalleCargando,
+    required TResult Function(_PersonaDetalleCargado value)
+    personaDetalleCargado,
+    required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
+  }) {
+    return personaActualizada(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_Initial value)? initial,
+    TResult? Function(_Loading value)? loading,
+    TResult? Function(_Success value)? success,
+    TResult? Function(_Error value)? error,
+    TResult? Function(_PersonasCargando value)? personasCargando,
+    TResult? Function(_PersonasCargadas value)? personasCargadas,
+    TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
+    TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
+    TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
+  }) {
+    return personaActualizada?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_Initial value)? initial,
+    TResult Function(_Loading value)? loading,
+    TResult Function(_Success value)? success,
+    TResult Function(_Error value)? error,
+    TResult Function(_PersonasCargando value)? personasCargando,
+    TResult Function(_PersonasCargadas value)? personasCargadas,
+    TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
+    TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
+    TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
+    required TResult orElse(),
+  }) {
+    if (personaActualizada != null) {
+      return personaActualizada(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _PersonaActualizada implements ConductorState {
+  const factory _PersonaActualizada({
+    required final PersonaActualizarResponse response,
+  }) = _$PersonaActualizadaImpl;
+
+  PersonaActualizarResponse get response;
+
+  /// Create a copy of ConductorState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$PersonaActualizadaImplCopyWith<_$PersonaActualizadaImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$PersonaActualizacionErrorImplCopyWith<$Res> {
+  factory _$$PersonaActualizacionErrorImplCopyWith(
+    _$PersonaActualizacionErrorImpl value,
+    $Res Function(_$PersonaActualizacionErrorImpl) then,
+  ) = __$$PersonaActualizacionErrorImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({String message});
+}
+
+/// @nodoc
+class __$$PersonaActualizacionErrorImplCopyWithImpl<$Res>
+    extends _$ConductorStateCopyWithImpl<$Res, _$PersonaActualizacionErrorImpl>
+    implements _$$PersonaActualizacionErrorImplCopyWith<$Res> {
+  __$$PersonaActualizacionErrorImplCopyWithImpl(
+    _$PersonaActualizacionErrorImpl _value,
+    $Res Function(_$PersonaActualizacionErrorImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of ConductorState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? message = null}) {
+    return _then(
+      _$PersonaActualizacionErrorImpl(
+        message: null == message
+            ? _value.message
+            : message // ignore: cast_nullable_to_non_nullable
+                  as String,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$PersonaActualizacionErrorImpl implements _PersonaActualizacionError {
+  const _$PersonaActualizacionErrorImpl({required this.message});
+
+  @override
+  final String message;
+
+  @override
+  String toString() {
+    return 'ConductorState.personaActualizacionError(message: $message)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$PersonaActualizacionErrorImpl &&
+            (identical(other.message, message) || other.message == message));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, message);
+
+  /// Create a copy of ConductorState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$PersonaActualizacionErrorImplCopyWith<_$PersonaActualizacionErrorImpl>
+  get copyWith =>
+      __$$PersonaActualizacionErrorImplCopyWithImpl<
+        _$PersonaActualizacionErrorImpl
+      >(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() initial,
+    required TResult Function() loading,
+    required TResult Function(ConductorRegistroResponse response) success,
+    required TResult Function(String message) error,
+    required TResult Function() personasCargando,
+    required TResult Function(List<PersonaModel> personas) personasCargadas,
+    required TResult Function() personaDetalleCargando,
+    required TResult Function(PersonaModel persona) personaDetalleCargado,
+    required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
+  }) {
+    return personaActualizacionError(message);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? initial,
+    TResult? Function()? loading,
+    TResult? Function(ConductorRegistroResponse response)? success,
+    TResult? Function(String message)? error,
+    TResult? Function()? personasCargando,
+    TResult? Function(List<PersonaModel> personas)? personasCargadas,
+    TResult? Function()? personaDetalleCargando,
+    TResult? Function(PersonaModel persona)? personaDetalleCargado,
+    TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
+  }) {
+    return personaActualizacionError?.call(message);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? initial,
+    TResult Function()? loading,
+    TResult Function(ConductorRegistroResponse response)? success,
+    TResult Function(String message)? error,
+    TResult Function()? personasCargando,
+    TResult Function(List<PersonaModel> personas)? personasCargadas,
+    TResult Function()? personaDetalleCargando,
+    TResult Function(PersonaModel persona)? personaDetalleCargado,
+    TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
+    required TResult orElse(),
+  }) {
+    if (personaActualizacionError != null) {
+      return personaActualizacionError(message);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_Initial value) initial,
+    required TResult Function(_Loading value) loading,
+    required TResult Function(_Success value) success,
+    required TResult Function(_Error value) error,
+    required TResult Function(_PersonasCargando value) personasCargando,
+    required TResult Function(_PersonasCargadas value) personasCargadas,
+    required TResult Function(_PersonaDetalleCargando value)
+    personaDetalleCargando,
+    required TResult Function(_PersonaDetalleCargado value)
+    personaDetalleCargado,
+    required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
+  }) {
+    return personaActualizacionError(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_Initial value)? initial,
+    TResult? Function(_Loading value)? loading,
+    TResult? Function(_Success value)? success,
+    TResult? Function(_Error value)? error,
+    TResult? Function(_PersonasCargando value)? personasCargando,
+    TResult? Function(_PersonasCargadas value)? personasCargadas,
+    TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
+    TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
+    TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
+  }) {
+    return personaActualizacionError?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_Initial value)? initial,
+    TResult Function(_Loading value)? loading,
+    TResult Function(_Success value)? success,
+    TResult Function(_Error value)? error,
+    TResult Function(_PersonasCargando value)? personasCargando,
+    TResult Function(_PersonasCargadas value)? personasCargadas,
+    TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
+    TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
+    TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
+    required TResult orElse(),
+  }) {
+    if (personaActualizacionError != null) {
+      return personaActualizacionError(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _PersonaActualizacionError implements ConductorState {
+  const factory _PersonaActualizacionError({required final String message}) =
+      _$PersonaActualizacionErrorImpl;
+
+  String get message;
+
+  /// Create a copy of ConductorState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$PersonaActualizacionErrorImplCopyWith<_$PersonaActualizacionErrorImpl>
+  get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$TiposTelefonoCargandoImplCopyWith<$Res> {
+  factory _$$TiposTelefonoCargandoImplCopyWith(
+    _$TiposTelefonoCargandoImpl value,
+    $Res Function(_$TiposTelefonoCargandoImpl) then,
+  ) = __$$TiposTelefonoCargandoImplCopyWithImpl<$Res>;
+}
+
+/// @nodoc
+class __$$TiposTelefonoCargandoImplCopyWithImpl<$Res>
+    extends _$ConductorStateCopyWithImpl<$Res, _$TiposTelefonoCargandoImpl>
+    implements _$$TiposTelefonoCargandoImplCopyWith<$Res> {
+  __$$TiposTelefonoCargandoImplCopyWithImpl(
+    _$TiposTelefonoCargandoImpl _value,
+    $Res Function(_$TiposTelefonoCargandoImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of ConductorState
+  /// with the given fields replaced by the non-null parameter values.
+}
+
+/// @nodoc
+
+class _$TiposTelefonoCargandoImpl implements _TiposTelefonoCargando {
+  const _$TiposTelefonoCargandoImpl();
+
+  @override
+  String toString() {
+    return 'ConductorState.tiposTelefonoCargando()';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$TiposTelefonoCargandoImpl);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() initial,
+    required TResult Function() loading,
+    required TResult Function(ConductorRegistroResponse response) success,
+    required TResult Function(String message) error,
+    required TResult Function() personasCargando,
+    required TResult Function(List<PersonaModel> personas) personasCargadas,
+    required TResult Function() personaDetalleCargando,
+    required TResult Function(PersonaModel persona) personaDetalleCargado,
+    required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
+  }) {
+    return tiposTelefonoCargando();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? initial,
+    TResult? Function()? loading,
+    TResult? Function(ConductorRegistroResponse response)? success,
+    TResult? Function(String message)? error,
+    TResult? Function()? personasCargando,
+    TResult? Function(List<PersonaModel> personas)? personasCargadas,
+    TResult? Function()? personaDetalleCargando,
+    TResult? Function(PersonaModel persona)? personaDetalleCargado,
+    TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
+  }) {
+    return tiposTelefonoCargando?.call();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? initial,
+    TResult Function()? loading,
+    TResult Function(ConductorRegistroResponse response)? success,
+    TResult Function(String message)? error,
+    TResult Function()? personasCargando,
+    TResult Function(List<PersonaModel> personas)? personasCargadas,
+    TResult Function()? personaDetalleCargando,
+    TResult Function(PersonaModel persona)? personaDetalleCargado,
+    TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
+    required TResult orElse(),
+  }) {
+    if (tiposTelefonoCargando != null) {
+      return tiposTelefonoCargando();
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_Initial value) initial,
+    required TResult Function(_Loading value) loading,
+    required TResult Function(_Success value) success,
+    required TResult Function(_Error value) error,
+    required TResult Function(_PersonasCargando value) personasCargando,
+    required TResult Function(_PersonasCargadas value) personasCargadas,
+    required TResult Function(_PersonaDetalleCargando value)
+    personaDetalleCargando,
+    required TResult Function(_PersonaDetalleCargado value)
+    personaDetalleCargado,
+    required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
+  }) {
+    return tiposTelefonoCargando(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_Initial value)? initial,
+    TResult? Function(_Loading value)? loading,
+    TResult? Function(_Success value)? success,
+    TResult? Function(_Error value)? error,
+    TResult? Function(_PersonasCargando value)? personasCargando,
+    TResult? Function(_PersonasCargadas value)? personasCargadas,
+    TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
+    TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
+    TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
+  }) {
+    return tiposTelefonoCargando?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_Initial value)? initial,
+    TResult Function(_Loading value)? loading,
+    TResult Function(_Success value)? success,
+    TResult Function(_Error value)? error,
+    TResult Function(_PersonasCargando value)? personasCargando,
+    TResult Function(_PersonasCargadas value)? personasCargadas,
+    TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
+    TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
+    TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
+    required TResult orElse(),
+  }) {
+    if (tiposTelefonoCargando != null) {
+      return tiposTelefonoCargando(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _TiposTelefonoCargando implements ConductorState {
+  const factory _TiposTelefonoCargando() = _$TiposTelefonoCargandoImpl;
+}
+
+/// @nodoc
+abstract class _$$TiposTelefonoCargadosImplCopyWith<$Res> {
+  factory _$$TiposTelefonoCargadosImplCopyWith(
+    _$TiposTelefonoCargadosImpl value,
+    $Res Function(_$TiposTelefonoCargadosImpl) then,
+  ) = __$$TiposTelefonoCargadosImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({List<TipoTelefonoModel> tipos});
+}
+
+/// @nodoc
+class __$$TiposTelefonoCargadosImplCopyWithImpl<$Res>
+    extends _$ConductorStateCopyWithImpl<$Res, _$TiposTelefonoCargadosImpl>
+    implements _$$TiposTelefonoCargadosImplCopyWith<$Res> {
+  __$$TiposTelefonoCargadosImplCopyWithImpl(
+    _$TiposTelefonoCargadosImpl _value,
+    $Res Function(_$TiposTelefonoCargadosImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of ConductorState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? tipos = null}) {
+    return _then(
+      _$TiposTelefonoCargadosImpl(
+        tipos: null == tipos
+            ? _value._tipos
+            : tipos // ignore: cast_nullable_to_non_nullable
+                  as List<TipoTelefonoModel>,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$TiposTelefonoCargadosImpl implements _TiposTelefonoCargados {
+  const _$TiposTelefonoCargadosImpl({
+    required final List<TipoTelefonoModel> tipos,
+  }) : _tipos = tipos;
+
+  final List<TipoTelefonoModel> _tipos;
+  @override
+  List<TipoTelefonoModel> get tipos {
+    if (_tipos is EqualUnmodifiableListView) return _tipos;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_tipos);
+  }
+
+  @override
+  String toString() {
+    return 'ConductorState.tiposTelefonoCargados(tipos: $tipos)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$TiposTelefonoCargadosImpl &&
+            const DeepCollectionEquality().equals(other._tipos, _tipos));
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(_tipos));
+
+  /// Create a copy of ConductorState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$TiposTelefonoCargadosImplCopyWith<_$TiposTelefonoCargadosImpl>
+  get copyWith =>
+      __$$TiposTelefonoCargadosImplCopyWithImpl<_$TiposTelefonoCargadosImpl>(
+        this,
+        _$identity,
+      );
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() initial,
+    required TResult Function() loading,
+    required TResult Function(ConductorRegistroResponse response) success,
+    required TResult Function(String message) error,
+    required TResult Function() personasCargando,
+    required TResult Function(List<PersonaModel> personas) personasCargadas,
+    required TResult Function() personaDetalleCargando,
+    required TResult Function(PersonaModel persona) personaDetalleCargado,
+    required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
+  }) {
+    return tiposTelefonoCargados(tipos);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? initial,
+    TResult? Function()? loading,
+    TResult? Function(ConductorRegistroResponse response)? success,
+    TResult? Function(String message)? error,
+    TResult? Function()? personasCargando,
+    TResult? Function(List<PersonaModel> personas)? personasCargadas,
+    TResult? Function()? personaDetalleCargando,
+    TResult? Function(PersonaModel persona)? personaDetalleCargado,
+    TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
+  }) {
+    return tiposTelefonoCargados?.call(tipos);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? initial,
+    TResult Function()? loading,
+    TResult Function(ConductorRegistroResponse response)? success,
+    TResult Function(String message)? error,
+    TResult Function()? personasCargando,
+    TResult Function(List<PersonaModel> personas)? personasCargadas,
+    TResult Function()? personaDetalleCargando,
+    TResult Function(PersonaModel persona)? personaDetalleCargado,
+    TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
+    required TResult orElse(),
+  }) {
+    if (tiposTelefonoCargados != null) {
+      return tiposTelefonoCargados(tipos);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_Initial value) initial,
+    required TResult Function(_Loading value) loading,
+    required TResult Function(_Success value) success,
+    required TResult Function(_Error value) error,
+    required TResult Function(_PersonasCargando value) personasCargando,
+    required TResult Function(_PersonasCargadas value) personasCargadas,
+    required TResult Function(_PersonaDetalleCargando value)
+    personaDetalleCargando,
+    required TResult Function(_PersonaDetalleCargado value)
+    personaDetalleCargado,
+    required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
+  }) {
+    return tiposTelefonoCargados(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_Initial value)? initial,
+    TResult? Function(_Loading value)? loading,
+    TResult? Function(_Success value)? success,
+    TResult? Function(_Error value)? error,
+    TResult? Function(_PersonasCargando value)? personasCargando,
+    TResult? Function(_PersonasCargadas value)? personasCargadas,
+    TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
+    TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
+    TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
+  }) {
+    return tiposTelefonoCargados?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_Initial value)? initial,
+    TResult Function(_Loading value)? loading,
+    TResult Function(_Success value)? success,
+    TResult Function(_Error value)? error,
+    TResult Function(_PersonasCargando value)? personasCargando,
+    TResult Function(_PersonasCargadas value)? personasCargadas,
+    TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
+    TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
+    TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
+    required TResult orElse(),
+  }) {
+    if (tiposTelefonoCargados != null) {
+      return tiposTelefonoCargados(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _TiposTelefonoCargados implements ConductorState {
+  const factory _TiposTelefonoCargados({
+    required final List<TipoTelefonoModel> tipos,
+  }) = _$TiposTelefonoCargadosImpl;
+
+  List<TipoTelefonoModel> get tipos;
+
+  /// Create a copy of ConductorState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$TiposTelefonoCargadosImplCopyWith<_$TiposTelefonoCargadosImpl>
+  get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$TiposTelefonoErrorImplCopyWith<$Res> {
+  factory _$$TiposTelefonoErrorImplCopyWith(
+    _$TiposTelefonoErrorImpl value,
+    $Res Function(_$TiposTelefonoErrorImpl) then,
+  ) = __$$TiposTelefonoErrorImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({String message});
+}
+
+/// @nodoc
+class __$$TiposTelefonoErrorImplCopyWithImpl<$Res>
+    extends _$ConductorStateCopyWithImpl<$Res, _$TiposTelefonoErrorImpl>
+    implements _$$TiposTelefonoErrorImplCopyWith<$Res> {
+  __$$TiposTelefonoErrorImplCopyWithImpl(
+    _$TiposTelefonoErrorImpl _value,
+    $Res Function(_$TiposTelefonoErrorImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of ConductorState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? message = null}) {
+    return _then(
+      _$TiposTelefonoErrorImpl(
+        message: null == message
+            ? _value.message
+            : message // ignore: cast_nullable_to_non_nullable
+                  as String,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$TiposTelefonoErrorImpl implements _TiposTelefonoError {
+  const _$TiposTelefonoErrorImpl({required this.message});
+
+  @override
+  final String message;
+
+  @override
+  String toString() {
+    return 'ConductorState.tiposTelefonoError(message: $message)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$TiposTelefonoErrorImpl &&
+            (identical(other.message, message) || other.message == message));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, message);
+
+  /// Create a copy of ConductorState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$TiposTelefonoErrorImplCopyWith<_$TiposTelefonoErrorImpl> get copyWith =>
+      __$$TiposTelefonoErrorImplCopyWithImpl<_$TiposTelefonoErrorImpl>(
+        this,
+        _$identity,
+      );
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() initial,
+    required TResult Function() loading,
+    required TResult Function(ConductorRegistroResponse response) success,
+    required TResult Function(String message) error,
+    required TResult Function() personasCargando,
+    required TResult Function(List<PersonaModel> personas) personasCargadas,
+    required TResult Function() personaDetalleCargando,
+    required TResult Function(PersonaModel persona) personaDetalleCargado,
+    required TResult Function(String message) personaDetalleError,
+    required TResult Function() personaActualizando,
+    required TResult Function(PersonaActualizarResponse response)
+    personaActualizada,
+    required TResult Function(String message) personaActualizacionError,
+    required TResult Function() tiposTelefonoCargando,
+    required TResult Function(List<TipoTelefonoModel> tipos)
+    tiposTelefonoCargados,
+    required TResult Function(String message) tiposTelefonoError,
+  }) {
+    return tiposTelefonoError(message);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? initial,
+    TResult? Function()? loading,
+    TResult? Function(ConductorRegistroResponse response)? success,
+    TResult? Function(String message)? error,
+    TResult? Function()? personasCargando,
+    TResult? Function(List<PersonaModel> personas)? personasCargadas,
+    TResult? Function()? personaDetalleCargando,
+    TResult? Function(PersonaModel persona)? personaDetalleCargado,
+    TResult? Function(String message)? personaDetalleError,
+    TResult? Function()? personaActualizando,
+    TResult? Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult? Function(String message)? personaActualizacionError,
+    TResult? Function()? tiposTelefonoCargando,
+    TResult? Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult? Function(String message)? tiposTelefonoError,
+  }) {
+    return tiposTelefonoError?.call(message);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? initial,
+    TResult Function()? loading,
+    TResult Function(ConductorRegistroResponse response)? success,
+    TResult Function(String message)? error,
+    TResult Function()? personasCargando,
+    TResult Function(List<PersonaModel> personas)? personasCargadas,
+    TResult Function()? personaDetalleCargando,
+    TResult Function(PersonaModel persona)? personaDetalleCargado,
+    TResult Function(String message)? personaDetalleError,
+    TResult Function()? personaActualizando,
+    TResult Function(PersonaActualizarResponse response)? personaActualizada,
+    TResult Function(String message)? personaActualizacionError,
+    TResult Function()? tiposTelefonoCargando,
+    TResult Function(List<TipoTelefonoModel> tipos)? tiposTelefonoCargados,
+    TResult Function(String message)? tiposTelefonoError,
+    required TResult orElse(),
+  }) {
+    if (tiposTelefonoError != null) {
+      return tiposTelefonoError(message);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_Initial value) initial,
+    required TResult Function(_Loading value) loading,
+    required TResult Function(_Success value) success,
+    required TResult Function(_Error value) error,
+    required TResult Function(_PersonasCargando value) personasCargando,
+    required TResult Function(_PersonasCargadas value) personasCargadas,
+    required TResult Function(_PersonaDetalleCargando value)
+    personaDetalleCargando,
+    required TResult Function(_PersonaDetalleCargado value)
+    personaDetalleCargado,
+    required TResult Function(_PersonaDetalleError value) personaDetalleError,
+    required TResult Function(_PersonaActualizando value) personaActualizando,
+    required TResult Function(_PersonaActualizada value) personaActualizada,
+    required TResult Function(_PersonaActualizacionError value)
+    personaActualizacionError,
+    required TResult Function(_TiposTelefonoCargando value)
+    tiposTelefonoCargando,
+    required TResult Function(_TiposTelefonoCargados value)
+    tiposTelefonoCargados,
+    required TResult Function(_TiposTelefonoError value) tiposTelefonoError,
+  }) {
+    return tiposTelefonoError(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_Initial value)? initial,
+    TResult? Function(_Loading value)? loading,
+    TResult? Function(_Success value)? success,
+    TResult? Function(_Error value)? error,
+    TResult? Function(_PersonasCargando value)? personasCargando,
+    TResult? Function(_PersonasCargadas value)? personasCargadas,
+    TResult? Function(_PersonaDetalleCargando value)? personaDetalleCargando,
+    TResult? Function(_PersonaDetalleCargado value)? personaDetalleCargado,
+    TResult? Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult? Function(_PersonaActualizando value)? personaActualizando,
+    TResult? Function(_PersonaActualizada value)? personaActualizada,
+    TResult? Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult? Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult? Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult? Function(_TiposTelefonoError value)? tiposTelefonoError,
+  }) {
+    return tiposTelefonoError?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_Initial value)? initial,
+    TResult Function(_Loading value)? loading,
+    TResult Function(_Success value)? success,
+    TResult Function(_Error value)? error,
+    TResult Function(_PersonasCargando value)? personasCargando,
+    TResult Function(_PersonasCargadas value)? personasCargadas,
+    TResult Function(_PersonaDetalleCargando value)? personaDetalleCargando,
+    TResult Function(_PersonaDetalleCargado value)? personaDetalleCargado,
+    TResult Function(_PersonaDetalleError value)? personaDetalleError,
+    TResult Function(_PersonaActualizando value)? personaActualizando,
+    TResult Function(_PersonaActualizada value)? personaActualizada,
+    TResult Function(_PersonaActualizacionError value)?
+    personaActualizacionError,
+    TResult Function(_TiposTelefonoCargando value)? tiposTelefonoCargando,
+    TResult Function(_TiposTelefonoCargados value)? tiposTelefonoCargados,
+    TResult Function(_TiposTelefonoError value)? tiposTelefonoError,
+    required TResult orElse(),
+  }) {
+    if (tiposTelefonoError != null) {
+      return tiposTelefonoError(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _TiposTelefonoError implements ConductorState {
+  const factory _TiposTelefonoError({required final String message}) =
+      _$TiposTelefonoErrorImpl;
+
+  String get message;
+
+  /// Create a copy of ConductorState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$TiposTelefonoErrorImplCopyWith<_$TiposTelefonoErrorImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

@@ -1,20 +1,27 @@
 //Ruta: lib/features/conductor/data/models/persona_model.dart
 import 'package:flutter/foundation.dart';
-
+// En TelefonoModel, agrega el campo telId:
 @immutable
 class TelefonoModel {
+  final int? telId;  // ← AGREGAR ESTE CAMPO
   final String numero;
   final String uso;
+  final int? titId;
 
   const TelefonoModel({
+    this.telId,  // ← AGREGAR
     required this.numero,
     required this.uso,
+    this.titId,
   });
 
 factory TelefonoModel.fromJson(Map<String, dynamic> json) {
   return TelefonoModel(
+    telId: json['telId'] as int?,
     numero: json['numero']?.toString() ?? json['tel_vnumero']?.toString() ?? '',
-    uso: json['uso']?.toString() ?? json['tit_vuso']?.toString() ?? '',
+    uso: json['uso']?.toString() ?? json['tit_vuso']?.toString() ?? 'Personal', // 'uso' suele venir como Personal/Trabajo
+    // 🔥 CLAVE: El API manda 'tipoId', el modelo usa 'titId'
+    titId: json['tipoId'] as int? ?? json['titId'] as int? ?? json['tit_iid'] as int?,
   );
 }
 
@@ -162,6 +169,15 @@ factory PersonaModel.fromJson(Map<String, dynamic> json) {
   @override
   int get hashCode => personaId.hashCode;
 
+  get nombres => null;
+
+  get email => null;
+
   @override
   String toString() => 'Persona $personaId: $nombreCompleto ($dni)';
+
+
+
+  
 }
+

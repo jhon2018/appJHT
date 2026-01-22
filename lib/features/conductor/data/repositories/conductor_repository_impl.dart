@@ -7,7 +7,8 @@ import 'package:app_jht_front/features/conductor/data/models/conductor_registro_
 import 'package:app_jht_front/features/supplier/data/models/tipo_telefono_model.dart';
 import 'package:app_jht_front/features/conductor/data/models/persona_list_response.dart';
 import 'package:app_jht_front/features/conductor/data/models/persona_detalle_response.dart';
-
+import 'package:app_jht_front/features/conductor/data/models/persona_actualizar_dto.dart';
+import 'package:app_jht_front/features/conductor/data/models/persona_actualizar_response.dart';
 
 class ConductorRepositoryImpl implements ConductorRepository {
   final ConductorRemoteDataSource remoteDataSource;
@@ -24,7 +25,7 @@ class ConductorRepositoryImpl implements ConductorRepository {
     return remoteDataSource.getTiposTelefono();
   }
 
-  // ✅ NUEVOS MÉTODOS
+
   @override
   Future<PersonaListResponse> listarPersonas() {
     return remoteDataSource.listarPersonas();
@@ -34,4 +35,10 @@ class ConductorRepositoryImpl implements ConductorRepository {
   Future<PersonaDetalleResponse> obtenerPersonaDetalle(int personaId) {
     return remoteDataSource.obtenerPersonaDetalle(personaId);
   }
+
+  @override
+  Future<PersonaActualizarResponse> actualizarPersona(PersonaActualizarDto dto) {
+    return remoteDataSource.actualizarPersona(dto);
+  }
+
 }

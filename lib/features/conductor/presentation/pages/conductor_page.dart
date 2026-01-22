@@ -1,6 +1,8 @@
 // Ruta: lib/features/conductor/presentation/pages/conductor_page.dart
+import 'package:app_jht_front/features/conductor/data/datasources/conductor_remote_data_source.dart';
 import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_event.dart';
 import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_state.dart';
+import 'package:app_jht_front/features/conductor/presentation/widgets/editar_persona_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
@@ -12,11 +14,13 @@ import 'package:app_jht_front/features/conductor/data/models/persona_model.dart'
 class ConductorPage extends StatefulWidget {
   final String userName;
   final String userRole;
+  final ConductorRemoteDataSource dataSource;
 
-  const ConductorPage({
+const ConductorPage({
     super.key,
     required this.userName,
     required this.userRole,
+    required this.dataSource, // Requerido aquí
   });
 
   @override
@@ -66,121 +70,137 @@ class _ConductorPageState extends State<ConductorPage> {
       ),
     );
   }
-void _openPersonaDetalleModal(PersonaModel persona) {
-  print("🔵 UI: Abriendo detalle para ${persona.nombreCompleto}");
 
-  // SOLUCIÓN: Mostrar UN solo diálogo y manejar todo dentro
+
+void _openPersonaDetalleModal(PersonaModel persona) {
   showDialog(
     context: context,
     barrierDismissible: false,
-    builder: (context) {
-      // Despachar el evento inmediatamente
+    builder: (dialogContext) { // Usamos un context local del builder
       context.read<ConductorBloc>().add(
-        ConductorEvent.obtenerPersonaDetalle(personaId: persona.personaId),
-      );
+            ConductorEvent.obtenerPersonaDetalle(personaId: persona.personaId),
+          );
 
       return BlocListener<ConductorBloc, ConductorState>(
-        listenWhen: (previous, current) {
-          // Solo escuchar cuando cambie a estados de detalle
-          return current is ConductorState && 
-                (current.when(
-                  initial: () => false,
-                  loading: () => false,
-                  success: (_) => false,
-                  error: (_) => false,
-                  personasCargando: () => false,
-                  personasCargadas: (_) => false,
-                  personaDetalleCargando: () => false, // No cerrar aquí
-                  personaDetalleCargado: (_) => true,  // ← Cerrar aquí
-                  personaDetalleError: (_) => true,    // ← Cerrar aquí
-                ));
-        },
+        listenWhen: (previous, current) => current.maybeWhen(
+          personaDetalleCargado: (_) => true,
+          personaDetalleError: (_) => true,
+          orElse: () => false,
+        ),
         listener: (context, state) {
-          print("🟢 LISTENER: Estado detectado para detalle");
-          
-          // Manejar los estados de detalle
+          // Cerramos el diálogo de carga usando el context del builder original
+          Navigator.of(dialogContext).pop(); 
+
           state.whenOrNull(
             personaDetalleCargado: (personaDetalle) {
-              print("✅ LISTENER: Detalle cargado - ${personaDetalle.nombreCompleto}");
-              
-              // 1. Cerrar el diálogo de loading
-              Navigator.of(context).pop();
-              
-              // 2. Mostrar el modal de detalle (con un pequeño delay para evitar problemas)
-              Future.delayed(const Duration(milliseconds: 50), () {
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (context) => PersonaDetalleModal(persona: personaDetalle),
-                );
-              });
+              if (!mounted) return;
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => PersonaDetalleModal(persona: personaDetalle),
+              );
             },
-            
             personaDetalleError: (mensaje) {
-              print("❌ LISTENER: Error en detalle - $mensaje");
-              
-              // 1. Cerrar el diálogo de loading
-              Navigator.of(context).pop();
-              
-              // 2. Mostrar error (con un pequeño delay)
-              Future.delayed(const Duration(milliseconds: 50), () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error: $mensaje'),
-                    backgroundColor: Colors.red,
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
-              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error: $mensaje'), backgroundColor: Colors.red),
+              );
             },
           );
         },
-        child: AlertDialog(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          content: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.7),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(color: Color(0xFF303366)),
-                const SizedBox(height: 16),
-                Text(
-                  'Cargando detalles de ${persona.nombreCorto}...',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+      
+          child: AlertDialog(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            content: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Espere por favor',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
+                child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(color: Color(0xFF303366)),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Cargando detalles de ${persona.nombreCorto}...',
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
+  
+void _mostrarOpcionEditar(PersonaModel persona) {
+    // 1. Mostramos un diálogo de carga (Loading)
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        // 2. Disparamos el evento para obtener el detalle real de la API
+        context.read<ConductorBloc>().add(
+              ConductorEvent.obtenerPersonaDetalle(personaId: persona.personaId),
+            );
 
-  void _mostrarOpcionEditar(PersonaModel persona) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Editar persona: ${persona.nombreCompleto}'),
-        backgroundColor: const Color(0xFF303366),
-        duration: const Duration(seconds: 2),
-      ),
+        return BlocListener<ConductorBloc, ConductorState>(
+          listenWhen: (previous, current) => current.maybeWhen(
+            personaDetalleCargado: (_) => true,
+            personaDetalleError: (_) => true,
+            orElse: () => false,
+          ),
+          listener: (context, state) {
+            state.whenOrNull(
+              personaDetalleCargado: (personaDetalleCompleta) {
+                Navigator.of(context).pop(); // Cerramos el loading
+                
+                // 3. AQUÍ ESTÁ LA CORRECCIÓN:
+                // Pasamos 'persona' y el 'dataSource' que pide el constructor
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => EditarPersonaModal(
+                    persona: personaDetalleCompleta,
+                    // dataSource: context.read<ConductorRemoteDataSource>(), // <--- ESTO ES LO QUE FALTABA
+                    dataSource: widget.dataSource,
+                  ),
+                );
+              },
+              personaDetalleError: (mensaje) {
+                Navigator.of(context).pop(); // Cerramos el loading
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error al obtener datos: $mensaje'), backgroundColor: Colors.red),
+                );
+              },
+            );
+          },
+          child: AlertDialog(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            content: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(color: Colors.white),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Preparando edición de ${persona.nombreCorto}...',
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -495,19 +515,16 @@ void _openPersonaDetalleModal(PersonaModel persona) {
     );
   }
 
-  Widget _buildResponsiveTable(bool isMobile) {
+Widget _buildResponsiveTable(bool isMobile) {
     return BlocBuilder<ConductorBloc, ConductorState>(
       builder: (context, state) {
-        return state.when(
-          initial: () => _buildLoadingIndicator(),
-          loading: () => _buildLoadingIndicator(),
-          success: (_) => _buildLoadingIndicator(),
-          error: (message) => _buildErrorWidget(message),
-          personasCargando: () => _buildLoadingIndicator(),
+        // Usamos maybeWhen para ignorar los estados de "actualización" que no afectan a la tabla
+        return state.maybeWhen(
           personasCargadas: (personas) => _buildDataTable(personas, isMobile),
-          personaDetalleCargando: () => _buildLoadingIndicator(),
-          personaDetalleCargado: (_) => _buildLoadingIndicator(),
-          personaDetalleError: (message) => _buildErrorWidget(message),
+          personasCargando: () => _buildLoadingIndicator(),
+          error: (message) => _buildErrorWidget(message),
+          // Si está haciendo cualquier otra cosa (como actualizar), seguimos mostrando la tabla
+          orElse: () => _buildLoadingIndicator(),
         );
       },
     );

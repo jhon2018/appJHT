@@ -5,12 +5,15 @@ import 'package:app_jht_front/features/conductor/data/models/conductor_registro_
 import 'package:app_jht_front/features/supplier/data/models/tipo_telefono_model.dart';
 import 'package:app_jht_front/features/conductor/data/models/persona_list_response.dart';
 import 'package:app_jht_front/features/conductor/data/models/persona_detalle_response.dart';
+import 'package:app_jht_front/features/conductor/data/models/persona_actualizar_dto.dart';
+import 'package:app_jht_front/features/conductor/data/models/persona_actualizar_response.dart';
 
 abstract class ConductorRepository {
   Future<ConductorRegistroResponse> registrarConductor(ConductorRegistroDto dto);
   Future<List<TipoTelefonoModel>> getTiposTelefono();
   
-  // ✅ NUEVOS MÉTODOS PARA REQF14
   Future<PersonaListResponse> listarPersonas();
   Future<PersonaDetalleResponse> obtenerPersonaDetalle(int personaId);
+
+   Future<PersonaActualizarResponse> actualizarPersona(PersonaActualizarDto dto);
 }

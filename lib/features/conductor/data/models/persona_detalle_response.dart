@@ -1,3 +1,4 @@
+//Ruta: lib/features/conductor/data/models/persona_detalle_response.dart
 import 'package:flutter/foundation.dart';
 import 'persona_model.dart';
 

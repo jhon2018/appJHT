@@ -2,6 +2,7 @@
 import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/features/conductor/data/datasources/conductor_remote_data_source.dart';
 import 'package:app_jht_front/features/conductor/data/repositories/conductor_repository_impl.dart';
+import 'package:app_jht_front/features/conductor/domain/usecases/actualizar_persona_usecase.dart';
 import 'package:app_jht_front/features/conductor/domain/usecases/listar_personas_usecase.dart';
 import 'package:app_jht_front/features/conductor/domain/usecases/obtener_persona_detalle_usecase.dart';
 import 'package:app_jht_front/features/conductor/domain/usecases/registrar_conductor_usecase.dart';
@@ -13,10 +14,7 @@ import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimi
 import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_event.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/pages/mantenimiento_page.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
-import 'package:app_jht_front/features/supplier/data/datasources/supplier_remote_data_source.dart';
-import 'package:app_jht_front/features/supplier/data/repositories/supplier_repository_impl.dart';
-import 'package:app_jht_front/features/supplier/domain/usecases/registrar_supplier_usecase.dart';
-import 'package:app_jht_front/features/supplier/presentation/bloc/supplier_bloc.dart';
+
 import 'package:app_jht_front/features/vehicle/presentation/pages/vehicle_page.dart';
 import 'package:flutter/material.dart';
 
@@ -473,34 +471,43 @@ class _BaseDashboardState extends State<BaseDashboard>
           ),
         );
         break;
-case 'Conductores':
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) {
-        // Crear las dependencias
-        final remoteDataSource = ConductorRemoteDataSourceImpl();
-        final repository = ConductorRepositoryImpl(
-          remoteDataSource: remoteDataSource,
-        );
-        final useCase = RegistrarConductorUseCase(
-          repository: repository,
-        );
-        
-        return BlocProvider(
-          create: (context) => ConductorBloc(
-            registrarConductorUseCase: useCase,
-            repository: repository, listarPersonasUseCase: ListarPersonasUseCase(repository: repository), obtenerPersonaDetalleUseCase: ObtenerPersonaDetalleUseCase(repository: repository),
-          )..add(const ConductorEvent.listarPersonas()),
-          child: ConductorPage(
-            userName: widget.userName,
-            userRole: widget.userRole,
+      case 'Conductores':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) {
+              // Crear las dependencias
+              final remoteDataSource = ConductorRemoteDataSourceImpl();
+              final repository = ConductorRepositoryImpl(
+                remoteDataSource: remoteDataSource,
+              );
+
+              return BlocProvider(
+                create: (context) => ConductorBloc(
+                  registrarConductorUseCase: RegistrarConductorUseCase(
+                    repository: repository,
+                  ),
+                  listarPersonasUseCase: ListarPersonasUseCase(
+                    repository: repository,
+                  ),
+                  obtenerPersonaDetalleUseCase: ObtenerPersonaDetalleUseCase(
+                    repository: repository,
+                  ),
+                  actualizarPersonaUseCase: ActualizarPersonaUseCase(
+                    repository: repository,
+                  ),
+                  conductorRepository: repository,
+                )..add(const ConductorEvent.listarPersonas()),
+                child: ConductorPage(
+                  userName: widget.userName,
+                  userRole: widget.userRole,
+                  dataSource: remoteDataSource,
+                ),
+              );
+            },
           ),
         );
-      },
-    ),
-  );
-  break;
+        break;
       case 'Accesorios':
         Navigator.push(
           context,
