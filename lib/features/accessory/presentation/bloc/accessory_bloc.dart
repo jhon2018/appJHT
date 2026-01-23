@@ -1,4 +1,5 @@
 // lib/features/accessory/presentation/bloc/accessory_bloc.dart
+import 'package:app_jht_front/features/accessory/data/models/accesorio_detalle_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_registro_dto.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_registro_response.dart';
@@ -9,9 +10,9 @@ import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_mode
 import 'package:app_jht_front/features/accessory/data/models/vehiculo_model.dart';
 import 'package:app_jht_front/features/accessory/domain/repositories/accessory_repository.dart';
 import 'package:app_jht_front/features/accessory/domain/usecases/registrar_accesorio_usecase.dart';
-
 part 'accessory_event.dart';
 part 'accessory_state.dart';
+
 
 class AccessoryBloc extends Bloc<AccessoryEvent, AccessoryState> {
   final AccessoryRepository repository;
@@ -42,18 +43,19 @@ class AccessoryBloc extends Bloc<AccessoryEvent, AccessoryState> {
   }
 
   // REQF07 - API 27: Obtener detalle de un accesorio
-  Future<void> _onFetchDetalleAccesorio(
-    OnFetchDetalleAccesorio event,
-    Emitter<AccessoryState> emit,
-  ) async {
-    emit(DetalleAccesorioLoading());
-    try {
-      final detalle = await repository.getDetalleAccesorio(event.accesorioId);
-      emit(DetalleAccesorioLoaded(detalle: detalle));
-    } catch (e) {
-      emit(AccessoryError(message: "Error al obtener detalle: ${e.toString()}"));
-    }
+// accessory_bloc.dart - _onFetchDetalleAccesorio
+Future<void> _onFetchDetalleAccesorio(
+  OnFetchDetalleAccesorio event,
+  Emitter<AccessoryState> emit,
+) async {
+  emit(DetalleAccesorioLoading(nombreAccesorio: "Accesorio")); // puedes mejorar esto después
+  try {
+    final detalle = await repository.getDetalleAccesorio(event.accesorioId);
+    emit(DetalleAccesorioLoaded(detalle: detalle));  // ← ahora detalle es AccesorioDetalleModel
+  } catch (e) {
+    emit(AccessoryError(message: "Error al obtener detalle: ${e.toString()}"));
   }
+}
 
   // Cargar Vehículos (API 04)
   Future<void> _onLoadVehiculos(
@@ -131,4 +133,7 @@ class AccessoryBloc extends Bloc<AccessoryEvent, AccessoryState> {
       emit(TipoAccesorioRegistroError(message: e.toString()));
     }
   }
+
+
+  
 }

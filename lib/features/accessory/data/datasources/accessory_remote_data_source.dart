@@ -1,6 +1,7 @@
 // lib/features/accessory/data/datasources/accessory_remote_data_source.dart
 // Descripción: Implementación del datasource remoto para accesorios, incluyendo métodos para listar segmentos, tipos de accesorio y vehículos con autenticación.
 // Objetivo: Completar la implementación del datasource remoto para accesorios.
+import 'package:app_jht_front/features/accessory/data/models/accesorio_detalle_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_registro_dto.dart';
 
@@ -29,7 +30,7 @@ abstract class AccessoryRemoteDataSource {
 
 Future<List<AccesorioModel>> listarAccesoriosPorVehiculo(int vehId);
   Future<AccesorioModel> obtenerDetalleAccesorio(int accId);
-
+Future<AccesorioDetalleModel> getAccesorioDetalle(int accId);
 }
 
 // IMPLEMENTACIÓN (igual que en Vehicle)
@@ -337,5 +338,33 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
       rethrow;
     }
   }
+
+// Dentro de la clase AccessoryRemoteDataSourceImpl
+@override
+Future<AccesorioDetalleModel> getAccesorioDetalle(int accId) async {
+  try {
+    final token = await TokenService.getToken();
+    final baseUrl = kIsWeb ? 'http://localhost:7030' : 'http://192.168.1.2:7030';
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/general/accesorio/$accId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      // REQUERIMIENTO 13: Retornamos el modelo de detalle completo
+      return AccesorioDetalleModel.fromJson(responseData['data']);
+    } else {
+      throw Exception('Error al obtener detalle del API 27: ${response.statusCode}');
+    }
+  } catch (e) {
+    rethrow;
+  }
+}
+
 
 }

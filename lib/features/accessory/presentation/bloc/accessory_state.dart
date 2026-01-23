@@ -1,10 +1,9 @@
 // lib/features/accessory/presentation/bloc/accessory_state.dart
-// lib/features/accessory/presentation/bloc/accessory_state.dart
 part of 'accessory_bloc.dart';
 
 abstract class AccessoryState {}
 
-// --- ESTADOS INICIALES Y CARGA GENERAL ---
+/// Estados iniciales y generales
 class AccessoryInitial extends AccessoryState {}
 class AccessoryLoading extends AccessoryState {}
 
@@ -13,7 +12,7 @@ class AccessoryError extends AccessoryState {
   AccessoryError({required this.message});
 }
 
-// --- ESTADOS DE CARGA ESPECÍFICOS ---
+/// Estados de carga de listas / catálogos
 class SegmentosLoading extends AccessoryState {}
 class SegmentosLoaded extends AccessoryState {
   final List<SegmentoModel> segmentos;
@@ -32,20 +31,25 @@ class VehiculosLoaded extends AccessoryState {
   VehiculosLoaded({required this.vehiculos});
 }
 
-// --- NUEVOS: ESTADOS PARA REQF07 (TABLA Y DETALLE) ---
+/// Estados para REQF07 - Listado y detalle de accesorios por vehículo
 class AccesoriosByVehiculoLoading extends AccessoryState {}
 class AccesoriosByVehiculoLoaded extends AccessoryState {
   final List<AccesorioModel> accesorios;
   AccesoriosByVehiculoLoaded({required this.accesorios});
 }
 
-class DetalleAccesorioLoading extends AccessoryState {}
+// accessory_state.dart
+class DetalleAccesorioLoading extends AccessoryState {
+  final String? nombreAccesorio; // ← nuevo
+  DetalleAccesorioLoading({this.nombreAccesorio});
+}
+
 class DetalleAccesorioLoaded extends AccessoryState {
-  final AccesorioModel detalle;
+  final AccesorioDetalleModel detalle;
   DetalleAccesorioLoaded({required this.detalle});
 }
 
-// --- ESTADOS DE REGISTRO ---
+/// Estados de registro
 class RegistrandoAccesorio extends AccessoryState {}
 class AccesorioRegistrado extends AccessoryState {
   final AccesorioRegistroResponse response;

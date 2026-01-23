@@ -43,4 +43,6 @@ class OnFetchAccesoriosByVehiculo extends AccessoryEvent {
 class OnFetchDetalleAccesorio extends AccessoryEvent {
   final int accesorioId;
   OnFetchDetalleAccesorio(this.accesorioId);
+  @override
+  List<Object?> get props => [accesorioId];
 }

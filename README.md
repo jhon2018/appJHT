@@ -11,7 +11,6 @@ git flow init
 8.- Crear ramas en la consola del proyecto
 git flow feature start “Nombre del cambio”
 
-
 ## 3. COMPILAR ANDROID produccion--
 flutter clean
 flutter pub get  regenera si hay errores masivosç
@@ -65,3 +64,4 @@ lib/features/vehicle/
     │   └── vehicle_page.dart  // ← Donde estamos trabajando
     └── widgets/
         └── vehicle_card.dart
+    

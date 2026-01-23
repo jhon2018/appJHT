@@ -1,5 +1,6 @@
 // lib/features/accessory/data/repositories/accessory_repository_impl.dart
 import 'package:app_jht_front/features/accessory/data/datasources/accessory_remote_data_source.dart';
+import 'package:app_jht_front/features/accessory/data/models/accesorio_detalle_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_registro_dto.dart';
 import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_registro_dto.dart';
@@ -14,6 +15,14 @@ class AccessoryRepositoryImpl implements AccessoryRepository {
   final AccessoryRemoteDataSource remoteDataSource;
 
   AccessoryRepositoryImpl({required this.remoteDataSource});
+  
+@override
+Future<AccesorioDetalleModel> getAccesorioDetalle(int accId) async {
+  // Llama a tu Data Source que conecta con el API 27
+  return await remoteDataSource.getAccesorioDetalle(accId);
+}
+
+
 
 
 @override
@@ -26,10 +35,11 @@ class AccessoryRepositoryImpl implements AccessoryRepository {
     return await remoteDataSource.listarAccesoriosPorVehiculo(vehId);
   }
 
-  @override
-  Future<AccesorioModel> getDetalleAccesorio(int accId) async {
-    return await remoteDataSource.obtenerDetalleAccesorio(accId);
-  }
+@override
+Future<AccesorioDetalleModel> getDetalleAccesorio(int accId) async {
+  // Llama a tu Data Source que conecta con el API 27
+  return await remoteDataSource.getAccesorioDetalle(accId);
+}
 
   @override
   Future<List<SegmentoModel>> listarSegmentos() async {
