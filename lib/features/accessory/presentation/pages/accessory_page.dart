@@ -79,7 +79,7 @@ class _AccessoryPageState extends State<AccessoryPage> {
             SnackBar(
               content: const Text('Accesorio agregado exitosamente'),
               backgroundColor: const Color(0xFF303366),
-              duration: const Duration(seconds: 7),
+              duration: const Duration(seconds: 5),
             ),
           );
           // Recargar accesorios si hay un vehículo seleccionado

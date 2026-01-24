@@ -13,7 +13,7 @@ git flow feature start “Nombre del cambio”
 
 ## 3. COMPILAR ANDROID produccion--
 flutter clean
-flutter pub get  regenera si hay errores masivosç
+flutter pub get  regenera si hay errores masivosçj
 flutter build apk
 
 
