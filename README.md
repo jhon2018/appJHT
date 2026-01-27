@@ -39,29 +39,6 @@ Tools • Dart 3.8.1 • DevTools 2.45.1
 
 
 
-PARA VEHICULO
-lib/features/vehicle/
-├── data/
-│   ├── datasources/
-│   │   └── vehicle_remote_data_source.dart
-│   ├── models/
-│   │   └── vehicle_model.dart
-│   └── repositories/
-│       └── vehicle_repository_impl.dart
-├── domain/
-│   ├── entities/
-│   │   └── vehicle_entity.dart
-│   ├── repositories/
-│   │   └── vehicle_repository.dart
-│   └── usecases/
-│       └── get_vehicles_usecase.dart
-└── presentation/
-    ├── bloc/
-    │   ├── vehicle_bloc.dart
-    │   ├── vehicle_event.dart
-    │   └── vehicle_state.dart
-    ├── pages/
-    │   └── vehicle_page.dart  // ← Donde estamos trabajando
-    └── widgets/
-        └── vehicle_card.dart
-    
+## ELIMINAR CARPETAS ANDROI Y MACOS
+git rm -r --cached macos
+git rm -r --cached android
