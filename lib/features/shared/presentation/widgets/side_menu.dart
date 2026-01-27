@@ -19,12 +19,12 @@ class SideMenu extends StatelessWidget {
   // Items del menú según el nivel de acceso
   List<MenuItem> _getMenuItems() {
     final baseItems = [
-      MenuItem(icon: '🔧', title: 'Mantenimiento', enabled: true),
+      MenuItem(icon: '🔧', title: 'Mantenimiento', enabled: userRole == 'Administrador'),
       MenuItem(icon: '🚗', title: 'Vehículo', enabled: userRole == 'Administrador'), 
       MenuItem(icon: '🏢', title: 'Proveedor', enabled: userRole == 'Administrador'), 
       MenuItem(icon: '👨‍💼', title: 'Conductores', enabled: userRole == 'Administrador'),
-      MenuItem(icon: '🔩', title: 'Accesorios', enabled: true),
-      MenuItem(icon: '❓', title: 'Ayuda', enabled: true),
+      MenuItem(icon: '🔩', title: 'Accesorios', enabled: userRole == 'Administrador'),
+      MenuItem(icon: '❓', title: 'Ayuda', enabled: userRole == 'Administrador'),
     ];
     
     return baseItems;

@@ -1,0 +1,39 @@
+.git
+.gitignore
+.vscode
+.idea
+*.iml
+*.log
+*.swp
+.DS_Store
+Thumbs.db
+
+# Build outputs
+build/
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+
+# Flutter
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter/
+
+# Android
+android/
+
+# iOS
+ios/
+
+# Windows
+windows/
+
+# Linux
+linux/
+
+# macOS
+macos/
+
+# Test
+coverage/

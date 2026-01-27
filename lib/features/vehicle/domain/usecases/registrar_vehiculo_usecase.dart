@@ -1,6 +1,8 @@
 //Ruta: lib/features/vehicle/domain/usecases/registrar_vehiculo_usecase.dart
 /// Definición: Caso de uso para registrar vehículos
 /// Objetivo: Encapsular la lógica de negocio del registro
+library;
+
 
 import 'package:dartz/dartz.dart';
 import 'package:app_jht_front/core/error/failures.dart';

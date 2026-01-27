@@ -1,6 +1,13 @@
 // lib/features/accessory/data/datasources/accessory_remote_data_source.dart
 // Descripción: Implementación del datasource remoto para accesorios, incluyendo métodos para listar segmentos, tipos de accesorio y vehículos con autenticación.
 // Objetivo: Completar la implementación del datasource remoto para accesorios.
+import 'package:app_jht_front/features/accessory/data/models/accesorio_detalle_model.dart';
+import 'package:app_jht_front/features/accessory/data/models/accesorio_model.dart';
+import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_registro_dto.dart';
+
+import '../models/accesorio_registro_dto.dart';
+import '../models/accesorio_registro_response.dart';
+
 import 'dart:convert';
 import 'package:app_jht_front/core/network/http_client.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
@@ -17,13 +24,70 @@ abstract class AccessoryRemoteDataSource {
     int segmentoId,
   );
   Future<List<VehiculoModel>> listarVehiculos();
+  Future<AccesorioRegistroResponse> insertarAccesorio(AccesorioRegistroDto dto);
+
+  Future registrarTipoAccesorio(TipoAccesorioRegistroDto dto) async {}
+
+Future<List<AccesorioModel>> listarAccesoriosPorVehiculo(int vehId);
+  Future<AccesorioModel> obtenerDetalleAccesorio(int accId);
+Future<AccesorioDetalleModel> getAccesorioDetalle(int accId);
 }
 
 // IMPLEMENTACIÓN (igual que en Vehicle)
 class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
-  final DevHttpClient httpClient;
+  final HttpClient httpClient;
 
   AccessoryRemoteDataSourceImpl({required this.httpClient});
+
+  @override
+  Future<AccesorioRegistroResponse> insertarAccesorio(
+    AccesorioRegistroDto dto,
+  ) async {
+    try {
+      print('🔵 Iniciando registro de accesorio');
+
+      final String? token = await TokenService.getToken();
+
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación.');
+      }
+
+      String getBaseUrl() {
+        if (kIsWeb) {
+          return 'https://jht-transport-api.onrender.com';
+        } else {
+          return 'http://192.168.1.2:7030';
+        }
+      }
+
+      print('📡 Enviando DTO: ${dto.toJson()}');
+
+      final response = await http.post(
+        Uri.parse('${getBaseUrl()}/api/general/insertar-accesorio'),
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': '*/*',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode(dto.toJson()),
+      );
+
+      print('🟡 Response status: ${response.statusCode}');
+      print('🟡 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return AccesorioRegistroResponse.fromJson(responseData);
+      } else if (response.statusCode == 401) {
+        throw Exception('No autorizado. Token inválido o expirado.');
+      } else {
+        throw Exception('Error al registrar accesorio: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ ERROR en insertarAccesorio: $e');
+      rethrow;
+    }
+  }
 
   @override
   Future<List<SegmentoModel>> listarSegmentos() async {
@@ -40,7 +104,7 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
 
       String getBaseUrl() {
         if (kIsWeb) {
-          return 'http://localhost:7030';
+          return 'https://jht-transport-api.onrender.com';
         } else {
           return 'http://192.168.1.2:7030';
         }
@@ -72,76 +136,71 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
     }
   }
 
+  @override
+  Future<List<TipoAccesorioModel>> listarTiposAccesorioPorSegmento(
+    int segmentoId,
+  ) async {
+    try {
+      print('🔵 Iniciando carga de tipos accesorio para segmento: $segmentoId');
 
+      final String? token = await TokenService.getToken();
 
-@override
-Future<List<TipoAccesorioModel>> listarTiposAccesorioPorSegmento(
-  int segmentoId,
-) async {
-  try {
-    print('🔵 Iniciando carga de tipos accesorio para segmento: $segmentoId');
-
-    final String? token = await TokenService.getToken();
-
-    if (token == null || token.isEmpty) {
-      throw Exception('No hay token de autenticación.');
-    }
-
-    String getBaseUrl() {
-      if (kIsWeb) {
-        return 'http://localhost:7030';
-      } else {
-        return 'http://192.168.1.2:7030';
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación.');
       }
-    }
 
-    final response = await http.get(
-      Uri.parse(
-        '${getBaseUrl()}/api/general/listar-tipos-accesorio-por-segmento/$segmentoId',
-      ),
-      headers: {
-        'Content-Type': 'application/json',
-        'accept': '*/*',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    print('🟡 Response status: ${response.statusCode}');
-    print('🟡 Response body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseData = json.decode(response.body);
-      final List<dynamic> data = responseData['data'];
-      
-      // CORRECCIÓN AQUÍ:
-      if (data.isNotEmpty) {
-        final Map<String, dynamic> firstItem = data[0];
-        final List<dynamic> tiposData = firstItem['tipos'];
-        
-        print('🟡 Tipos encontrados: ${tiposData.length}');
-        
-        return tiposData
-            .map((json) => TipoAccesorioModel.fromJson(json))
-            .toList();
-      } else {
-        print('🟡 No hay datos en la respuesta');
-        return [];
+      String getBaseUrl() {
+        if (kIsWeb) {
+          return 'https://jht-transport-api.onrender.com';
+        } else {
+          return 'http://192.168.1.2:7030';
+        }
       }
-    } else if (response.statusCode == 401) {
-      throw Exception('No autorizado. Token inválido o expirado.');
-    } else {
-      throw Exception(
-        'Error al cargar tipos de accesorio: ${response.statusCode}',
+
+      final response = await http.get(
+        Uri.parse(
+          '${getBaseUrl()}/api/general/listar-tipos-accesorio-por-segmento/$segmentoId',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': '*/*',
+          'Authorization': 'Bearer $token',
+        },
       );
+
+      print('🟡 Response status: ${response.statusCode}');
+      print('🟡 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final List<dynamic> data = responseData['data'];
+
+        // CORRECCIÓN AQUÍ:
+        if (data.isNotEmpty) {
+          final Map<String, dynamic> firstItem = data[0];
+          final List<dynamic> tiposData = firstItem['tipos'];
+
+          print('🟡 Tipos encontrados: ${tiposData.length}');
+
+          return tiposData
+              .map((json) => TipoAccesorioModel.fromJson(json))
+              .toList();
+        } else {
+          print('🟡 No hay datos en la respuesta');
+          return [];
+        }
+      } else if (response.statusCode == 401) {
+        throw Exception('No autorizado. Token inválido o expirado.');
+      } else {
+        throw Exception(
+          'Error al cargar tipos de accesorio: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      print('❌ ERROR en listarTiposAccesorioPorSegmento: $e');
+      rethrow;
     }
-  } catch (e) {
-    print('❌ ERROR en listarTiposAccesorioPorSegmento: $e');
-    rethrow;
   }
-}
-
-
-
 
   @override
   Future<List<VehiculoModel>> listarVehiculos() async {
@@ -156,7 +215,7 @@ Future<List<TipoAccesorioModel>> listarTiposAccesorioPorSegmento(
 
       String getBaseUrl() {
         if (kIsWeb) {
-          return 'http://localhost:7030';
+          return 'https://jht-transport-api.onrender.com';
         } else {
           return 'http://192.168.1.2:7030';
         }
@@ -190,4 +249,122 @@ Future<List<TipoAccesorioModel>> listarTiposAccesorioPorSegmento(
       rethrow;
     }
   }
+
+  // Método para registrar tipo de accesorio
+  Future<Map<String, dynamic>> registrarTipoAccesorio(
+    TipoAccesorioRegistroDto dto,
+  ) async {
+    final token = await TokenService.getToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception('No hay token de autenticación.');
+    }
+
+    String getBaseUrl() {
+      if (kIsWeb) {
+        return 'https://jht-transport-api.onrender.com';
+      } else {
+        return 'http://192.168.1.2:7030';
+      }
+    }
+
+    final response = await http.post(
+      Uri.parse('${getBaseUrl()}/api/admin/registro_tipo_accesorio'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(dto.toJson()),
+    );
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception(
+        'Error al registrar tipo de accesorio: ${response.statusCode}',
+      );
+    }
+  }
+
+
+@override
+  Future<List<AccesorioModel>> listarAccesoriosPorVehiculo(int vehId) async {
+    try {
+      final token = await TokenService.getToken();
+      final baseUrl = kIsWeb ? 'https://jht-transport-api.onrender.com' : 'http://192.168.1.2:7030';
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/general/vehiculo/$vehId/accesorios'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final List<dynamic> data = responseData['data'];
+        return data.map((json) => AccesorioModel.fromJson(json)).toList();
+      } else {
+        throw Exception('Error al cargar accesorios: ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<AccesorioModel> obtenerDetalleAccesorio(int accId) async {
+    try {
+      final token = await TokenService.getToken();
+      final baseUrl = kIsWeb ? 'https://jht-transport-api.onrender.com' : 'http://192.168.1.2:7030';
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/general/accesorio/$accId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return AccesorioModel.fromJson(responseData['data']);
+      } else {
+        throw Exception('Error al obtener detalle: ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+// Dentro de la clase AccessoryRemoteDataSourceImpl
+@override
+Future<AccesorioDetalleModel> getAccesorioDetalle(int accId) async {
+  try {
+    final token = await TokenService.getToken();
+    final baseUrl = kIsWeb ? 'https://jht-transport-api.onrender.com' : 'http://192.168.1.2:7030';
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/general/accesorio/$accId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      // REQUERIMIENTO 13: Retornamos el modelo de detalle completo
+      return AccesorioDetalleModel.fromJson(responseData['data']);
+    } else {
+      throw Exception('Error al obtener detalle del API 27: ${response.statusCode}');
+    }
+  } catch (e) {
+    rethrow;
+  }
+}
+
+
 }

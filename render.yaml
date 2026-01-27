@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: jht-transport-frontend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: API_BASE_URL
+        value: https://jht-transport-api.onrender.com
+      - key: PORT
+        value: 10000
+    healthCheckPath: /
+    autoDeploy: true
+    plan: free
+    # Configuración específica para Flutter Web
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://jht-transport-api.onrender.com/api/$1

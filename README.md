@@ -11,18 +11,57 @@ git flow init
 8.- Crear ramas en la consola del proyecto
 git flow feature start “Nombre del cambio”
 
-
 ## 3. COMPILAR ANDROID produccion--
 flutter clean
-flutter pub get  regenera si hay errores masivosç
+flutter pub get  regenera si hay errores masivosçj
 flutter build apk
 
 
 ## 4. SI AGREGAS DEPENCIAS Y NO AGARRAN 
 flutter pub add carousel_slider
 
+## GIT
+whoami
+git config --global user.name
+git config --global user.email
+
 ## FRONT PLANTILLAS
 -- MOVIL LOGIN ---
 https://www.figma.com/design/8JToHlfCggOXy8gmDc0Cj2/Simple-Login-%E2%9C%A8--Community-?node-id=0-1&p=f&t=Q2Pyobv6QMaZ99uF-0
 
 https://www.shutterstock.com/tr/search/similar/2459649029
+
+
+## VERSION FRONT DE FLUTTER
+flutter --version
+Flutter 3.32.8 • 
+Tools • Dart 3.8.1 • DevTools 2.45.1
+
+
+
+PARA VEHICULO
+lib/features/vehicle/
+├── data/
+│   ├── datasources/
+│   │   └── vehicle_remote_data_source.dart
+│   ├── models/
+│   │   └── vehicle_model.dart
+│   └── repositories/
+│       └── vehicle_repository_impl.dart
+├── domain/
+│   ├── entities/
+│   │   └── vehicle_entity.dart
+│   ├── repositories/
+│   │   └── vehicle_repository.dart
+│   └── usecases/
+│       └── get_vehicles_usecase.dart
+└── presentation/
+    ├── bloc/
+    │   ├── vehicle_bloc.dart
+    │   ├── vehicle_event.dart
+    │   └── vehicle_state.dart
+    ├── pages/
+    │   └── vehicle_page.dart  // ← Donde estamos trabajando
+    └── widgets/
+        └── vehicle_card.dart
+    

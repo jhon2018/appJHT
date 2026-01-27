@@ -15,3 +15,34 @@ class LoadTiposAccesorioEvent extends AccessoryEvent {
 }
 
 class LoadVehiculosEvent extends AccessoryEvent {}
+
+// Agrega este evento
+class RegistrarAccesorioEvent extends AccessoryEvent {
+  final AccesorioRegistroDto dto;
+  
+  RegistrarAccesorioEvent({required this.dto});
+}
+
+class RegistrarTipoAccesorioEvent extends AccessoryEvent {
+  final TipoAccesorioRegistroDto dto;
+  
+  RegistrarTipoAccesorioEvent({required this.dto});
+}
+
+
+// Evento inicial para cargar el dropdown de vehículos (API04)
+class OnFetchVehiculos extends AccessoryEvent {}
+
+// Evento cuando el usuario selecciona un vehículo (API26)
+class OnFetchAccesoriosByVehiculo extends AccessoryEvent {
+  final int vehiculoId;
+  OnFetchAccesoriosByVehiculo(this.vehiculoId);
+}
+
+// Evento para ver el detalle de un accesorio (API27)
+class OnFetchDetalleAccesorio extends AccessoryEvent {
+  final int accesorioId;
+  OnFetchDetalleAccesorio(this.accesorioId);
+  @override
+  List<Object?> get props => [accesorioId];
+}

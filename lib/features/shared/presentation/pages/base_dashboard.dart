@@ -1,6 +1,20 @@
 // lib/features/shared/presentation/pages/base_dashboard.dart
 import 'package:app_jht_front/core/utils/token_service.dart';
+import 'package:app_jht_front/features/conductor/data/datasources/conductor_remote_data_source.dart';
+import 'package:app_jht_front/features/conductor/data/repositories/conductor_repository_impl.dart';
+import 'package:app_jht_front/features/conductor/domain/usecases/actualizar_persona_usecase.dart';
+import 'package:app_jht_front/features/conductor/domain/usecases/listar_personas_usecase.dart';
+import 'package:app_jht_front/features/conductor/domain/usecases/obtener_persona_detalle_usecase.dart';
+import 'package:app_jht_front/features/conductor/domain/usecases/registrar_conductor_usecase.dart';
+import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_bloc.dart';
+import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_event.dart';
+import 'package:app_jht_front/features/conductor/presentation/pages/conductor_page.dart';
+import 'package:app_jht_front/features/mantenimiento/data/repositories/mantenimiento_repository.dart';
+import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_bloc.dart';
+import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_event.dart';
+import 'package:app_jht_front/features/mantenimiento/presentation/pages/mantenimiento_page.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
+
 import 'package:app_jht_front/features/vehicle/presentation/pages/vehicle_page.dart';
 import 'package:flutter/material.dart';
 
@@ -12,6 +26,7 @@ import 'package:app_jht_front/features/vehicle/data/datasources/vehicle_remote_d
 import 'package:app_jht_front/core/network/http_client.dart';
 
 import 'package:app_jht_front/features/accessory/presentation/pages/accessory_page.dart';
+import 'package:app_jht_front/features/supplier/presentation/pages/supplier_page.dart';
 
 class BaseDashboard extends StatefulWidget {
   final String userName;
@@ -410,10 +425,11 @@ class _BaseDashboardState extends State<BaseDashboard>
           MaterialPageRoute(
             builder: (_) => BlocProvider(
               create: (context) => VehicleBloc(
+                // ← NUEVA INSTANCIA
                 registrarVehiculoUseCase: RegistrarVehiculoUseCase(
                   repository: VehicleRepositoryImpl(
                     remoteDataSource: VehicleRemoteDataSourceImpl(
-                      httpClient: DevHttpClient(), // ✅ CLIENTE HTTP
+                      httpClient: HttpClient(),
                     ),
                   ),
                 ),
@@ -427,16 +443,70 @@ class _BaseDashboardState extends State<BaseDashboard>
         );
         break;
       case 'Mantenimiento':
-        // Navigator.push(context, MaterialPageRoute(builder: (_) => MaintenancePage()));
-        _showNotImplementedMessage(pageName);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BlocProvider(
+              create: (context) =>
+                  MantenimientoBloc(repository: MantenimientoRepository())
+                    ..add(LoadMantenimientosEvent()),
+              child: MantenimientoPage(
+                userName: widget.userName,
+                userRole: widget.userRole,
+              ),
+            ),
+          ),
+        );
         break;
+      // En base_dashboard.dart
       case 'Proveedor':
-        // Navigator.push(context, MaterialPageRoute(builder: (_) => ProviderPage()));
-        _showNotImplementedMessage(pageName);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SupplierPage(
+              // ← QUITA EL BlocProvider de aquí
+              userName: widget.userName,
+              userRole: widget.userRole,
+            ),
+          ),
+        );
         break;
       case 'Conductores':
-        // Navigator.push(context, MaterialPageRoute(builder: (_) => DriversPage()));
-        _showNotImplementedMessage(pageName);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) {
+              // Crear las dependencias
+              final remoteDataSource = ConductorRemoteDataSourceImpl();
+              final repository = ConductorRepositoryImpl(
+                remoteDataSource: remoteDataSource,
+              );
+
+              return BlocProvider(
+                create: (context) => ConductorBloc(
+                  registrarConductorUseCase: RegistrarConductorUseCase(
+                    repository: repository,
+                  ),
+                  listarPersonasUseCase: ListarPersonasUseCase(
+                    repository: repository,
+                  ),
+                  obtenerPersonaDetalleUseCase: ObtenerPersonaDetalleUseCase(
+                    repository: repository,
+                  ),
+                  actualizarPersonaUseCase: ActualizarPersonaUseCase(
+                    repository: repository,
+                  ),
+                  conductorRepository: repository,
+                )..add(const ConductorEvent.listarPersonas()),
+                child: ConductorPage(
+                  userName: widget.userName,
+                  userRole: widget.userRole,
+                  dataSource: remoteDataSource,
+                ),
+              );
+            },
+          ),
+        );
         break;
       case 'Accesorios':
         Navigator.push(
@@ -455,6 +525,8 @@ class _BaseDashboardState extends State<BaseDashboard>
         break;
       default:
         _showNotImplementedMessage(pageName);
+        //imprime en consola
+        print('Navegación a $pageName no implementada.');
     }
   }
 

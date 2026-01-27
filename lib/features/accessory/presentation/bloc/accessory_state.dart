@@ -1,39 +1,73 @@
 // lib/features/accessory/presentation/bloc/accessory_state.dart
-// description: Definición de estados para el AccessoryBloc.
-// objetivo: Representar los diferentes estados durante la carga de segmentos, tipos de accesorio y vehículos.
-
 part of 'accessory_bloc.dart';
 
 abstract class AccessoryState {}
 
+/// Estados iniciales y generales
 class AccessoryInitial extends AccessoryState {}
-
 class AccessoryLoading extends AccessoryState {}
-
-class SegmentosLoading extends AccessoryState {}
-class TiposAccesorioLoading extends AccessoryState {}
-class VehiculosLoading extends AccessoryState {}
 
 class AccessoryError extends AccessoryState {
   final String message;
-
   AccessoryError({required this.message});
 }
 
+/// Estados de carga de listas / catálogos
+class SegmentosLoading extends AccessoryState {}
 class SegmentosLoaded extends AccessoryState {
   final List<SegmentoModel> segmentos;
-
   SegmentosLoaded({required this.segmentos});
 }
 
+class TiposAccesorioLoading extends AccessoryState {}
 class TiposAccesorioLoaded extends AccessoryState {
   final List<TipoAccesorioModel> tiposAccesorio;
-
   TiposAccesorioLoaded({required this.tiposAccesorio});
 }
 
+class VehiculosLoading extends AccessoryState {}
 class VehiculosLoaded extends AccessoryState {
   final List<VehiculoModel> vehiculos;
-
   VehiculosLoaded({required this.vehiculos});
+}
+
+/// Estados para REQF07 - Listado y detalle de accesorios por vehículo
+class AccesoriosByVehiculoLoading extends AccessoryState {}
+class AccesoriosByVehiculoLoaded extends AccessoryState {
+  final List<AccesorioModel> accesorios;
+  AccesoriosByVehiculoLoaded({required this.accesorios});
+}
+
+// accessory_state.dart
+class DetalleAccesorioLoading extends AccessoryState {
+  final String? nombreAccesorio; // ← nuevo
+  DetalleAccesorioLoading({this.nombreAccesorio});
+}
+
+class DetalleAccesorioLoaded extends AccessoryState {
+  final AccesorioDetalleModel detalle;
+  DetalleAccesorioLoaded({required this.detalle});
+}
+
+/// Estados de registro
+class RegistrandoAccesorio extends AccessoryState {}
+class AccesorioRegistrado extends AccessoryState {
+  final AccesorioRegistroResponse response;
+  AccesorioRegistrado({required this.response});
+}
+
+class RegistroError extends AccessoryState {
+  final String message;
+  RegistroError({required this.message});
+}
+
+class RegistrandoTipoAccesorio extends AccessoryState {}
+class TipoAccesorioRegistrado extends AccessoryState {
+  final dynamic response;
+  TipoAccesorioRegistrado({required this.response});
+}
+
+class TipoAccesorioRegistroError extends AccessoryState {
+  final String message;
+  TipoAccesorioRegistroError({required this.message});
 }

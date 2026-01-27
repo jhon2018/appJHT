@@ -15,7 +15,7 @@ abstract class VehicleRemoteDataSource {
 }
 
 class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
-  final DevHttpClient httpClient;
+  final HttpClient httpClient;
 
   VehicleRemoteDataSourceImpl({required this.httpClient});
 
@@ -36,7 +36,7 @@ class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
       // 2. CONFIGURAR URL BASE (igual que en login)
       String getBaseUrl() {
         if (kIsWeb) {
-          return 'http://localhost:7030'; // Web funciona con localhost
+          return 'https://jht-transport-api.onrender.com'; // Web funciona con localhost
         } else {
           return 'http://192.168.1.2:7030'; // Móvil usa IP
         }
