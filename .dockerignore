@@ -8,32 +8,48 @@
 .DS_Store
 Thumbs.db
 
+# BLOQUEAR PLATAFORMAS MÓVILES (CRÍTICO)
+android/
+ios/
+linux/
+macos/
+windows/
+
 # Build outputs
 build/
 .dart_tool/
 .packages
 .pub-cache/
 .pub/
-
-# Flutter
 .flutter-plugins
 .flutter-plugins-dependencies
 .flutter/
 
-# Android
-android/
+# Gradle y Android
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+*.keystore
+*.jks
 
 # iOS
-ios/
+Podfile
+Podfile.lock
+Pods/
+*.xcworkspace
+*.xcodeproj
 
-# Windows
-windows/
+# Archivos grandes
+*.zip
+*.tar
+*.gz
+*.7z
 
-# Linux
-linux/
-
-# macOS
-macos/
+# Environment
+.env
+.env.local
 
 # Test
 coverage/
+test/
