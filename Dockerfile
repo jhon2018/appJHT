@@ -19,9 +19,8 @@ COPY lib/ lib/
 COPY web/ web/
 COPY assets/ assets/
 
-RUN flutter build web --release --web-renderer html \
+RUN flutter build web --release \
     --dart-define=API_BASE_URL=https://jht-transport-api.onrender.com
-
 
 FROM nginx:alpine
 COPY --from=build /app/build/web /usr/share/nginx/html
