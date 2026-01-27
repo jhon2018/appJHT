@@ -1,70 +1,57 @@
-# Dockerfile para Flutter Web en Render - VERSIÓN CORREGIDA
-FROM debian:stable-slim AS build
+# Dockerfile para Flutter Web ONLY
+FROM ubuntu:22.04 AS build
 
-# Instalar dependencias necesarias
+# Instalar mínimo
 RUN apt-get update && apt-get install -y \
-    curl \
-    git \
-    unzip \
-    xz-utils \
-    zip \
-    libglu1-mesa \
-    && rm -rf /var/lib/apt/lists/*
+    curl git unzip xz-utils ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
-# Configurar usuario sin privilegios para evitar problemas de permisos
-RUN useradd -m -u 1000 flutteruser
+# Clonar Flutter
+RUN git clone https://github.com/flutter/flutter.git -b stable /flutter
 
-# Instalar Flutter como usuario root primero, luego cambiar ownership
-RUN git clone https://github.com/flutter/flutter.git -b stable /usr/local/flutter
+# PATH
+ENV PATH="/flutter/bin:/flutter/bin/cache/dart-sdk/bin:${PATH}"
 
-# Configurar PATH
-ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PATH}"
+# CONFIGURAR SOLO WEB (CRÍTICO)
+WORKDIR /flutter
+RUN ./bin/flutter config --enable-web
+RUN ./bin/flutter config --no-enable-android
+RUN ./bin/flutter config --no-enable-ios
+RUN ./bin/flutter config --no-enable-linux
+RUN ./bin/flutter config --no-enable-windows
+RUN ./bin/flutter config --no-enable-macos
 
-# Configurar Flutter para no verificar gradle (no lo necesitamos para web)
-RUN flutter config --no-analytics
-RUN flutter config --enable-web
+# Precache solo web
+RUN ./bin/flutter precache --web
 
-# Pre-descargar dependencias de Flutter sin verificar todo
-RUN flutter precache --web
-
-# Cambiar ownership para evitar problemas de permisos
-RUN chown -R 1000:1000 /usr/local/flutter
-
-# Cambiar a usuario no-root
-USER flutteruser
-
-# Configurar entorno de build
+# Trabajar en app
 WORKDIR /app
 
-# Copiar archivos del proyecto
-COPY --chown=flutteruser:flutteruser pubspec.yaml ./
-COPY --chown=flutteruser:flutteruser lib ./lib
-COPY --chown=flutteruser:flutteruser assets ./assets
-COPY --chown=flutteruser:flutteruser web ./web
-COPY --chown=flutteruser:flutteruser .env ./
-
-# Instalar dependencias
+# Copiar pubspec primero (para cache de dependencias)
+COPY pubspec.yaml pubspec.lock ./
 RUN flutter pub get
 
-# Build para web (SOLO web, sin verificar Android/iOS)
+# Copiar código (Dockerignore evita android/ios/)
+COPY lib/ ./lib/
+COPY web/ ./web/
+COPY assets/ ./assets/ 2>/dev/null || true
+
+# Build web
 RUN flutter build web \
     --release \
     --web-renderer html \
     --dart-define=API_BASE_URL=https://jht-transport-api.onrender.com \
-    --no-tree-shake-icons \
-    --verbose
+    --no-tree-shake-icons
 
-# Etapa final: Servir con Nginx
+# Etapa final
 FROM nginx:alpine
 
-# Copiar build de Flutter
+# Copiar build
 COPY --from=build /app/build/web /usr/share/nginx/html
 
-# Configuración Nginx optimizada para SPA
+# Config Nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Exponer puerto 10000
 EXPOSE 10000
 
-# Iniciar Nginx
 CMD ["nginx", "-g", "daemon off;"]
