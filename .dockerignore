@@ -53,3 +53,12 @@ Pods/
 # Test
 coverage/
 test/
+
+android/
+ios/
+linux/
+macos/
+windows/
+test/
+build/
+.dart_tool/
