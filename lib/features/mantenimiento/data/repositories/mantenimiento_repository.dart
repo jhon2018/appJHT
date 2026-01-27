@@ -10,7 +10,7 @@ class MantenimientoRepository {
   // Método para obtener la URL base (igual que en otros repositorios)
   String getBaseUrl() {
     if (kIsWeb) {
-      return 'http://localhost:7030';
+      return 'https://jht-transport-api.onrender.com';
     } else {
       // Para Android/iOS, usa la IP de tu computadora
       // Ejemplo: 'http://192.168.1.2:7030'

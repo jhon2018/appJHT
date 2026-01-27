@@ -35,7 +35,7 @@ Future<AccesorioDetalleModel> getAccesorioDetalle(int accId);
 
 // IMPLEMENTACIÓN (igual que en Vehicle)
 class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
-  final DevHttpClient httpClient;
+  final HttpClient httpClient;
 
   AccessoryRemoteDataSourceImpl({required this.httpClient});
 
@@ -54,7 +54,7 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
 
       String getBaseUrl() {
         if (kIsWeb) {
-          return 'http://localhost:7030';
+          return 'https://jht-transport-api.onrender.com';
         } else {
           return 'http://192.168.1.2:7030';
         }
@@ -104,7 +104,7 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
 
       String getBaseUrl() {
         if (kIsWeb) {
-          return 'http://localhost:7030';
+          return 'https://jht-transport-api.onrender.com';
         } else {
           return 'http://192.168.1.2:7030';
         }
@@ -151,7 +151,7 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
 
       String getBaseUrl() {
         if (kIsWeb) {
-          return 'http://localhost:7030';
+          return 'https://jht-transport-api.onrender.com';
         } else {
           return 'http://192.168.1.2:7030';
         }
@@ -215,7 +215,7 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
 
       String getBaseUrl() {
         if (kIsWeb) {
-          return 'http://localhost:7030';
+          return 'https://jht-transport-api.onrender.com';
         } else {
           return 'http://192.168.1.2:7030';
         }
@@ -262,7 +262,7 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
 
     String getBaseUrl() {
       if (kIsWeb) {
-        return 'http://localhost:7030';
+        return 'https://jht-transport-api.onrender.com';
       } else {
         return 'http://192.168.1.2:7030';
       }
@@ -292,7 +292,7 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
   Future<List<AccesorioModel>> listarAccesoriosPorVehiculo(int vehId) async {
     try {
       final token = await TokenService.getToken();
-      final baseUrl = kIsWeb ? 'http://localhost:7030' : 'http://192.168.1.2:7030';
+      final baseUrl = kIsWeb ? 'https://jht-transport-api.onrender.com' : 'http://192.168.1.2:7030';
 
       final response = await http.get(
         Uri.parse('$baseUrl/api/general/vehiculo/$vehId/accesorios'),
@@ -318,7 +318,7 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
   Future<AccesorioModel> obtenerDetalleAccesorio(int accId) async {
     try {
       final token = await TokenService.getToken();
-      final baseUrl = kIsWeb ? 'http://localhost:7030' : 'http://192.168.1.2:7030';
+      final baseUrl = kIsWeb ? 'https://jht-transport-api.onrender.com' : 'http://192.168.1.2:7030';
 
       final response = await http.get(
         Uri.parse('$baseUrl/api/general/accesorio/$accId'),
@@ -344,7 +344,7 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
 Future<AccesorioDetalleModel> getAccesorioDetalle(int accId) async {
   try {
     final token = await TokenService.getToken();
-    final baseUrl = kIsWeb ? 'http://localhost:7030' : 'http://192.168.1.2:7030';
+    final baseUrl = kIsWeb ? 'https://jht-transport-api.onrender.com' : 'http://192.168.1.2:7030';
 
     final response = await http.get(
       Uri.parse('$baseUrl/api/general/accesorio/$accId'),

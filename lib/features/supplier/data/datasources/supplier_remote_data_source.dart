@@ -7,13 +7,16 @@ import 'package:app_jht_front/features/supplier/data/models/tipo_telefono_model.
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:app_jht_front/core/network/base_remote_data_source.dart';
 
 abstract class SupplierRemoteDataSource {
   Future<SupplierRegistroResponse> registrarProveedor(SupplierRegistroDto dto);
 }
 
-class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
-  final DevHttpClient httpClient;
+class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource 
+    implements SupplierRemoteDataSource {
+  
+  final HttpClient httpClient;
 
   SupplierRemoteDataSourceImpl({required this.httpClient});
 
@@ -32,7 +35,7 @@ class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
 
       String getBaseUrl() {
         if (kIsWeb) {
-          return 'http://localhost:7030';
+          return 'https://jht-transport-api.onrender.com';
         } else {
           return 'http://192.168.1.2:7030';
         }
@@ -104,7 +107,7 @@ Future<List<TipoTelefonoModel>> getTiposTelefono() async {
 
     String getBaseUrl() {
       if (kIsWeb) {
-        return 'http://localhost:7030';
+        return 'https://jht-transport-api.onrender.com';
       } else {
         return 'http://192.168.1.2:7030';
       }

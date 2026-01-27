@@ -26,7 +26,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
      
      String getBaseUrl() {
       if (kIsWeb) {
-        return 'http://localhost:7030'; // Web funciona con localhost
+        return 'https://jht-transport-api.onrender.com'; // Web funciona con localhost
       } else {
         // Para móvil, usar IP de la laptop
         return 'http://192.168.1.2:7030'; // ← Cambia por tu IP y agregalo en el CORS

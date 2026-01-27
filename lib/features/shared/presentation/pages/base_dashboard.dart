@@ -429,7 +429,7 @@ class _BaseDashboardState extends State<BaseDashboard>
                 registrarVehiculoUseCase: RegistrarVehiculoUseCase(
                   repository: VehicleRepositoryImpl(
                     remoteDataSource: VehicleRemoteDataSourceImpl(
-                      httpClient: DevHttpClient(),
+                      httpClient: HttpClient(),
                     ),
                   ),
                 ),

@@ -31,7 +31,7 @@ import 'package:app_jht_front/features/conductor/domain/usecases/registrar_condu
 import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_bloc.dart';
 
 void main() {
-  // DevHttpClient.ignoreSslErrors(); // Ignorar errores SSL en desarrollo temporalmente
+  // HttpClient.ignoreSslErrors(); // Ignorar errores SSL en desarrollo temporalmente
 
   runApp(const MyApp());
 }
@@ -50,7 +50,7 @@ class MyApp extends StatelessWidget {
             registrarVehiculoUseCase: RegistrarVehiculoUseCase(
               repository: VehicleRepositoryImpl(
                 remoteDataSource: VehicleRemoteDataSourceImpl(
-                  httpClient: DevHttpClient(), // ← Agregado aquí
+                  httpClient: HttpClient(), // ← Agregado aquí
                 ),
               ),
             ),
@@ -61,7 +61,7 @@ class MyApp extends StatelessWidget {
           create: (context) => AccessoryBloc(
             repository: AccessoryRepositoryImpl(
               remoteDataSource: AccessoryRemoteDataSourceImpl(
-                httpClient: DevHttpClient(),
+                httpClient: HttpClient(),
               ),
             ),
           ),

@@ -33,7 +33,7 @@ class _SupplierPageState extends State<SupplierPage> {
         registrarSupplierUseCase: RegistrarSupplierUseCase(
           repository: SupplierRepositoryImpl(
             remoteDataSource: SupplierRemoteDataSourceImpl(
-              httpClient: DevHttpClient(),
+              httpClient: HttpClient(),
             ),
           ),
         ),
