@@ -4,11 +4,9 @@ RUN apt-get update && apt-get install -y \
     curl git unzip xz-utils ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Flutter
 RUN git clone https://github.com/flutter/flutter.git -b stable /flutter
 ENV PATH="/flutter/bin:${PATH}"
 
-# Solo web
 RUN flutter config --enable-web
 
 WORKDIR /app

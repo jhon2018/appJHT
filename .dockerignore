@@ -1,64 +1,28 @@
-.git
-.gitignore
-.vscode
-.idea
-*.iml
-*.log
-*.swp
-.DS_Store
-Thumbs.db
-
-# BLOQUEAR PLATAFORMAS MÓVILES (CRÍTICO)
-android/
-ios/
-linux/
-macos/
-windows/
-
-# Build outputs
-build/
+# Flutter / Dart
 .dart_tool/
 .packages
 .pub-cache/
-.pub/
-.flutter-plugins
-.flutter-plugins-dependencies
-.flutter/
+build/
 
-# Gradle y Android
-.gradle/
-gradle/
-gradlew
-gradlew.bat
-*.keystore
-*.jks
-
-# iOS
-Podfile
-Podfile.lock
-Pods/
-*.xcworkspace
-*.xcodeproj
-
-# Archivos grandes
-*.zip
-*.tar
-*.gz
-*.7z
-
-# Environment
-.env
-.env.local
-
-# Test
-coverage/
-test/
-
+# Platforms (CRÍTICO)
 android/
 ios/
 linux/
 macos/
 windows/
+
+# Tests & IDE
 test/
-build/
-.dart_tool/
+.idea/
+.vscode/
+
+# Git
+.git/
+.gitignore
+
+# Env
+.env
+
+# Metadata
+.metadata
+*.iml
