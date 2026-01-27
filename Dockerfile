@@ -1,5 +1,7 @@
 FROM ubuntu:22.04 AS build
 
+ENV TAR_OPTIONS=--no-same-owner
+
 RUN apt-get update && apt-get install -y \
     curl git unzip xz-utils ca-certificates \
     && rm -rf /var/lib/apt/lists/*
