@@ -7,8 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
+import 'package:app_jht_front/features/config/environment_config.dart';
+
 
 class AddSupplierModal extends StatefulWidget {
   final Function()? onSupplierAdded;
@@ -64,7 +65,7 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
 
   Future<void> _cargarTiposTelefono() async {
     try {
-      print('🟡 Cargando tipos de teléfono...');
+      print('🟡 Cargando tipos de teléfono...');  
 
       final String? token = await TokenService.getToken();
 
@@ -72,16 +73,9 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
         throw Exception('No hay token de autenticación.');
       }
 
-      String getBaseUrl() {
-        if (kIsWeb) {
-          return 'https://jht-transport-api.onrender.com';
-        } else {
-          return 'http://192.168.1.2:7030';
-        }
-      }
-
+      // ✅ Usando la URL base centralizada de EnvironmentConfig
       final response = await http.get(
-        Uri.parse('${getBaseUrl()}/api/admin/consulta_tipo_telefono'),
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/consulta_tipo_telefono'),
         headers: {
           'Authorization': 'Bearer $token',
           'accept': 'application/json',

@@ -1,7 +1,6 @@
-//Ruta: lib/features/conductor/data/datasources/conductor_remote_data_source.dart
+// Ruta: lib/features/conductor/data/datasources/conductor_remote_data_source.dart
 
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/features/conductor/data/models/conductor_registro_dto.dart';
@@ -11,6 +10,7 @@ import 'package:app_jht_front/features/conductor/data/models/persona_list_respon
 import 'package:app_jht_front/features/conductor/data/models/persona_detalle_response.dart';
 import 'package:app_jht_front/features/conductor/data/models/persona_actualizar_dto.dart';
 import 'package:app_jht_front/features/conductor/data/models/persona_actualizar_response.dart';
+import 'package:app_jht_front/features/config/environment_config.dart';
 
 abstract class ConductorRemoteDataSource {
   Future<ConductorRegistroResponse> registrarConductor(
@@ -41,16 +41,9 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
 
       print('🟡 Token obtenido: ${token.substring(0, 20)}...');
 
-      String getBaseUrl() {
-        if (kIsWeb) {
-          return 'https://jht-transport-api.onrender.com';
-        } else {
-          return 'http://192.168.1.2:7030';
-        }
-      }
-
+      // ✅ Usando EnvironmentConfig.baseUrl de forma global
       final response = await http.post(
-        Uri.parse('${getBaseUrl()}/api/admin/registrar_colaborador'),
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/registrar_colaborador'),
         headers: {
           'Content-Type': 'application/json',
           'accept': '*/*',
@@ -90,16 +83,9 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
         throw Exception('No hay token de autenticación.');
       }
 
-      String getBaseUrl() {
-        if (kIsWeb) {
-          return 'https://jht-transport-api.onrender.com';
-        } else {
-          return 'http://192.168.1.2:7030';
-        }
-      }
-
+      // ✅ Usando EnvironmentConfig.baseUrl de forma global
       final response = await http.get(
-        Uri.parse('${getBaseUrl()}/api/admin/consulta_tipo_telefono'),
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/consulta_tipo_telefono'),
         headers: {
           'Authorization': 'Bearer $token',
           'accept': 'application/json',
@@ -143,8 +129,6 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
       }
       return errorMessage;
     }
-
-    // SEGUNDO: Buscar otros campos posibles
     if (errorData['mensaje'] != null) return errorData['mensaje'].toString();
     if (errorData['message'] != null) return errorData['message'].toString();
 
@@ -170,14 +154,6 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
   @override
   Future<PersonaListResponse> listarPersonas() async {
     try {
-      String getBaseUrl() {
-        if (kIsWeb) {
-          return 'https://jht-transport-api.onrender.com';
-        } else {
-          return 'http://192.168.1.2:7030';
-        }
-      }
-
       print('🔵 Listando personas...');
 
       final String? token = await TokenService.getToken();
@@ -189,7 +165,7 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
       print('🟡 Token obtenido: ${token.substring(0, 20)}...');
 
       final response = await http.get(
-        Uri.parse('${getBaseUrl()}/api/admin/Listar-personas'),
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/Listar-personas'),
         headers: {
           'Authorization': 'Bearer $token',
           'accept': 'application/json',
@@ -208,9 +184,7 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
         throw Exception('No tienes permisos para listar personas.');
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(
-          'Error al listar personas: ${response.statusCode} - ${errorData['message']}',
-        );
+        throw Exception('Error al listar personas: ${errorData['message']}');
       }
     } catch (e) {
       print('❌ ERROR en listarPersonas: $e');
@@ -224,22 +198,11 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
       print('🔵 Obteniendo detalle de persona ID: $personaId');
 
       final String? token = await TokenService.getToken();
-      String getBaseUrl() {
-        if (kIsWeb) {
-          return 'https://jht-transport-api.onrender.com';
-        } else {
-          return 'http://192.168.1.2:7030';
-        }
-      }
+      if (token == null || token.isEmpty) throw Exception('No hay token.');
 
-      if (token == null || token.isEmpty) {
-        throw Exception('No hay token de autenticación.');
-      }
-
-      print('🟡 Token obtenido: ${token.substring(0, 20)}...');
-
+      // ✅ Usando EnvironmentConfig.baseUrl de forma global
       final response = await http.get(
-        Uri.parse('${getBaseUrl()}/api/admin/persona/$personaId'),
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/persona/$personaId'),
         headers: {
           'Authorization': 'Bearer $token',
           'accept': 'application/json',
@@ -281,24 +244,11 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
       );
 
       final String? token = await TokenService.getToken();
+      if (token == null || token.isEmpty) throw Exception('No hay token.');
 
-      if (token == null || token.isEmpty) {
-        throw Exception('No hay token de autenticación.');
-      }
-
-      print('🟡 Token obtenido: ${token.substring(0, 20)}...');
-
-      String getBaseUrl() {
-        if (kIsWeb) {
-          return 'https://jht-transport-api.onrender.com';
-        } else {
-          return 'http://192.168.1.2:7030';
-        }
-      }
-
+      // ✅ Usando EnvironmentConfig.baseUrl de forma global
       final response = await http.put(
-        // ✅ USAR PUT para actualizar
-        Uri.parse('${getBaseUrl()}/api/admin/actualizar-persona'),
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/actualizar-persona'),
         headers: {
           'Content-Type': 'application/json',
           'accept': '*/*',

@@ -1,6 +1,5 @@
 // lib/core/network/base_remote_data_source.dart
-import 'package:app_jht_front/config/environment_config.dart';
-import 'package:flutter/foundation.dart';
+import 'package:app_jht_front/features/config/environment_config.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 

@@ -1,17 +1,17 @@
 //Ruta: lib/features/conductor/presentation/widgets/add_conductor_modal.dart
 import 'dart:convert';
 import 'package:app_jht_front/features/conductor/data/models/persona_actualizar_response.dart';
-import 'package:app_jht_front/features/conductor/data/models/persona_model.dart';
 import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_event.dart';
 import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_bloc.dart';
 import 'package:app_jht_front/features/conductor/data/models/conductor_registro_dto.dart';
 import 'package:app_jht_front/features/supplier/data/models/tipo_telefono_model.dart';
+import 'package:app_jht_front/features/config/environment_config.dart';
+
 
 class AddConductorModal extends StatefulWidget {
   final Function()? onConductorAdded;
@@ -78,7 +78,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
 
   Future<void> _cargarTiposTelefono() async {
     try {
-      print('🟡 Cargando tipos de teléfono...');
+print('🟡 Cargando tipos de teléfono...');
 
       final String? token = await TokenService.getToken();
 
@@ -86,16 +86,9 @@ class _AddConductorModalState extends State<AddConductorModal> {
         throw Exception('No hay token de autenticación.');
       }
 
-      String getBaseUrl() {
-        if (kIsWeb) {
-          return 'https://jht-transport-api.onrender.com';
-        } else {
-          return 'http://192.168.1.2:7030';
-        }
-      }
-
+      // ✅ Usando EnvironmentConfig para centralizar la URL
       final response = await http.get(
-        Uri.parse('${getBaseUrl()}/api/admin/consulta_tipo_telefono'),
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/consulta_tipo_telefono'),
         headers: {
           'Authorization': 'Bearer $token',
           'accept': 'application/json',

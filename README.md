@@ -5,6 +5,7 @@ flutter run -d chrome
 flutter run -d web-server
 flutter run -d chrome --web-browser-flag "--ignore-certificate-errors" --web-browser-flag "--disable-web-security"
 flutter run -d web-server --web-port=5000
+flutter run -d web-server --web-port=5000 --dart-define=USE_LOCAL=true
 
 ## 2. Inicia el método de trabajo y crea las ramas
 git flow init
@@ -15,7 +16,7 @@ git flow feature start “Nombre del cambio”
 flutter clean
 flutter pub get  regenera si hay errores masivosçj
 flutter build apk
-
+build/app/outputs/flutter-apk/app-release.apk
 
 ## 4. SI AGREGAS DEPENCIAS Y NO AGARRAN 
 flutter pub add carousel_slider
