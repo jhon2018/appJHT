@@ -4,6 +4,8 @@ import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/features/supplier/data/models/supplier_registro_dto.dart';
 import 'package:app_jht_front/features/supplier/data/models/supplier_registro_response.dart';
 import 'package:app_jht_front/features/supplier/data/models/tipo_telefono_model.dart';
+import 'package:app_jht_front/features/config/environment_config.dart';
+
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
@@ -33,16 +35,9 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
       
       print('🟡 Token obtenido: ${token.substring(0, 20)}...');
 
-      String getBaseUrl() {
-        if (kIsWeb) {
-          return 'https://jht-transport-api.onrender.com';
-        } else {
-          return 'http://192.168.1.2:7030';
-        }
-      }
-
+      // ✅ Usando EnvironmentConfig.baseUrl de forma global
       final response = await http.post(
-        Uri.parse('${getBaseUrl()}/api/general/insertar-proveedor'),
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/general/insertar-proveedor'),
         headers: {
           'Content-Type': 'application/json', 
           'accept': '*/*',
@@ -95,46 +90,37 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
     return 'Error en el registro del proveedor';
   }
 
-Future<List<TipoTelefonoModel>> getTiposTelefono() async {
-  try {
-    print('🟡 Obteniendo tipos de teléfono...');
-    
-    final String? token = await TokenService.getToken();
-    
-    if (token == null || token.isEmpty) {
-      throw Exception('No hay token de autenticación.');
-    }
-
-    String getBaseUrl() {
-      if (kIsWeb) {
-        return 'https://jht-transport-api.onrender.com';
-      } else {
-        return 'http://192.168.1.2:7030';
+  Future<List<TipoTelefonoModel>> getTiposTelefono() async {
+    try {
+      print('🟡 Obteniendo tipos de teléfono...');
+      
+      final String? token = await TokenService.getToken();
+      
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación.');
       }
+
+      // ✅ Usando EnvironmentConfig.baseUrl de forma global
+      final response = await http.get(
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/consulta_tipo_telefono'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'accept': 'application/json',
+        },
+      );
+
+      print('🟡 Response status tipos teléfono: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        final data = responseData['data'] as List;
+        return data.map((item) => TipoTelefonoModel.fromJson(item)).toList();
+      } else {
+        throw Exception('Error al obtener tipos de teléfono: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ ERROR en getTiposTelefono: $e');
+      throw Exception('Error en getTiposTelefono: $e');
     }
-
-    final response = await http.get(
-      Uri.parse('${getBaseUrl()}/api/admin/consulta_tipo_telefono'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'accept': 'application/json',
-      },
-    );
-
-    print('🟡 Response status tipos teléfono: ${response.statusCode}');
-
-    if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
-      final data = responseData['data'] as List;
-      return data.map((item) => TipoTelefonoModel.fromJson(item)).toList();
-    } else {
-      throw Exception('Error al obtener tipos de teléfono: ${response.statusCode}');
-    }
-  } catch (e) {
-    print('❌ ERROR en getTiposTelefono: $e');
-    throw Exception('Error en getTiposTelefono: $e');
   }
-}
-
-
 }

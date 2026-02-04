@@ -6,9 +6,10 @@ import 'package:app_jht_front/core/network/http_client.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/features/vehicle/data/models/vehicle_registro_dto.dart';
 import 'package:app_jht_front/features/vehicle/data/models/vehicle_registro_response.dart';
+import 'package:app_jht_front/features/config/environment_config.dart';
+
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 
 abstract class VehicleRemoteDataSource {
   Future<VehicleRegistroResponse> registrarVehiculo(VehicleRegistroDto dto);
@@ -33,18 +34,13 @@ class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
       
       print('🟡 Token obtenido: ${token.substring(0, 20)}...'); // Log parcial del token
 
-      // 2. CONFIGURAR URL BASE (igual que en login)
-      String getBaseUrl() {
-        if (kIsWeb) {
-          return 'https://jht-transport-api.onrender.com'; // Web funciona con localhost
-        } else {
-          return 'http://192.168.1.2:7030'; // Móvil usa IP
-        }
-      }
+      // 2. CONFIGURACIÓN DE URL CENTRALIZADA
+      // Se eliminó getBaseUrl() local para usar EnvironmentConfig.baseUrl
 
       // 3. LLAMADA REAL AL API CON AUTENTICACIÓN
       final response = await http.post(
-        Uri.parse('${getBaseUrl()}/api/general/registro_vehiculo'),
+        // ✅ Cambio a URL Global unificada
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/general/registro_vehiculo'),
         headers: {
           'Content-Type': 'application/json', 
           'accept': '*/*',

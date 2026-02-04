@@ -1,32 +1,47 @@
-// lib/config/environment_config.dart
-abstract class EnvironmentConfig {
-  // URL base según el entorno
+import 'package:flutter/foundation.dart';
+
+class EnvironmentConfig {
+  static const String _urlProduccion = 'https://jht-transport-api.onrender.com';
+  static const String _urlLocalWeb = 'http://localhost:7030';
+  static const String _urlLocalMovilEmulador = 'http://10.0.2.2:7030';
+
   static String get baseUrl {
-    // En producción (Render) usamos variable de entorno
-    const String envUrl = String.fromEnvironment(
-      'API_BASE_URL',
-      defaultValue: 'https://jht-transport-api.onrender.com',
-    );
-    
-    // Para desarrollo local, puedes sobreescribir aquí
-    const bool isDebug = bool.fromEnvironment('dart.vm.product') == false;
-    
-    if (isDebug) {
-      // Cambia esto según necesites para desarrollo
-      return 'http://localhost:7030'; // Tu backend local
+    // 1. Variable de entorno para forzar el uso de LOCAL 
+    // Se activa lanzando: flutter run -d chrome --dart-define=USE_LOCAL=true
+    const bool useLocal = bool.fromEnvironment('USE_LOCAL', defaultValue: false);
+
+    if (kReleaseMode) return _urlProduccion;
+
+    if (kIsWeb) {
+      // SI NO activaste explicitamente "USE_LOCAL", por defecto usa PRODUCCIÓN
+      // Esto soluciona que el navegador siempre intente ir a localhost por error.
+      if (!useLocal) {
+        debugPrint('🌐 Web Local: Conectando a PRODUCCIÓN (Render)');
+        return _urlProduccion;
+      }
+      debugPrint('💻 Web Local: Conectando a BACKEND LOCAL (7030)');
+      return _urlLocalWeb;
+    } else {
+      // Para móvil (Emulador)
+      if (!useLocal) return _urlProduccion;
+      return _urlLocalMovilEmulador;
     }
-    
-    return envUrl;
   }
-  
+
+  // 3. Rutas Base
   static String get apiUrl => '$baseUrl/api';
-  
-  // Método auxiliar para desarrollo vs producción
   static bool get isProduction => baseUrl.contains('onrender.com');
-  
-  // Endpoints específicos (ajusta según tu backend)
-  static String get loginEndpoint => '$apiUrl/auth/login';
-  static String get registerEndpoint => '$apiUrl/auth/register';
-  static String get listarPersonasEndpoint => '$apiUrl/admin/Listar-personas';
-  // Agrega más endpoints aquí...
+
+  // 4. Todos tus Endpoints Unificados
+  // Auth
+  static String get authApi => '$apiUrl/Auth'; 
+  static String get loginEndpoint => '$authApi/login';
+  static String get registerEndpoint => '$authApi/register';
+
+  // Admin
+  static String get adminApi => '$apiUrl/admin';
+  static String get listarPersonasEndpoint => '$adminApi/Listar-personas';
+
+  // General
+  static String get generalApi => '$apiUrl/general';
 }

@@ -26,7 +26,7 @@
 // lib/core/network/http_client.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../config/environment_config.dart'; // Importa la nueva configuración
+import 'package:app_jht_front/features/config/environment_config.dart';
 
 class HttpClient {
   final String _baseUrl;

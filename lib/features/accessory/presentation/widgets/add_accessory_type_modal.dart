@@ -7,6 +7,8 @@ import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/features/accessory/presentation/bloc/accessory_bloc.dart';
 import 'package:app_jht_front/features/accessory/data/models/segmento_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_registro_dto.dart';
+import 'package:app_jht_front/features/config/environment_config.dart';
+
 
 class AddAccessoryTypeModal extends StatefulWidget {
   final Function()? onAccessoryTypeAdded;
@@ -66,30 +68,23 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
 
     try {
       print('🟡 Cargando segmentos...');
-      
-      final String? token = await TokenService.getToken();
-      
-      if (token == null || token.isEmpty) {
-        throw Exception('No hay token de autenticación.');
-      }
+            
+            final String? token = await TokenService.getToken();
+            
+            if (token == null || token.isEmpty) {
+              throw Exception('No hay token de autenticación.');
+            }
 
-      String getBaseUrl() {
-        if (kIsWeb) {
-          return 'https://jht-transport-api.onrender.com';
-        } else {
-          return 'http://192.168.1.2:7030';
-        }
-      }
+            // ✅ Eliminada la función local getBaseUrl() para usar la centralizada
+            final response = await http.get(
+              Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/listar_segmento_accesorio'),
+              headers: {
+                'Authorization': 'Bearer $token',
+                'accept': 'application/json',
+              },
+            );
 
-      final response = await http.get(
-        Uri.parse('${getBaseUrl()}/api/admin/listar_segmento_accesorio'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'accept': 'application/json',
-        },
-      );
-
-      print('🟡 Response status segmentos: ${response.statusCode}');
+            print('🟡 Response status segmentos: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
