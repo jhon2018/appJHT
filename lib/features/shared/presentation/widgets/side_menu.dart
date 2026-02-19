@@ -17,19 +17,21 @@ class SideMenu extends StatelessWidget {
   });
 
   // Items del menú según el nivel de acceso
-  List<MenuItem> _getMenuItems() {
-    final baseItems = [
-      MenuItem(icon: '🔧', title: 'Mantenimiento', enabled: userRole == 'Administrador'),
-      MenuItem(icon: '🚗', title: 'Vehículo', enabled: userRole == 'Administrador'), 
-      MenuItem(icon: '🏢', title: 'Proveedor', enabled: userRole == 'Administrador'), 
-      MenuItem(icon: '👨‍💼', title: 'Conductores', enabled: userRole == 'Administrador'),
-      MenuItem(icon: '🔩', title: 'Accesorios', enabled: userRole == 'Administrador'),
-      MenuItem(icon: '❓', title: 'Ayuda', enabled: userRole == 'Administrador'),
-    ];
-    
-    return baseItems;
-  }
-
+List<MenuItem> _getMenuItems() {
+  // Verificar si el usuario es admin (Root o Administrador)
+  final bool isAdmin = userRole == 'Administrador' || userRole == 'Root';
+  
+  final baseItems = [
+    MenuItem(icon: '🔧', title: 'Mantenimiento', enabled: isAdmin),
+    MenuItem(icon: '🚗', title: 'Vehículo', enabled: isAdmin), 
+    MenuItem(icon: '🏢', title: 'Proveedor', enabled: isAdmin), 
+    MenuItem(icon: '👨‍💼', title: 'Conductores', enabled: isAdmin),
+    MenuItem(icon: '🔩', title: 'Accesorios', enabled: isAdmin),
+    MenuItem(icon: '❓', title: 'Ayuda', enabled: isAdmin),
+  ];
+  
+  return baseItems;
+}
   @override
   Widget build(BuildContext context) {
     return Container(
