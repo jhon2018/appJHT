@@ -1,5 +1,7 @@
 // lib/features/shared/presentation/pages/base_dashboard.dart
+import 'package:app_jht_front/core/network/http_client.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
+import 'package:app_jht_front/features/accessory/presentation/pages/accessory_page.dart';
 import 'package:app_jht_front/features/conductor/data/datasources/conductor_remote_data_source.dart';
 import 'package:app_jht_front/features/conductor/data/repositories/conductor_repository_impl.dart';
 import 'package:app_jht_front/features/conductor/domain/usecases/actualizar_persona_usecase.dart';
@@ -13,29 +15,27 @@ import 'package:app_jht_front/features/mantenimiento/data/repositories/mantenimi
 import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_bloc.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_event.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/pages/mantenimiento_page.dart';
-import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
-
+import 'package:app_jht_front/features/shared/presentation/mixins/dashboard_responsive_mixin.dart';
+import 'package:app_jht_front/features/supplier/presentation/pages/supplier_page.dart';
+import 'package:app_jht_front/features/vehicle/data/datasources/vehicle_remote_data_source.dart';
+import 'package:app_jht_front/features/vehicle/data/repositories/vehicle_repository_impl.dart';
+import 'package:app_jht_front/features/vehicle/domain/usecases/registrar_vehiculo_usecase.dart';
+import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
 import 'package:app_jht_front/features/vehicle/presentation/pages/vehicle_page.dart';
 import 'package:flutter/material.dart';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
-import 'package:app_jht_front/features/vehicle/domain/usecases/registrar_vehiculo_usecase.dart';
-import 'package:app_jht_front/features/vehicle/data/repositories/vehicle_repository_impl.dart';
-import 'package:app_jht_front/features/vehicle/data/datasources/vehicle_remote_data_source.dart';
-import 'package:app_jht_front/core/network/http_client.dart';
-
-import 'package:app_jht_front/features/accessory/presentation/pages/accessory_page.dart';
-import 'package:app_jht_front/features/supplier/presentation/pages/supplier_page.dart';
+import '../widgets/side_menu.dart';
 
 class BaseDashboard extends StatefulWidget {
   final String userName;
   final String userRole;
+  final Widget Function(BuildContext, bool isDesktop)? contentBuilder;
 
   const BaseDashboard({
     super.key,
     required this.userName,
     required this.userRole,
+    this.contentBuilder, // ← AHORA ES OPCIONAL
   });
 
   @override
@@ -43,17 +43,15 @@ class BaseDashboard extends StatefulWidget {
 }
 
 class _BaseDashboardState extends State<BaseDashboard>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, DashboardResponsiveMixin {
   bool _isMenuOpen = false;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _slideAnimation;
-  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -65,10 +63,6 @@ class _BaseDashboardState extends State<BaseDashboard>
 
     _slideAnimation = Tween<double>(begin: -300, end: 0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
   }
 
@@ -98,24 +92,29 @@ class _BaseDashboardState extends State<BaseDashboard>
 
   @override
   Widget build(BuildContext context) {
+    final bool isDesktopDevice = isDesktop(context);
+    
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
           // Contenido principal
-          _buildMainContent(),
+          _buildMainContent(isDesktopDevice),
 
-          // Overlay oscuro
-          if (_isMenuOpen) _buildOverlay(),
+          // Overlay oscuro (solo móvil/tablet)
+          if (_isMenuOpen && !isDesktopDevice) _buildOverlay(),
 
-          // Menú lateral
-          _buildSideMenu(),
+          // Menú lateral (drawer para móvil, sidebar para desktop)
+          if (isDesktopDevice)
+            _buildDesktopSideMenu()
+          else
+            _buildMobileSideMenu(),
         ],
       ),
     );
   }
 
-  Widget _buildMainContent() {
+  Widget _buildMainContent(bool isDesktopDevice) {
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
@@ -125,14 +124,13 @@ class _BaseDashboardState extends State<BaseDashboard>
             color: Colors.white,
             child: Column(
               children: [
-                // Header - ESTILO JHT TRANSPORT
-                _buildHeader(),
-
-                // Contenido
+                _buildHeader(isDesktopDevice),
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: _buildContent(),
+                    padding: EdgeInsets.all(isDesktopDevice ? 24 : 16),
+                    child: widget.contentBuilder != null
+                        ? widget.contentBuilder!(context, isDesktopDevice) // ← Usa el contentBuilder si existe
+                        : _buildDefaultContent(), // ← Muestra el dashboard genérico si no hay contentBuilder
                   ),
                 ),
               ],
@@ -143,10 +141,13 @@ class _BaseDashboardState extends State<BaseDashboard>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isDesktopDevice) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktopDevice ? 32 : 20,
+        vertical: isDesktopDevice ? 20 : 16,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Colors.grey[300]!, width: 1)),
@@ -157,7 +158,7 @@ class _BaseDashboardState extends State<BaseDashboard>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'JHT TRANSPORT \n COMPANY',
+              'JHT TRANSPORT\nCOMPANY',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -165,44 +166,57 @@ class _BaseDashboardState extends State<BaseDashboard>
                 letterSpacing: 1.0,
               ),
             ),
-
-            InkWell(
-              onTap: _toggleMenu,
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                width: 40,
-                height: 40,
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      width: 4,
-                      height: 4,
-                      decoration: const BoxDecoration(
-                        color: Colors.black87,
-                        shape: BoxShape.circle,
-                      ),
+            Row(
+              children: [
+                if (isDesktopDevice) ...[
+                  Text(
+                    'Bienvenido, ${widget.userName}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
                     ),
-                    Container(
-                      width: 4,
-                      height: 4,
-                      decoration: const BoxDecoration(
-                        color: Colors.black87,
-                        shape: BoxShape.circle,
-                      ),
+                  ),
+                  const SizedBox(width: 20),
+                ],
+                InkWell(
+                  onTap: _toggleMenu,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 4,
+                          decoration: const BoxDecoration(
+                            color: Colors.black87,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        Container(
+                          width: 4,
+                          height: 4,
+                          decoration: const BoxDecoration(
+                            color: Colors.black87,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        Container(
+                          width: 4,
+                          height: 4,
+                          decoration: const BoxDecoration(
+                            color: Colors.black87,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
                     ),
-                    Container(
-                      width: 4,
-                      height: 4,
-                      decoration: const BoxDecoration(
-                        color: Colors.black87,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -210,7 +224,8 @@ class _BaseDashboardState extends State<BaseDashboard>
     );
   }
 
-  Widget _buildContent() {
+  // ✅ DASHBOARD GENÉRICO POR DEFECTO (cuando se usa BaseDashboard directamente)
+  Widget _buildDefaultContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -226,7 +241,6 @@ class _BaseDashboardState extends State<BaseDashboard>
             ),
           ),
         ),
-
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -256,7 +270,6 @@ class _BaseDashboardState extends State<BaseDashboard>
             ),
           ],
         ),
-
         const SizedBox(height: 10),
         const Text(
           'ESTADÍSTICAS RÁPIDAS',
@@ -268,7 +281,6 @@ class _BaseDashboardState extends State<BaseDashboard>
           ),
         ),
         const SizedBox(height: 16),
-
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -282,7 +294,6 @@ class _BaseDashboardState extends State<BaseDashboard>
             _buildStatCard('Alertas', '2', Icons.warning),
           ],
         ),
-
         const SizedBox(height: 40),
         Container(
           width: double.infinity,
@@ -388,14 +399,33 @@ class _BaseDashboardState extends State<BaseDashboard>
     );
   }
 
-  Widget _buildOverlay() {
-    return GestureDetector(
-      onTap: _closeMenu,
-      child: Container(color: Colors.black.withOpacity(0.5)),
+  Widget _buildDesktopSideMenu() {
+    return Positioned(
+      left: 0,
+      top: 0,
+      bottom: 0,
+      child: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(_isMenuOpen ? 0 : -280, 0),
+            child: SideMenu(
+              userName: widget.userName,
+              userRole: widget.userRole,
+              onClose: _closeMenu,
+              onItemSelected: (itemTitle) {
+                _closeMenu();
+                _showNavigationMessage(itemTitle);
+                _navigateToPage(itemTitle);
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildSideMenu() {
+  Widget _buildMobileSideMenu() {
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
@@ -416,7 +446,14 @@ class _BaseDashboardState extends State<BaseDashboard>
     );
   }
 
-  // FUNCIÓN QUE FALTABA - AGREGADA
+  Widget _buildOverlay() {
+    return GestureDetector(
+      onTap: _closeMenu,
+      child: Container(color: Colors.black.withOpacity(0.5)),
+    );
+  }
+
+  // ✅ FUNCIÓN DE NAVEGACIÓN (se mantiene igual)
   void _navigateToPage(String pageName) {
     switch (pageName) {
       case 'Vehículo':
@@ -425,7 +462,6 @@ class _BaseDashboardState extends State<BaseDashboard>
           MaterialPageRoute(
             builder: (_) => BlocProvider(
               create: (context) => VehicleBloc(
-                // ← NUEVA INSTANCIA
                 registrarVehiculoUseCase: RegistrarVehiculoUseCase(
                   repository: VehicleRepositoryImpl(
                     remoteDataSource: VehicleRemoteDataSourceImpl(
@@ -458,13 +494,11 @@ class _BaseDashboardState extends State<BaseDashboard>
           ),
         );
         break;
-      // En base_dashboard.dart
       case 'Proveedor':
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => SupplierPage(
-              // ← QUITA EL BlocProvider de aquí
               userName: widget.userName,
               userRole: widget.userRole,
             ),
@@ -476,7 +510,6 @@ class _BaseDashboardState extends State<BaseDashboard>
           context,
           MaterialPageRoute(
             builder: (_) {
-              // Crear las dependencias
               final remoteDataSource = ConductorRemoteDataSourceImpl();
               final repository = ConductorRepositoryImpl(
                 remoteDataSource: remoteDataSource,
@@ -520,12 +553,10 @@ class _BaseDashboardState extends State<BaseDashboard>
         );
         break;
       case 'Ayuda':
-        // Navigator.push(context, MaterialPageRoute(builder: (_) => HelpPage()));
         _showNotImplementedMessage(pageName);
         break;
       default:
         _showNotImplementedMessage(pageName);
-        //imprime en consola
         print('Navegación a $pageName no implementada.');
     }
   }
@@ -545,7 +576,7 @@ class _BaseDashboardState extends State<BaseDashboard>
       SnackBar(
         content: Text('Navegando a: $pageName'),
         backgroundColor: const Color(0xFF303366),
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 1),
       ),
     );
   }
@@ -569,7 +600,7 @@ class _BaseDashboardState extends State<BaseDashboard>
             ),
           ),
           content: Text(
-            '¿Estás seguro usuario ${widget.userName}? ¿que deseas cerrar sesión?',
+            '¿Estás seguro usuario ${widget.userName}? ¿deseas cerrar sesión?',
             style: TextStyle(fontSize: 14, color: Colors.black87),
           ),
           actions: [
@@ -623,12 +654,4 @@ class _BaseDashboardState extends State<BaseDashboard>
       );
     }
   }
-}
-
-class MenuItem {
-  final String icon;
-  final String title;
-  final bool enabled;
-
-  MenuItem({required this.icon, required this.title, required this.enabled});
 }

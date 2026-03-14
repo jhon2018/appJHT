@@ -52,44 +52,64 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // MÉTODO DE NAVEGACIÓN COMÚN PARA WEB Y MÓVIL - ACTUALIZADO
-  void _handleLoginSuccess(BuildContext context, LoginState state) {
-    print(' 1 Login exitoso! Navegando...');
-    print('Estado actual: $state');
-    print('cargo: ${state.cargo}');
-    print('usuario: ${state.usuario}');
-    print('error: ${state.error}');
+void _handleLoginSuccess(BuildContext context, LoginState state) {
+  print('✅ Login exitoso! Navegando...');
+  print('Estado actual: $state');
+  print('cargo: ${state.cargo}');
+  print('usuario: ${state.usuario}');
 
-    // Usar WidgetsBinding para asegurar que el contexto esté disponible
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Navegación por rol
-      if (state.cargo == 'Root' || state.cargo == 'Administrador') {
-        // Admin
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const AdminDashboard()),
-        );
-      } else if (state.cargo == 'Conductor') {
-        // Conductor
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const ConductorDashboard()),
-        );
-      } else {
-        // Rol no reconocido
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Tu Usuario no tiene un rol asignado, comunicate con el administrador de jht transport.',
-            ),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 5),
-          ),
-        );
-      }
-
-      // Limpiar campos después del login exitoso
-      _usernameController.clear();
-      _passwordController.clear();
-    });
+  // Validar que tengamos los datos necesarios
+  if (state.cargo == null || state.usuario == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Error: Datos de usuario incompletos'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
   }
+
+  // Usar WidgetsBinding para asegurar que el contexto esté disponible
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Navegación por rol
+    if (state.cargo == 'Root' || state.cargo == 'Administrador') {
+      // Admin - ✅ CORREGIDO: Usamos el operador ! porque ya validamos que no es null
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => AdminDashboard(
+            userName: state.usuario!,
+            userRole: state.cargo!,
+          ),
+        ),
+      );
+    } else if (state.cargo == 'Conductor') {
+      // Conductor - ✅ CORREGIDO: Usamos el operador ! porque ya validamos que no es null
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => ConductorDashboard(
+            userName: state.usuario!,
+            userRole: state.cargo!,
+          ),
+        ),
+      );
+    } else {
+      // Rol no reconocido
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Tu Usuario no tiene un rol asignado, comunicate con el administrador de jht transport.',
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 5),
+        ),
+      );
+    }
+
+    // Limpiar campos después del login exitoso
+    _usernameController.clear();
+    _passwordController.clear();
+  });
+}
 
   void _handleLoginError(BuildContext context, String error) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
