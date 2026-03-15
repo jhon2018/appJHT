@@ -31,6 +31,8 @@ class _ConductorPageState extends State<ConductorPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _horizontalScrollController = ScrollController();
   bool _isLoadingDetalle = false;
+  int _currentPage = 1;
+final int _itemsPerPage = 5; // Tu requerimiento de 5 registros por página
 
   @override
   void initState() {
@@ -72,33 +74,46 @@ class _ConductorPageState extends State<ConductorPage> {
   }
 
 
-void _openPersonaDetalleModal(PersonaModel persona) {
-  showDialog(
+void _openPersonaDetalleModal(PersonaModel persona) async { // ⬅️ Añadimos async
+  // 1. Disparamos la petición ANTES de abrir nada
+  final conductorBloc = context.read<ConductorBloc>();
+  conductorBloc.add(ConductorEvent.obtenerPersonaDetalle(personaId: persona.personaId));
+
+  // 2. Abrimos el modal de "Cargando"
+  await showDialog( // ⬅️ Añadimos await aquí para controlar el flujo
     context: context,
     barrierDismissible: false,
-    builder: (dialogContext) { // Usamos un context local del builder
-      context.read<ConductorBloc>().add(
-            ConductorEvent.obtenerPersonaDetalle(personaId: persona.personaId),
-          );
-
+    builder: (dialogContext) {
       return BlocListener<ConductorBloc, ConductorState>(
+        bloc: conductorBloc, 
         listenWhen: (previous, current) => current.maybeWhen(
           personaDetalleCargado: (_) => true,
           personaDetalleError: (_) => true,
           orElse: () => false,
         ),
-        listener: (context, state) {
-          // Cerramos el diálogo de carga usando el context del builder original
-          Navigator.of(dialogContext).pop(); 
+        listener: (context, state) async { // ⬅️ Listener async para esperar el modal real
+          // 3. Al recibir respuesta, cerramos el diálogo de "Cargando"
+          if (Navigator.of(dialogContext).canPop()) {
+            Navigator.of(dialogContext).pop();
+          }
 
           state.whenOrNull(
-            personaDetalleCargado: (personaDetalle) {
-              if (!mounted) return;
-              showDialog(
+            personaDetalleCargado: (personaDetalle) async {
+              // 4. Abrimos el modal real y ESPERAMOS a que se cierre
+              await showDialog(
                 context: context,
-                barrierDismissible: false,
-                builder: (context) => PersonaDetalleModal(persona: personaDetalle),
+                barrierDismissible: false, 
+                builder: (context) => PopScope(
+                  canPop: true, // ⬅️ Cambiado a true para permitir el cierre controlado
+                  child: PersonaDetalleModal(persona: personaDetalle),
+                ),
               );
+
+              // 5. CLAVE: Cuando el modal real se cierra, restauramos la lista
+              // Esto hace que la paginación y la tabla vuelvan a aparecer.
+              if (mounted) {
+                conductorBloc.add(const ConductorEvent.listarPersonas());
+              }
             },
             personaDetalleError: (mensaje) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -107,102 +122,113 @@ void _openPersonaDetalleModal(PersonaModel persona) {
             },
           );
         },
-      
-          child: AlertDialog(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            content: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(color: Color(0xFF303366)),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Cargando detalles de ${persona.nombreCorto}...',
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                ],
+        child: AlertDialog(
+          backgroundColor: Colors.black.withOpacity(0.8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: Colors.white),
+              const SizedBox(height: 16),
+              Text(
+                'Cargando detalles de\n${persona.nombreCorto}...',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
               ),
-            ),
+            ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
   
 void _mostrarOpcionEditar(PersonaModel persona) {
-    // 1. Mostramos un diálogo de carga (Loading)
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        // 2. Disparamos el evento para obtener el detalle real de la API
-        context.read<ConductorBloc>().add(
-              ConductorEvent.obtenerPersonaDetalle(personaId: persona.personaId),
-            );
+  // Guardamos la referencia del Bloc antes de entrar a contextos de diálogos
+  final conductorBloc = context.read<ConductorBloc>();
 
-        return BlocListener<ConductorBloc, ConductorState>(
-          listenWhen: (previous, current) => current.maybeWhen(
-            personaDetalleCargado: (_) => true,
-            personaDetalleError: (_) => true,
-            orElse: () => false,
-          ),
-          listener: (context, state) {
-            state.whenOrNull(
-              personaDetalleCargado: (personaDetalleCompleta) {
-                Navigator.of(context).pop(); // Cerramos el loading
-                
-                // 3. AQUÍ ESTÁ LA CORRECCIÓN:
-                // Pasamos 'persona' y el 'dataSource' que pide el constructor
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (context) => EditarPersonaModal(
-                    persona: personaDetalleCompleta,
-                    // dataSource: context.read<ConductorRemoteDataSource>(), // <--- ESTO ES LO QUE FALTABA
-                    dataSource: widget.dataSource,
-                  ),
-                );
-              },
-              personaDetalleError: (mensaje) {
-                Navigator.of(context).pop(); // Cerramos el loading
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error al obtener datos: $mensaje'), backgroundColor: Colors.red),
-                );
-              },
-            );
-          },
-          child: AlertDialog(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            content: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(color: Colors.white),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Preparando edición de ${persona.nombreCorto}...',
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                ],
-              ),
+  // 1. Mostramos el diálogo de carga inicial
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) {
+      // 2. Disparamos el evento para obtener el detalle real
+      conductorBloc.add(
+        ConductorEvent.obtenerPersonaDetalle(personaId: persona.personaId),
+      );
+
+      return BlocListener<ConductorBloc, ConductorState>(
+        bloc: conductorBloc,
+        listenWhen: (previous, current) => current.maybeWhen(
+          personaDetalleCargado: (_) => true,
+          personaDetalleError: (_) => true,
+          orElse: () => false,
+        ),
+        listener: (context, state) {
+          state.whenOrNull(
+            personaDetalleCargado: (personaDetalleCompleta) async {
+              // Cerramos el loading circular pequeño
+              if (Navigator.of(dialogContext).canPop()) {
+                Navigator.of(dialogContext).pop();
+              }
+
+              // 3. Abrimos el modal de Edición y ESPERAMOS a que se cierre
+              await showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => EditarPersonaModal(
+                  persona: personaDetalleCompleta,
+                  dataSource: widget.dataSource,
+                ),
+              );
+
+              // 4. AL CERRAR EL MODAL: Disparamos la recarga de la lista.
+              // Esto hará que el Bloc emita 'personasCargando' y tu 
+              // tabla muestre el widget '_buildLoadingIndicator()'
+              if (mounted) {
+                conductorBloc.add(const ConductorEvent.listarPersonas());
+              }
+            },
+            personaDetalleError: (mensaje) {
+              if (Navigator.of(dialogContext).canPop()) {
+                Navigator.of(dialogContext).pop();
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error al obtener datos: $mensaje'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            },
+          );
+        },
+        child: AlertDialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          content: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: Colors.white),
+                const SizedBox(height: 16),
+                Text(
+                  'Preparando edición de ${persona.nombreCorto}...',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ],
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   @override
   void dispose() {
@@ -516,24 +542,41 @@ void _mostrarOpcionEditar(PersonaModel persona) {
   }
 
 Widget _buildResponsiveTable(bool isMobile) {
-    return BlocBuilder<ConductorBloc, ConductorState>(
-      builder: (context, state) {
-        // Usamos maybeWhen para ignorar los estados de "actualización" que no afectan a la tabla
-        return state.maybeWhen(
-          personasCargadas: (personas) => _buildDataTable(personas, isMobile),
-          personasCargando: () => _buildLoadingIndicator(),
-          error: (message) => _buildErrorWidget(message),
-          // Si está haciendo cualquier otra cosa (como actualizar), seguimos mostrando la tabla
-          orElse: () => _buildLoadingIndicator(),
-        );
-      },
-    );
-  }
+  return BlocBuilder<ConductorBloc, ConductorState>(
+    buildWhen: (previous, current) => current.maybeWhen(
+      personasCargadas: (_) => true,
+      personasCargando: () => true,
+      personaDetalleCargado: (_) => true,
+      error: (_) => true,
+      orElse: () => false, 
+    ),
+    builder: (context, state) {
+      return state.maybeWhen(
+        // CUANDO ESTÁ CARGANDO: Usamos el nuevo widget
+        personasCargando: () => _buildLoadingIndicator(),
+        
+        // CUANDO CARGÓ: Segmentamos para la paginación y mostramos la tabla
+        personasCargadas: (allPersonas) {
+          final int startIndex = (_currentPage - 1) * _itemsPerPage;
+          final int endIndex = startIndex + _itemsPerPage;
+          final List<PersonaModel> pagedPersonas = allPersonas.length > startIndex
+              ? allPersonas.sublist(startIndex, 
+                  endIndex > allPersonas.length ? allPersonas.length : endIndex)
+              : [];
+          return _buildDataTable(pagedPersonas, isMobile);
+        },
+        
+        error: (message) => _buildErrorWidget(message),
+        orElse: () => const SizedBox.shrink(),
+      );
+    },
+  );
+}
 
   Widget _buildDataTable(List<PersonaModel> personas, bool isMobile) {
     if (personas.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(40),
+        padding: const EdgeInsets.all(60),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.grey[300]!),
@@ -601,7 +644,7 @@ Widget _buildResponsiveTable(bool isMobile) {
         ),
         DataColumn(
           label: SizedBox(
-            width: 130,
+            width: 140,
             child: Text(
               'Nombre Apellido',
               style: TextStyle(
@@ -640,7 +683,7 @@ Widget _buildResponsiveTable(bool isMobile) {
         ),
         DataColumn(
           label: SizedBox(
-            width: 100,
+            width: 110,
             child: Text(
               'Fecha Ingreso',
               style: TextStyle(
@@ -653,7 +696,7 @@ Widget _buildResponsiveTable(bool isMobile) {
         ),
         DataColumn(
           label: SizedBox(
-            width: 50,
+            width: 70,
             child: Text(
               'Detalle',
               style: TextStyle(
@@ -666,7 +709,7 @@ Widget _buildResponsiveTable(bool isMobile) {
         ),
         DataColumn(
           label: SizedBox(
-            width: 50,
+            width: 70,
             child: Text(
               'Editar',
               style: TextStyle(
@@ -721,7 +764,7 @@ Widget _buildResponsiveTable(bool isMobile) {
         ),
         DataColumn(
           label: SizedBox(
-            width: 120,
+            width: 100,
             child: Text(
               'Teléfono',
               style: TextStyle(
@@ -734,7 +777,7 @@ Widget _buildResponsiveTable(bool isMobile) {
         ),
         DataColumn(
           label: SizedBox(
-            width: 140,
+            width: 100,
             child: Text(
               'Fecha Ingreso',
               style: TextStyle(
@@ -747,7 +790,7 @@ Widget _buildResponsiveTable(bool isMobile) {
         ),
         DataColumn(
           label: SizedBox(
-            width: 80,
+            width: 60,
             child: Text(
               'Detalle',
               style: TextStyle(
@@ -834,98 +877,124 @@ Widget _buildResponsiveTable(bool isMobile) {
     );
   }
 
-  Widget _buildPagination() {
-    return BlocBuilder<ConductorBloc, ConductorState>(
-      builder: (context, state) {
-        int itemCount = 0;
-        
-        state.whenOrNull(
-          personasCargadas: (personas) => itemCount = personas.length,
-        );
+Widget _buildPagination() {
+  return BlocBuilder<ConductorBloc, ConductorState>(
+    builder: (context, state) {
+      int itemCount = 0;
+      
+      state.whenOrNull(
+        personasCargadas: (personas) => itemCount = personas.length,
+      );
 
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    itemCount > 0
-                        ? 'Mostrando 1 al $itemCount de $itemCount personas'
-                        : 'No hay datos para mostrar',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                  ),
-                  Row(
-                    children: [
-                      Text(
-                        'Por página:',
+      // 1. Cálculo del total de páginas
+      final int totalPages = (itemCount / _itemsPerPage).ceil();
+      
+      // 2. Cálculo del rango actual para el texto descriptivo
+      final int firstItemIndex = itemCount > 0 ? ((_currentPage - 1) * _itemsPerPage) + 1 : 0;
+      final int lastItemIndex = (_currentPage * _itemsPerPage) > itemCount 
+          ? itemCount 
+          : (_currentPage * _itemsPerPage);
+
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  itemCount > 0
+                      ? 'Mostrando $firstItemIndex al $lastItemIndex de $itemCount personas'
+                      : 'No hay datos para mostrar',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
+                Row(
+                  children: [
+                    Text(
+                      'Por página:',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey[400]!),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '$_itemsPerPage', // Muestra 5 dinámicamente
                         style: TextStyle(color: Colors.grey[600], fontSize: 12),
                       ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey[400]!),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '10',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // BOTÓN ANTERIOR
+                  _buildPaginationButton(
+                    'Anterior', 
+                    isActive: false,
+                    onTap: _currentPage > 1 ? () => setState(() => _currentPage--) : null,
+                  ),
+
+                  // BOTONES NUMÉRICOS DINÁMICOS
+                  ...List.generate(totalPages, (index) {
+                    final page = index + 1;
+                    return _buildPaginationButton(
+                      '$page',
+                      isActive: _currentPage == page,
+                      onTap: () => setState(() => _currentPage = page),
+                    );
+                  }),
+
+                  // BOTÓN SIGUIENTE
+                  _buildPaginationButton(
+                    'Siguiente', 
+                    isActive: false,
+                    onTap: _currentPage < totalPages ? () => setState(() => _currentPage++) : null,
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildPaginationButton('Anterior', isActive: false),
-                    _buildPaginationButton('1', isActive: true),
-                    _buildPaginationButton('Siguiente', isActive: false),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
-  Widget _buildPaginationButton(String text, {bool isActive = false}) {
-    return Container(
+Widget _buildPaginationButton(String text, {required bool isActive, VoidCallback? onTap}) {
+  return InkWell(
+    onTap: onTap, // 👈 Ahora el botón reacciona al click
+    child: Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF303366) : Colors.white,
+        color: isActive ? const Color(0xFF303366) : (onTap == null ? Colors.grey[100] : Colors.white),
         border: Border.all(color: Colors.grey[400]!),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         text,
         style: TextStyle(
-          color: isActive ? Colors.white : Colors.grey[600],
+          color: isActive ? Colors.white : (onTap == null ? Colors.grey[400] : Colors.grey[600]),
           fontSize: 12,
           fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
         ),
-      )
-    );
-  }
+      ),
+    ),
+  );
+}
 
   Widget _buildCopyright() {
     return Container(
@@ -945,18 +1014,27 @@ Widget _buildResponsiveTable(bool isMobile) {
     );
   }
 
-  Widget _buildLoadingIndicator() {
-    return Container(
-      height: 200,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: const Center(
-        child: CircularProgressIndicator(color: Color(0xFF303366)),
-      ),
-    );
-  }
+Widget _buildLoadingIndicator() {
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF303366)),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Cargando lista de personas...',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF303366),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildErrorWidget(String message) {
     return Container(

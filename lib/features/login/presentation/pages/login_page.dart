@@ -15,9 +15,24 @@ class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   // Colores definidos para el login, basados en el diseño web (Azul Oscuro/Blue Background).
-  static const Color primaryColor = Color.fromARGB(255, 48, 51, 98); // Azul oscuro (Botón/Texto)
-  static const Color webBackgroundColor = Color.fromARGB(255, 70, 130, 180); // Fondo azul para la vista web
-  static const Color accentColor = Color.fromARGB(255, 34, 35, 90); // Azul oscuro (Texto, Íconos)
+  static const Color primaryColor = Color.fromARGB(
+    255,
+    48,
+    51,
+    98,
+  ); // Azul oscuro (Botón/Texto)
+  static const Color webBackgroundColor = Color.fromARGB(
+    255,
+    70,
+    130,
+    180,
+  ); // Fondo azul para la vista web
+  static const Color accentColor = Color.fromARGB(
+    255,
+    34,
+    35,
+    90,
+  ); // Azul oscuro (Texto, Íconos)
   static const Color buttonColor = primaryColor; // Color del botón
 
   @override
@@ -37,40 +52,64 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // MÉTODO DE NAVEGACIÓN COMÚN PARA WEB Y MÓVIL - ACTUALIZADO
-  void _handleLoginSuccess(BuildContext context, LoginState state) {
-    print(' 1 Login exitoso! Navegando...');
-    print('Estado actual: $state');
-    print('cargo: ${state.cargo}');
-    print('usuario: ${state.usuario}');
-    print('error: ${state.error}');    
-    
-    // Usar WidgetsBinding para asegurar que el contexto esté disponible
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Navegación por rol
-      if (state.cargo == 'Administrador') {
-        // Admin
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const AdminDashboard()),
-        );
-      } else if (state.cargo == 'Conductor') {
-        // Conductor
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const ConductorDashboard()),
-        );
-      } else {
-        // Rol no reconocido
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tu Usuario no tiene un rol asignado, comunicate con el administrador de jht transport.'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 5)),
-        );
-      }
-      
-      // Limpiar campos después del login exitoso
-      _usernameController.clear();
-      _passwordController.clear();
-    });
+void _handleLoginSuccess(BuildContext context, LoginState state) {
+  print('✅ Login exitoso! Navegando...');
+  print('Estado actual: $state');
+  print('cargo: ${state.cargo}');
+  print('usuario: ${state.usuario}');
+
+  // Validar que tengamos los datos necesarios
+  if (state.cargo == null || state.usuario == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Error: Datos de usuario incompletos'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
   }
+
+  // Usar WidgetsBinding para asegurar que el contexto esté disponible
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Navegación por rol
+    if (state.cargo == 'Root' || state.cargo == 'Administrador') {
+      // Admin - ✅ CORREGIDO: Usamos el operador ! porque ya validamos que no es null
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => AdminDashboard(
+            userName: state.usuario!,
+            userRole: state.cargo!,
+          ),
+        ),
+      );
+    } else if (state.cargo == 'Conductor') {
+      // Conductor - ✅ CORREGIDO: Usamos el operador ! porque ya validamos que no es null
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => ConductorDashboard(
+            userName: state.usuario!,
+            userRole: state.cargo!,
+          ),
+        ),
+      );
+    } else {
+      // Rol no reconocido
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Tu Usuario no tiene un rol asignado, comunicate con el administrador de jht transport.',
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 5),
+        ),
+      );
+    }
+
+    // Limpiar campos después del login exitoso
+    _usernameController.clear();
+    _passwordController.clear();
+  });
+}
 
   void _handleLoginError(BuildContext context, String error) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -88,10 +127,10 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return BlocListener<LoginBloc, LoginState>(
       listener: (context, state) {
-         print(' 2 Estado actual: $state');
-          print('Cargo: ${state.cargo}');
-          print('usuario: ${state.usuario}');
-          print('error: ${state.error}');
+        print(' 2 Estado actual: $state');
+        print('Cargo: ${state.cargo}');
+        print('usuario: ${state.usuario}');
+        print('error: ${state.error}');
         if (state.isSuccess) {
           _handleLoginSuccess(context, state);
         }
@@ -134,10 +173,7 @@ class _LoginPageState extends State<LoginPage> {
           // CONTENIDO PRINCIPAL CENTRADO
           Center(
             child: Container(
-              constraints: const BoxConstraints(
-                maxWidth: 1200,
-                maxHeight: 800,
-              ),
+              constraints: const BoxConstraints(maxWidth: 1200, maxHeight: 800),
               padding: const EdgeInsets.all(40),
               child: Row(
                 children: [
@@ -347,18 +383,22 @@ class _LoginButton extends StatelessWidget {
     return BlocBuilder<LoginBloc, LoginState>(
       builder: (context, state) {
         return ElevatedButton(
-          onPressed: state.isLoading 
-              ? null 
+          onPressed: state.isLoading
+              ? null
               : () {
-                  context.read<LoginBloc>().add(LoginButtonPressed(
-                    username: usernameController.text,
-                    password: passwordController.text,
-                  ));
+                  context.read<LoginBloc>().add(
+                    LoginButtonPressed(
+                      username: usernameController.text,
+                      password: passwordController.text,
+                    ),
+                  );
                 },
           style: ElevatedButton.styleFrom(
             backgroundColor: color,
             padding: const EdgeInsets.symmetric(vertical: 15),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
           child: state.isLoading
               ? const SizedBox(
@@ -406,13 +446,22 @@ class _WebWelcomeSectionState extends State<_WebWelcomeSection>
       vsync: this,
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 1.0, curve: Curves.easeInOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 1.0, curve: Curves.easeInOut),
+      ),
     );
     _slideAnimation = Tween<double>(begin: 50.0, end: 0.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
+      ),
     );
     _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.3, 1.0, curve: Curves.elasticOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.3, 1.0, curve: Curves.elasticOut),
+      ),
     );
     Future.delayed(const Duration(milliseconds: 300), () {
       _controller.forward();
@@ -451,7 +500,11 @@ class _WebWelcomeSectionState extends State<_WebWelcomeSection>
                         color: Colors.white,
                         letterSpacing: 2.0,
                         shadows: [
-                          Shadow(blurRadius: 15.0, color: Colors.black87, offset: Offset(3, 3)),
+                          Shadow(
+                            blurRadius: 15.0,
+                            color: Colors.black87,
+                            offset: Offset(3, 3),
+                          ),
                         ],
                       ),
                     ),
@@ -472,7 +525,11 @@ class _WebWelcomeSectionState extends State<_WebWelcomeSection>
                       height: 1.5,
                       letterSpacing: 0.5,
                       shadows: [
-                        Shadow(blurRadius: 10.0, color: Colors.black87, offset: Offset(2, 2)),
+                        Shadow(
+                          blurRadius: 10.0,
+                          color: Colors.black87,
+                          offset: Offset(2, 2),
+                        ),
                       ],
                     ),
                   ),
@@ -503,6 +560,7 @@ class _WebLoginFormCard extends StatelessWidget {
     return BlocListener<LoginBloc, LoginState>(
       listener: (context, state) {
         if (state.isSuccess) {
+          
           print('Login exitoso en formulario web!');
           onLoginSuccess();
         }
@@ -533,7 +591,13 @@ class _WebLoginFormCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const Divider(color: Colors.grey, thickness: 1, height: 15, indent: 70, endIndent: 70),
+              const Divider(
+                color: Colors.grey,
+                thickness: 1,
+                height: 15,
+                indent: 70,
+                endIndent: 70,
+              ),
               const SizedBox(height: 40),
               _LoginFormField(
                 labelText: 'User Name',
