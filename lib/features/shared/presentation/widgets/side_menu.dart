@@ -1,6 +1,8 @@
 // lib/features/shared/presentation/widgets/side_menu.dart
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
+import 'menu_config.dart';
+import 'permission_service.dart';
 
 class SideMenu extends StatelessWidget {
   final String userName;
@@ -16,24 +18,17 @@ class SideMenu extends StatelessWidget {
     required this.onItemSelected,
   });
 
-  // Items del menú según el nivel de acceso
-List<MenuItem> _getMenuItems() {
-  // Verificar si el usuario es admin (Root o Administrador)
-  final bool isAdmin = userRole == 'Administrador' || userRole == 'Root';
-  
-  final baseItems = [
-    MenuItem(icon: '🔧', title: 'Mantenimiento', enabled: isAdmin),
-    MenuItem(icon: '🚗', title: 'Vehículo', enabled: isAdmin), 
-    MenuItem(icon: '🏢', title: 'Proveedor', enabled: isAdmin), 
-    MenuItem(icon: '👨‍💼', title: 'Conductores', enabled: isAdmin),
-    MenuItem(icon: '🔩', title: 'Accesorios', enabled: isAdmin),
-    MenuItem(icon: '❓', title: 'Ayuda', enabled: isAdmin),
-  ];
-  
-  return baseItems;
-}
+  // Obtener items del menú basado en el rol (AHORA CORRECTO)
+  List<MenuItem> _getMenuItems() {
+    // Usamos MenuUtil para obtener los items permitidos para este rol
+    return MenuUtil.toMenuItemList(userRole);
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Actualizar el PermissionService con el rol actual
+    PermissionService().updateRole(userRole);
+    
     return Container(
       width: 280,
       color: Colors.white,
@@ -150,39 +145,36 @@ List<MenuItem> _getMenuItems() {
         separatorBuilder: (context, index) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
           final item = menuItems[index];
-          return Opacity(
-            opacity: item.enabled ? 1.0 : 0.5,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: item.enabled ? () {
-                  onClose();
-                  onItemSelected(item.title);
-                } : null,
-                borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    color: item.enabled ? Colors.grey[50] : Colors.grey[100],
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        item.icon,
-                        style: const TextStyle(fontSize: 16),
+          return Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                onClose();
+                onItemSelected(item.title);
+              },
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  color: Colors.grey[50],
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      item.icon,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      item.title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        item.title,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -242,7 +234,7 @@ List<MenuItem> _getMenuItems() {
       builder: (context) {
         return AlertDialog(
           title: const Text('Cerrar Sesión'),
-          content: Text('¿Estás seguro usuario $userName? ¿que deseas cerrar sesión?'),
+          content: Text('¿Estás seguro usuario $userName? ¿Deseas cerrar sesión?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -264,35 +256,28 @@ List<MenuItem> _getMenuItems() {
   void _performRealLogout(BuildContext context) async {
     try {
       await TokenService.deleteToken();
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      // Limpiar el rol en PermissionService
+      PermissionService().updateRole(null);
       
-      Future.delayed(const Duration(milliseconds: 100), () {
+      if (context.mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Sesión cerrada correctamente'),
             backgroundColor: Color(0xFF303366),
           ),
         );
-      });
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al cerrar sesión: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cerrar sesión: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
-}
-
-class MenuItem {
-  final String icon;
-  final String title;
-  final bool enabled;
-
-  MenuItem({
-    required this.icon,
-    required this.title,
-    required this.enabled,
-  });
 }
