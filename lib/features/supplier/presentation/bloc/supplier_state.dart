@@ -8,6 +8,17 @@ class SupplierState with _$SupplierState {
   const factory SupplierState.success({
     required SupplierRegistroResponse response,
   }) = _Success;
+
+
+    const factory SupplierState.listLoaded({
+    required SupplierListResponse response,
+  }) = _ListLoaded;
+  
+  const factory SupplierState.detailLoaded({
+    required SupplierDetailResponse response,
+  }) = _DetailLoaded;
+
+  
   const factory SupplierState.error({
     required String message,
   }) = _Error;

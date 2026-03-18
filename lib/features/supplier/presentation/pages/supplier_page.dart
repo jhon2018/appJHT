@@ -5,11 +5,15 @@ import 'package:app_jht_front/core/network/http_client.dart';
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
 import 'package:app_jht_front/features/supplier/presentation/widgets/add_supplier_modal.dart';
+import 'package:app_jht_front/features/supplier/presentation/widgets/detalle_supplier_modal.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/supplier/presentation/bloc/supplier_bloc.dart';
 import 'package:app_jht_front/features/supplier/domain/usecases/registrar_supplier_usecase.dart';
+import 'package:app_jht_front/features/supplier/domain/usecases/listar_proveedores_usecase.dart';
+import 'package:app_jht_front/features/supplier/domain/usecases/obtener_detalle_proveedor_usecase.dart';
 import 'package:app_jht_front/features/supplier/data/repositories/supplier_repository_impl.dart';
 import 'package:app_jht_front/features/supplier/data/datasources/supplier_remote_data_source.dart';
+import 'package:app_jht_front/features/supplier/data/models/supplier_list_model.dart';
 
 class SupplierPage extends StatefulWidget {
   final String userName;
@@ -28,15 +32,15 @@ class SupplierPage extends StatefulWidget {
 class _SupplierPageState extends State<SupplierPage> {
   @override
   Widget build(BuildContext context) {
+    final repository = SupplierRepositoryImpl(
+      remoteDataSource: SupplierRemoteDataSourceImpl(httpClient: HttpClient()),
+    );
+
     return BlocProvider(
       create: (context) => SupplierBloc(
-        registrarSupplierUseCase: RegistrarSupplierUseCase(
-          repository: SupplierRepositoryImpl(
-            remoteDataSource: SupplierRemoteDataSourceImpl(
-              httpClient: HttpClient(),
-            ),
-          ),
-        ),
+        registrarSupplierUseCase: RegistrarSupplierUseCase(repository: repository),
+        listarProveedoresUseCase: ListarProveedoresUseCase(repository: repository),
+        obtenerDetalleProveedorUseCase: ObtenerDetalleProveedorUseCase(repository: repository),
       ),
       child: _SupplierPageContent(
         userName: widget.userName,
@@ -46,15 +50,11 @@ class _SupplierPageState extends State<SupplierPage> {
   }
 }
 
-// NUEVA CLASE PARA EL CONTENIDO QUE ESTÁ DENTRO DEL BLOCPROVIDER
 class _SupplierPageContent extends StatefulWidget {
   final String userName;
   final String userRole;
 
-  const _SupplierPageContent({
-    required this.userName,
-    required this.userRole,
-  });
+  const _SupplierPageContent({required this.userName, required this.userRole});
 
   @override
   State<_SupplierPageContent> createState() => __SupplierPageContentState();
@@ -62,117 +62,286 @@ class _SupplierPageContent extends StatefulWidget {
 
 class __SupplierPageContentState extends State<_SupplierPageContent> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final ScrollController _horizontalScrollController = ScrollController();
 
-void _openAddSupplierModal() {
-  // Obtén el SupplierBloc DEL ÁRBOL ACTUAL
-  final supplierBloc = BlocProvider.of<SupplierBloc>(context);
-  
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) {
-      return BlocProvider.value(
-        value: supplierBloc,
-        child: AddSupplierModal(
-          parentContext: this.context, // ← PASA EL CONTEXT DE LA PÁGINA
-          onSupplierAdded: () {
-            print('Proveedor agregado - refrescar lista');
-            ScaffoldMessenger.of(this.context).showSnackBar( // ← Usa this.context
-              SnackBar(
-                content: const Text('Lista de proveedores actualizada'),
-                backgroundColor: const Color(0xFF303366),
-              ),
-            );
-          },
+  List<SupplierListModel> _proveedores = [];
+  List<SupplierListModel> _filteredProveedores = [];
+  List<SupplierListModel> _paginatedProveedores = [];
+
+  bool _isLoading = false;
+  final TextEditingController _searchController = TextEditingController();
+
+  // ✅ PAGINACIÓN: 5 registros por página
+  int _currentPage = 1;
+  int _itemsPerPage = 5;
+  String _currentFilter = 'Todos';
+
+  int get _totalPages => _filteredProveedores.isEmpty ? 1 : (_filteredProveedores.length / _itemsPerPage).ceil();
+
+  bool get _isMobile => MediaQuery.of(context).size.width < 768;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarProveedores();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  void _cargarProveedores() {
+    if (mounted) {
+      BlocProvider.of<SupplierBloc>(context).add(const SupplierEvent.listarProveedores());
+    }
+  }
+
+  void _onSearchChanged() {
+    _aplicarFiltros();
+  }
+
+  void _aplicarFiltros() {
+    if (!mounted) return;
+    setState(() {
+      final query = _searchController.text.toLowerCase();
+      List<SupplierListModel> tempList = _proveedores;
+
+      if (query.isNotEmpty) {
+        tempList = _proveedores.where((proveedor) {
+          return proveedor.razonSocial.toLowerCase().contains(query) ||
+              proveedor.ruc.toString().contains(query) ||
+              proveedor.telefono.contains(query) ||
+              proveedor.representante.toLowerCase().contains(query);
+        }).toList();
+      }
+
+      if (_currentFilter != 'Todos') {
+        final estadoFilter = _currentFilter == 'Activos' ? 'activo' : 'inactivo';
+        tempList = tempList
+            .where((proveedor) => proveedor.estado.toLowerCase() == estadoFilter)
+            .toList();
+      }
+
+      _filteredProveedores = tempList;
+      _currentPage = 1;
+      _actualizarPagina();
+    });
+  }
+
+  void _actualizarPagina() {
+    if (!mounted) return;
+    final startIndex = (_currentPage - 1) * _itemsPerPage;
+    final endIndex = startIndex + _itemsPerPage;
+
+    setState(() {
+      if (startIndex < _filteredProveedores.length) {
+        _paginatedProveedores = _filteredProveedores.sublist(
+          startIndex,
+          endIndex > _filteredProveedores.length ? _filteredProveedores.length : endIndex,
+        );
+      } else {
+        _paginatedProveedores = [];
+      }
+    });
+  }
+
+  void _cambiarPagina(int page) {
+    if (!mounted) return;
+    if (page < 1 || page > _totalPages) return;
+    setState(() {
+      _currentPage = page;
+      _actualizarPagina();
+    });
+  }
+
+  void _paginaAnterior() {
+    if (_currentPage > 1) {
+      _cambiarPagina(_currentPage - 1);
+    }
+  }
+
+  void _paginaSiguiente() {
+    if (_currentPage < _totalPages) {
+      _cambiarPagina(_currentPage + 1);
+    }
+  }
+
+  void _cambiarFiltro(String filtro) {
+    if (!mounted) return;
+    setState(() {
+      _currentFilter = filtro;
+      _aplicarFiltros();
+    });
+  }
+
+  Color _getEstadoColor(String estado) {
+    final estadoLower = estado.toLowerCase();
+    if (estadoLower.contains('acti')) {
+      return Colors.green[800]!;
+    } else if (estadoLower.contains('inacti')) {
+      return Colors.red[800]!;
+    }
+    return Colors.grey[800]!;
+  }
+
+  void _verDetalleProveedor(int proveedorId) {
+    if (mounted) {
+      BlocProvider.of<SupplierBloc>(context).add(
+        SupplierEvent.obtenerDetalleProveedor(proveedorId: proveedorId),
+      );
+    }
+  }
+
+  void _openAddSupplierModal() {
+    if (!mounted) return;
+    final supplierBloc = BlocProvider.of<SupplierBloc>(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return BlocProvider.value(
+          value: supplierBloc,
+          child: AddSupplierModal(
+            parentContext: context,
+            onSupplierAdded: () {
+              _cargarProveedores();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Proveedor agregado correctamente'),
+                    backgroundColor: Color(0xFF303366),
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  void _handleMenuSelection(String itemTitle) {
+    if (_scaffoldKey.currentContext != null) {
+      ScaffoldMessenger.of(_scaffoldKey.currentContext!).showSnackBar(
+        SnackBar(
+          content: Text('Navegando a: $itemTitle'),
+          backgroundColor: const Color(0xFF303366),
         ),
       );
-    },
-  );
-}
-  void _handleMenuSelection(String itemTitle) {
-    ScaffoldMessenger.of(_scaffoldKey.currentContext!).showSnackBar(
-      SnackBar(
-        content: Text('Navegando a: $itemTitle'),
-        backgroundColor: const Color(0xFF303366),
-      ),
-    );
+    }
   }
 
   @override
   void dispose() {
-    _horizontalScrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 768;
-
-    return Scaffold(
-      key: _scaffoldKey,
-      endDrawer: Drawer(
-        child: SideMenu(
-          userName: widget.userName,
-          userRole: widget.userRole,
-          onClose: () => Navigator.pop(context),
-          onItemSelected: _handleMenuSelection,
-        ),
-      ),
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          Expanded(
-            child: CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  backgroundColor: Colors.white,
-                  elevation: 1,
-                  pinned: true,
-                  title: const Text(
-                    'JHT TRANSPORT',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF303366),
-                    ),
-                  ),
-                  actions: [_buildMenuButton()],
+    return BlocListener<SupplierBloc, SupplierState>(
+      listener: (context, state) {
+        state.when(
+          initial: () {},
+          loading: () {
+            if (mounted) setState(() => _isLoading = true);
+          },
+          success: (response) {},
+          listLoaded: (response) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+                _proveedores = response.data;
+                _filteredProveedores = response.data;
+                _actualizarPagina();
+              });
+            }
+          },
+          detailLoaded: (response) {
+            if (mounted) {
+              setState(() => _isLoading = false);
+              showDialog(
+                context: context,
+                builder: (context) => DetalleSupplierModal(proveedor: response.data),
+              );
+            }
+          },
+          error: (message) {
+            if (mounted) {
+              setState(() => _isLoading = false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: $message'),
+                  backgroundColor: Colors.red,
                 ),
-
-                SliverList(
-                  delegate: SliverChildListDelegate([
-                    Padding(
-                      padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHeaderWithAddButton(isMobile),
-                          const SizedBox(height: 16),
-                          _buildMobileFilters(),
-                          const SizedBox(height: 16),
-                          _buildResponsiveTable(isMobile),
-                          const SizedBox(height: 16),
-                          _buildPagination(),
-                        ],
+              );
+            }
+          },
+        );
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        endDrawer: Drawer(
+          child: SideMenu(
+            userName: widget.userName,
+            userRole: widget.userRole,
+            onClose: () => Navigator.pop(context),
+            onItemSelected: _handleMenuSelection,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        body: Column(
+          children: [
+            Expanded(
+              child: CustomScrollView(
+                slivers: [
+                  SliverAppBar(
+                    backgroundColor: Colors.white,
+                    elevation: 1,
+                    pinned: true,
+                    title: const Text(
+                      'JHT TRANSPORT',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF303366),
                       ),
                     ),
-                  ]),
-                ),
-              ],
+                    actions: [_buildMenuButton()],
+                  ),
+                  SliverList(
+                    delegate: SliverChildListDelegate([
+                      Padding(
+                        padding: EdgeInsets.all(_isMobile ? 12.0 : 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeaderWithAddButton(),
+                            const SizedBox(height: 16),
+                            _buildFilters(),
+                            const SizedBox(height: 16),
+                            _isLoading
+                                ? const Center(child: CircularProgressIndicator())
+                                : _buildResponsiveTable(),
+                            const SizedBox(height: 16),
+                            // ✅ PAGINACIÓN CON BOTONES
+                            if (!_isLoading && _filteredProveedores.isNotEmpty)
+                              _buildPagination(),
+                          ],
+                        ),
+                      ),
+                    ]),
+                  ),
+                ],
+              ),
             ),
-          ),
-          _buildCopyright(),
-        ],
+            _buildCopyright(),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildMenuButton() {
     return InkWell(
-      onTap: () {
-        _scaffoldKey.currentState?.openEndDrawer();
-      },
+      onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
       borderRadius: BorderRadius.circular(20),
       child: Container(
         width: 40,
@@ -211,54 +380,83 @@ void _openAddSupplierModal() {
     );
   }
 
-  DataRow _buildDataRow(int nr, String razonSocial, String direccion, 
-                        String marca, String telefono, String ruc) {
-    return DataRow(cells: [
-      DataCell(Text(
-        nr.toString(),
-        style: const TextStyle(fontSize: 12),
-      )),
-      DataCell(Container(
-        child: Text(
-          razonSocial,
-          style: const TextStyle(fontSize: 12),
-          overflow: TextOverflow.ellipsis,
-        ),
-      )),
-      DataCell(Container(
-        child: Text(
-          direccion,
-          style: const TextStyle(fontSize: 12),
-          overflow: TextOverflow.ellipsis,
-        ),
-      )),
-      DataCell(Text(
-        marca,
-        style: const TextStyle(fontSize: 12),
-      )),
-      DataCell(Text(
-        telefono,
-        style: const TextStyle(fontSize: 12),
-      )),
-      DataCell(Text(
-        ruc,
-        style: const TextStyle(fontSize: 12),
-      )),
-      DataCell(Container(
-        child: InkWell(
-          onTap: () {
-            print('Ver detalle del proveedor: $razonSocial');
-          },
-          child: const Padding(
-            padding: EdgeInsets.all(4.0),
-            child: Icon(Icons.remove_red_eye, color: Colors.grey, size: 18),
+  DataRow _buildDataRow(SupplierListModel proveedor, int index) {
+    final globalIndex = ((_currentPage - 1) * _itemsPerPage) + index + 1;
+
+    return DataRow(
+      cells: [
+        DataCell(Text(globalIndex.toString(), style: const TextStyle(fontSize: 12))),
+        DataCell(
+          Container(
+            constraints: const BoxConstraints(maxWidth: 180),
+            child: Text(
+              proveedor.razonSocial,
+              style: const TextStyle(fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ),
-      )),
-    ]);
+        DataCell(
+          Container(
+            constraints: const BoxConstraints(maxWidth: 200),
+            child: Text(
+              proveedor.representante,
+              style: const TextStyle(fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+        DataCell(
+          Container(
+            constraints: const BoxConstraints(maxWidth: 120),
+            child: Text(
+              proveedor.encargado,
+              style: const TextStyle(fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+        DataCell(Text(proveedor.telefono, style: const TextStyle(fontSize: 12))),
+        DataCell(Text(proveedor.ruc.toString(), style: const TextStyle(fontSize: 12))),
+        DataCell(
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: _getEstadoColor(proveedor.estado).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              proveedor.estado,
+              style: TextStyle(
+                fontSize: 11,
+                color: _getEstadoColor(proveedor.estado),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        DataCell(
+          InkWell(
+            onTap: () => _verDetalleProveedor(proveedor.proveedorId),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF303366).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.remove_red_eye,
+                color: Color(0xFF303366),
+                size: 18,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
-  Widget _buildHeaderWithAddButton(bool isMobile) {
+  Widget _buildHeaderWithAddButton() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -272,7 +470,7 @@ void _openAddSupplierModal() {
           ),
         ),
         const SizedBox(height: 20),
-        isMobile ? _buildMobileHeaderLayout() : _buildDesktopHeaderLayout(),
+        _isMobile ? _buildMobileHeaderLayout() : _buildDesktopHeaderLayout(),
       ],
     );
   }
@@ -280,7 +478,6 @@ void _openAddSupplierModal() {
   Widget _buildMobileHeaderLayout() {
     return Column(
       children: [
-        // Botón AGREGAR - Toma todo el ancho
         InkWell(
           onTap: _openAddSupplierModal,
           child: Container(
@@ -308,8 +505,6 @@ void _openAddSupplierModal() {
           ),
         ),
         const SizedBox(height: 12),
-        
-        // Barra de búsqueda - Toma todo el ancho
         Container(
           width: double.infinity,
           height: 50,
@@ -318,20 +513,26 @@ void _openAddSupplierModal() {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.grey[400]!),
           ),
-          child: const Row(
+          child: Row(
             children: [
-              SizedBox(width: 16),
-              Icon(Icons.search, color: Colors.grey, size: 20),
-              SizedBox(width: 12),
+              const SizedBox(width: 16),
+              const Icon(Icons.search, color: Colors.grey, size: 20),
+              const SizedBox(width: 12),
               Expanded(
                 child: TextField(
-                  decoration: InputDecoration(
+                  controller: _searchController,
+                  decoration: const InputDecoration(
                     border: InputBorder.none,
                     hintText: 'Buscar por RUC, razón social o teléfono...',
                     hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
                   ),
                 ),
               ),
+              if (_searchController.text.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.clear, color: Colors.grey, size: 18),
+                  onPressed: () => _searchController.clear(),
+                ),
             ],
           ),
         ),
@@ -340,92 +541,72 @@ void _openAddSupplierModal() {
   }
 
   Widget _buildDesktopHeaderLayout() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        // Fila 1: Botón AGREGAR y Barra de búsqueda
-        Row(
-          children: [
-            // Botón AGREGAR - tamaño fijo
-            InkWell(
-              onTap: _openAddSupplierModal,
-              child: Container(
-                width: 220,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF303366),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.add, color: Colors.white, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'AGREGAR PROVEEDOR',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        InkWell(
+          onTap: _openAddSupplierModal,
+          child: Container(
+            width: 220,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF303366),
+              borderRadius: BorderRadius.circular(8),
             ),
-            const SizedBox(width: 16),
-            // Barra de búsqueda - ocupa el espacio restante
-            Expanded(
-              child: Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[400]!),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add, color: Colors.white, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'AGREGAR PROVEEDOR',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                child: const Row(
-                  children: [
-                    SizedBox(width: 16),
-                    Icon(Icons.search, color: Colors.grey, size: 20),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: 'Buscar por RUC, razón social o teléfono...',
-                          hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              ],
             ),
-          ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Container(
+            height: 50,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey[400]!),
+            ),
+            child: Row(
+              children: [
+                const SizedBox(width: 16),
+                const Icon(Icons.search, color: Colors.grey, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: 'Buscar por RUC, razón social o teléfono...',
+                      hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
+                  ),
+                ),
+                if (_searchController.text.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.clear, color: Colors.grey, size: 18),
+                    onPressed: () => _searchController.clear(),
+                  ),
+              ],
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildFilterChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF303366),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 12,
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMobileFilters() {
+  Widget _buildFilters() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -449,10 +630,9 @@ void _openAddSupplierModal() {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildFilterChip('Todos'),
-              _buildFilterChip('Activos'),
-              _buildFilterChip('Inactivos'),
-              _buildFilterChip('Con deuda'),
+              _buildFilterChip('Todos', isSelected: _currentFilter == 'Todos'),
+              _buildFilterChip('Activos', isSelected: _currentFilter == 'Activos'),
+              _buildFilterChip('Inactivos', isSelected: _currentFilter == 'Inactivos'),
             ],
           ),
         ],
@@ -460,154 +640,97 @@ void _openAddSupplierModal() {
     );
   }
 
-  Widget _buildResponsiveTable(bool isMobile) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
+  Widget _buildFilterChip(String label, {required bool isSelected}) {
+    return GestureDetector(
+      onTap: () => _cambiarFiltro(label),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF303366) : Colors.grey[200],
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF303366) : Colors.grey[400]!,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isSelected ? Colors.white : Colors.grey[700],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ),
-      child: Scrollbar(
-        controller: _horizontalScrollController,
-        thumbVisibility: true,
-        trackVisibility: true,
+    );
+  }
+
+  // ✅ TABLA SIN SCROLLBAR - EVITA ERROR EN DESKTOP
+  Widget _buildResponsiveTable() {
+    if (_filteredProveedores.isEmpty) {
+      return Container(
+        height: 200,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.inbox, size: 48, color: Colors.grey[400]),
+              const SizedBox(height: 16),
+              Text(
+                _proveedores.isEmpty
+                    ? 'No hay proveedores registrados'
+                    : 'No se encontraron resultados con los filtros aplicados',
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                textAlign: TextAlign.center,
+              ),
+              if (_proveedores.isNotEmpty && _filteredProveedores.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: TextButton(
+                    onPressed: () {
+                      _searchController.clear();
+                      _cambiarFiltro('Todos');
+                    },
+                    child: const Text('Limpiar filtros'),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
+        ),
         child: SingleChildScrollView(
-          controller: _horizontalScrollController,
           scrollDirection: Axis.horizontal,
-          child: Container(
-            width: isMobile ? 700 : 1000,
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
             padding: const EdgeInsets.all(8),
-            child: DataTable(
-              headingRowHeight: 50,
-              dataRowHeight: 50,
-              horizontalMargin: isMobile ? 12 : 16,
-              columnSpacing: isMobile ? 8 : 24,
-              headingRowColor: WidgetStateProperty.all(const Color(0xFF303366)),
-              columns: isMobile 
-                  ? const [
-                      // COLUMNAS MÓVIL
-                      DataColumn(
-                        label: SizedBox(
-                          width: 50,
-                          child: Text('Nr', 
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 120,
-                          child: Text('Razón social', 
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 100,
-                          child: Text('Dirección', 
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 80,
-                          child: Text('Marca', 
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 90,
-                          child: Text('Teléfono', 
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 80,
-                          child: Text('RUC', 
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 70,
-                          child: Text('Detalle', 
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                    ]
-                  : const [
-                      // COLUMNAS DESKTOP
-                      DataColumn(
-                        label: SizedBox(
-                          width: 60,
-                          child: Text('Nr', 
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 180,
-                          child: Text('Razón Social', 
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 200,
-                          child: Text('Dirección', 
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 120,
-                          child: Text('Marca', 
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 120,
-                          child: Text('Teléfono', 
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 120,
-                          child: Text('RUC', 
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: SizedBox(
-                          width: 100,
-                          child: Text('Detalle', 
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                          ),
-                        ),
-                      ),
-                    ],
-              rows: [
-                _buildDataRow(1, 'Importadora ABC S.A.', 'Av. Principal 123', 'Toyota', '987654321', '20123456789'),
-                _buildDataRow(2, 'Distribuidora XYZ E.I.R.L.', 'Calle Comercio 456', 'Nissan', '912345678', '10456789012'),
-                _buildDataRow(3, 'Automotriz QRS S.A.C.', 'Jr. Industria 789', 'Ford', '934567890', '20678901234'),
-                _buildDataRow(4, 'Repuestos MNO S.R.L.', 'Av. Libertad 101', 'Chevrolet', '956789012', '30890123456'),
-                _buildDataRow(5, 'Servicios TUV S.A.', 'Calle Servicios 202', 'Mitsubishi', '978901234', '40123456789'),
-              ],
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: _isMobile ? 800 : 1000,
+              ),
+              child: DataTable(
+                headingRowHeight: 50,
+                dataRowHeight: 55,
+                horizontalMargin: _isMobile ? 12 : 16,
+                columnSpacing: _isMobile ? 8 : 16,
+                headingRowColor: WidgetStateProperty.all(const Color(0xFF303366)),
+                columns: _buildTableColumns(),
+                rows: _paginatedProveedores.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final proveedor = entry.value;
+                  return _buildDataRow(proveedor, index);
+                }).toList(),
+              ),
             ),
           ),
         ),
@@ -615,61 +738,113 @@ void _openAddSupplierModal() {
     );
   }
 
+  List<DataColumn> _buildTableColumns() {
+    final fontSize = _isMobile ? 11.0 : 13.0;
+    final columnWidths = _isMobile
+        ? [40.0, 120.0, 120.0, 100.0, 90.0, 80.0, 70.0, 70.0]
+        : [50.0, 160.0, 160.0, 140.0, 100.0, 100.0, 80.0, 80.0];
+
+    final labels = [
+      'Nr',
+      'Razón Social',
+      'Representante',
+      'Encargado',
+      'Teléfono',
+      'RUC',
+      'Estado',
+      'Detalle',
+    ];
+
+    return List.generate(8, (index) {
+      return DataColumn(
+        label: SizedBox(
+          width: columnWidths[index],
+          child: Text(
+            labels[index],
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: fontSize,
+              fontWeight: FontWeight.w600,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  // ✅ NUEVA PAGINACIÓN CON BOTONES: 1, 2, 3, Anterior, Siguiente
   Widget _buildPagination() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
+        color: Colors.grey[50],
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Mostrando 1 al 5 de 25 proveedores',
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+          // Botón Anterior
+          InkWell(
+            onTap: _paginaAnterior,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: _currentPage > 1 ? const Color(0xFF303366) : Colors.grey[300],
+                borderRadius: BorderRadius.circular(6),
               ),
-              Row(
+              child: Row(
                 children: [
-                  Text(
-                    'Por página:',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  Icon(
+                    Icons.chevron_left,
+                    color: _currentPage > 1 ? Colors.white : Colors.grey[600],
+                    size: 18,
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[400]!),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      '5',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Anterior',
+                    style: TextStyle(
+                      color: _currentPage > 1 ? Colors.white : Colors.grey[600],
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-          const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildPaginationButton('Anterior', isActive: false),
-                _buildPaginationButton('1', isActive: true),
-                _buildPaginationButton('2', isActive: false),
-                _buildPaginationButton('3', isActive: false),
-                _buildPaginationButton('4', isActive: false),
-                _buildPaginationButton('5', isActive: false),
-                _buildPaginationButton('Siguiente', isActive: false),
-              ],
+          const SizedBox(width: 16),
+          // Botones de página
+          ..._buildPageButtons(),
+          const SizedBox(width: 16),
+          // Botón Siguiente
+          InkWell(
+            onTap: _paginaSiguiente,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: _currentPage < _totalPages ? const Color(0xFF303366) : Colors.grey[300],
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    'Siguiente',
+                    style: TextStyle(
+                      color: _currentPage < _totalPages ? Colors.white : Colors.grey[600],
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right,
+                    color: _currentPage < _totalPages ? Colors.white : Colors.grey[600],
+                    size: 18,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -677,24 +852,53 @@ void _openAddSupplierModal() {
     );
   }
 
-  Widget _buildPaginationButton(String text, {bool isActive = false}) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF303366) : Colors.white,
-        border: Border.all(color: Colors.grey[400]!),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: isActive ? Colors.white : Colors.grey[600],
-          fontSize: 12,
-          fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+  List<Widget> _buildPageButtons() {
+    List<Widget> buttons = [];
+    int startPage = (_currentPage - 2).clamp(1, _totalPages);
+    int endPage = (_currentPage + 2).clamp(1, _totalPages);
+
+    // Ajustar para mostrar siempre hasta 5 botones
+    if (endPage - startPage < 4) {
+      if (startPage == 1) {
+        endPage = (startPage + 4).clamp(1, _totalPages);
+      } else if (endPage == _totalPages) {
+        startPage = (endPage - 4).clamp(1, _totalPages);
+      }
+    }
+
+    for (int i = startPage; i <= endPage; i++) {
+      buttons.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: InkWell(
+            onTap: () => _cambiarPagina(i),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _currentPage == i ? const Color(0xFF303366) : Colors.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: _currentPage == i ? const Color(0xFF303366) : Colors.grey[400]!,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  i.toString(),
+                  style: TextStyle(
+                    color: _currentPage == i ? Colors.white : Colors.grey[700],
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
-      ),
-    );
+      );
+    }
+
+    return buttons;
   }
 
   Widget _buildCopyright() {

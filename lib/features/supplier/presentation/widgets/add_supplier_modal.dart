@@ -1,5 +1,7 @@
 // lib/features/supplier/presentation/widgets/add_supplier_modal.dart
 // DESCRIPCIÓN: Modal para agregar un nuevo proveedor con todos los campos requeridos.
+import 'package:app_jht_front/features/supplier/data/models/supplier_detail_response.dart';
+import 'package:app_jht_front/features/supplier/data/models/supplier_list_response.dart';
 import 'package:app_jht_front/features/supplier/data/models/tipo_telefono_model.dart';
 import 'package:app_jht_front/features/supplier/presentation/bloc/supplier_bloc.dart';
 import 'package:app_jht_front/features/supplier/data/models/supplier_registro_dto.dart';
@@ -301,7 +303,7 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
                 backgroundColor: Colors.red,
               ),
             );
-          },
+          }, listLoaded: (SupplierListResponse response) {  }, detailLoaded: (SupplierDetailResponse response) {  },
         );
       },
       child: Dialog(

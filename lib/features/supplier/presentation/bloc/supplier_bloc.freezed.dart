@@ -17,39 +17,45 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$SupplierEvent {
-  SupplierRegistroDto get dto => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(SupplierRegistroDto dto) registrarProveedor,
+    required TResult Function() listarProveedores,
+    required TResult Function(int proveedorId) obtenerDetalleProveedor,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(SupplierRegistroDto dto)? registrarProveedor,
+    TResult? Function()? listarProveedores,
+    TResult? Function(int proveedorId)? obtenerDetalleProveedor,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(SupplierRegistroDto dto)? registrarProveedor,
+    TResult Function()? listarProveedores,
+    TResult Function(int proveedorId)? obtenerDetalleProveedor,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_RegistrarProveedor value) registrarProveedor,
+    required TResult Function(_ListarProveedores value) listarProveedores,
+    required TResult Function(_ObtenerDetalleProveedor value)
+    obtenerDetalleProveedor,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_RegistrarProveedor value)? registrarProveedor,
+    TResult? Function(_ListarProveedores value)? listarProveedores,
+    TResult? Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_RegistrarProveedor value)? registrarProveedor,
+    TResult Function(_ListarProveedores value)? listarProveedores,
+    TResult Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
-
-  /// Create a copy of SupplierEvent
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $SupplierEventCopyWith<SupplierEvent> get copyWith =>
-      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -58,8 +64,6 @@ abstract class $SupplierEventCopyWith<$Res> {
     SupplierEvent value,
     $Res Function(SupplierEvent) then,
   ) = _$SupplierEventCopyWithImpl<$Res, SupplierEvent>;
-  @useResult
-  $Res call({SupplierRegistroDto dto});
 }
 
 /// @nodoc
@@ -74,29 +78,14 @@ class _$SupplierEventCopyWithImpl<$Res, $Val extends SupplierEvent>
 
   /// Create a copy of SupplierEvent
   /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({Object? dto = null}) {
-    return _then(
-      _value.copyWith(
-            dto: null == dto
-                ? _value.dto
-                : dto // ignore: cast_nullable_to_non_nullable
-                      as SupplierRegistroDto,
-          )
-          as $Val,
-    );
-  }
 }
 
 /// @nodoc
-abstract class _$$RegistrarProveedorImplCopyWith<$Res>
-    implements $SupplierEventCopyWith<$Res> {
+abstract class _$$RegistrarProveedorImplCopyWith<$Res> {
   factory _$$RegistrarProveedorImplCopyWith(
     _$RegistrarProveedorImpl value,
     $Res Function(_$RegistrarProveedorImpl) then,
   ) = __$$RegistrarProveedorImplCopyWithImpl<$Res>;
-  @override
   @useResult
   $Res call({SupplierRegistroDto dto});
 }
@@ -165,6 +154,8 @@ class _$RegistrarProveedorImpl implements _RegistrarProveedor {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(SupplierRegistroDto dto) registrarProveedor,
+    required TResult Function() listarProveedores,
+    required TResult Function(int proveedorId) obtenerDetalleProveedor,
   }) {
     return registrarProveedor(dto);
   }
@@ -173,6 +164,8 @@ class _$RegistrarProveedorImpl implements _RegistrarProveedor {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(SupplierRegistroDto dto)? registrarProveedor,
+    TResult? Function()? listarProveedores,
+    TResult? Function(int proveedorId)? obtenerDetalleProveedor,
   }) {
     return registrarProveedor?.call(dto);
   }
@@ -181,6 +174,8 @@ class _$RegistrarProveedorImpl implements _RegistrarProveedor {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(SupplierRegistroDto dto)? registrarProveedor,
+    TResult Function()? listarProveedores,
+    TResult Function(int proveedorId)? obtenerDetalleProveedor,
     required TResult orElse(),
   }) {
     if (registrarProveedor != null) {
@@ -193,6 +188,9 @@ class _$RegistrarProveedorImpl implements _RegistrarProveedor {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_RegistrarProveedor value) registrarProveedor,
+    required TResult Function(_ListarProveedores value) listarProveedores,
+    required TResult Function(_ObtenerDetalleProveedor value)
+    obtenerDetalleProveedor,
   }) {
     return registrarProveedor(this);
   }
@@ -201,6 +199,8 @@ class _$RegistrarProveedorImpl implements _RegistrarProveedor {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_RegistrarProveedor value)? registrarProveedor,
+    TResult? Function(_ListarProveedores value)? listarProveedores,
+    TResult? Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
   }) {
     return registrarProveedor?.call(this);
   }
@@ -209,6 +209,8 @@ class _$RegistrarProveedorImpl implements _RegistrarProveedor {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_RegistrarProveedor value)? registrarProveedor,
+    TResult Function(_ListarProveedores value)? listarProveedores,
+    TResult Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
     required TResult orElse(),
   }) {
     if (registrarProveedor != null) {
@@ -222,15 +224,281 @@ abstract class _RegistrarProveedor implements SupplierEvent {
   const factory _RegistrarProveedor({required final SupplierRegistroDto dto}) =
       _$RegistrarProveedorImpl;
 
-  @override
   SupplierRegistroDto get dto;
 
   /// Create a copy of SupplierEvent
   /// with the given fields replaced by the non-null parameter values.
-  @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$RegistrarProveedorImplCopyWith<_$RegistrarProveedorImpl> get copyWith =>
       throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$ListarProveedoresImplCopyWith<$Res> {
+  factory _$$ListarProveedoresImplCopyWith(
+    _$ListarProveedoresImpl value,
+    $Res Function(_$ListarProveedoresImpl) then,
+  ) = __$$ListarProveedoresImplCopyWithImpl<$Res>;
+}
+
+/// @nodoc
+class __$$ListarProveedoresImplCopyWithImpl<$Res>
+    extends _$SupplierEventCopyWithImpl<$Res, _$ListarProveedoresImpl>
+    implements _$$ListarProveedoresImplCopyWith<$Res> {
+  __$$ListarProveedoresImplCopyWithImpl(
+    _$ListarProveedoresImpl _value,
+    $Res Function(_$ListarProveedoresImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of SupplierEvent
+  /// with the given fields replaced by the non-null parameter values.
+}
+
+/// @nodoc
+
+class _$ListarProveedoresImpl implements _ListarProveedores {
+  const _$ListarProveedoresImpl();
+
+  @override
+  String toString() {
+    return 'SupplierEvent.listarProveedores()';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is _$ListarProveedoresImpl);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(SupplierRegistroDto dto) registrarProveedor,
+    required TResult Function() listarProveedores,
+    required TResult Function(int proveedorId) obtenerDetalleProveedor,
+  }) {
+    return listarProveedores();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(SupplierRegistroDto dto)? registrarProveedor,
+    TResult? Function()? listarProveedores,
+    TResult? Function(int proveedorId)? obtenerDetalleProveedor,
+  }) {
+    return listarProveedores?.call();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(SupplierRegistroDto dto)? registrarProveedor,
+    TResult Function()? listarProveedores,
+    TResult Function(int proveedorId)? obtenerDetalleProveedor,
+    required TResult orElse(),
+  }) {
+    if (listarProveedores != null) {
+      return listarProveedores();
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_RegistrarProveedor value) registrarProveedor,
+    required TResult Function(_ListarProveedores value) listarProveedores,
+    required TResult Function(_ObtenerDetalleProveedor value)
+    obtenerDetalleProveedor,
+  }) {
+    return listarProveedores(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_RegistrarProveedor value)? registrarProveedor,
+    TResult? Function(_ListarProveedores value)? listarProveedores,
+    TResult? Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
+  }) {
+    return listarProveedores?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_RegistrarProveedor value)? registrarProveedor,
+    TResult Function(_ListarProveedores value)? listarProveedores,
+    TResult Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
+    required TResult orElse(),
+  }) {
+    if (listarProveedores != null) {
+      return listarProveedores(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _ListarProveedores implements SupplierEvent {
+  const factory _ListarProveedores() = _$ListarProveedoresImpl;
+}
+
+/// @nodoc
+abstract class _$$ObtenerDetalleProveedorImplCopyWith<$Res> {
+  factory _$$ObtenerDetalleProveedorImplCopyWith(
+    _$ObtenerDetalleProveedorImpl value,
+    $Res Function(_$ObtenerDetalleProveedorImpl) then,
+  ) = __$$ObtenerDetalleProveedorImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({int proveedorId});
+}
+
+/// @nodoc
+class __$$ObtenerDetalleProveedorImplCopyWithImpl<$Res>
+    extends _$SupplierEventCopyWithImpl<$Res, _$ObtenerDetalleProveedorImpl>
+    implements _$$ObtenerDetalleProveedorImplCopyWith<$Res> {
+  __$$ObtenerDetalleProveedorImplCopyWithImpl(
+    _$ObtenerDetalleProveedorImpl _value,
+    $Res Function(_$ObtenerDetalleProveedorImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of SupplierEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? proveedorId = null}) {
+    return _then(
+      _$ObtenerDetalleProveedorImpl(
+        proveedorId: null == proveedorId
+            ? _value.proveedorId
+            : proveedorId // ignore: cast_nullable_to_non_nullable
+                  as int,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$ObtenerDetalleProveedorImpl implements _ObtenerDetalleProveedor {
+  const _$ObtenerDetalleProveedorImpl({required this.proveedorId});
+
+  @override
+  final int proveedorId;
+
+  @override
+  String toString() {
+    return 'SupplierEvent.obtenerDetalleProveedor(proveedorId: $proveedorId)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ObtenerDetalleProveedorImpl &&
+            (identical(other.proveedorId, proveedorId) ||
+                other.proveedorId == proveedorId));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, proveedorId);
+
+  /// Create a copy of SupplierEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ObtenerDetalleProveedorImplCopyWith<_$ObtenerDetalleProveedorImpl>
+  get copyWith =>
+      __$$ObtenerDetalleProveedorImplCopyWithImpl<
+        _$ObtenerDetalleProveedorImpl
+      >(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(SupplierRegistroDto dto) registrarProveedor,
+    required TResult Function() listarProveedores,
+    required TResult Function(int proveedorId) obtenerDetalleProveedor,
+  }) {
+    return obtenerDetalleProveedor(proveedorId);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(SupplierRegistroDto dto)? registrarProveedor,
+    TResult? Function()? listarProveedores,
+    TResult? Function(int proveedorId)? obtenerDetalleProveedor,
+  }) {
+    return obtenerDetalleProveedor?.call(proveedorId);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(SupplierRegistroDto dto)? registrarProveedor,
+    TResult Function()? listarProveedores,
+    TResult Function(int proveedorId)? obtenerDetalleProveedor,
+    required TResult orElse(),
+  }) {
+    if (obtenerDetalleProveedor != null) {
+      return obtenerDetalleProveedor(proveedorId);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_RegistrarProveedor value) registrarProveedor,
+    required TResult Function(_ListarProveedores value) listarProveedores,
+    required TResult Function(_ObtenerDetalleProveedor value)
+    obtenerDetalleProveedor,
+  }) {
+    return obtenerDetalleProveedor(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_RegistrarProveedor value)? registrarProveedor,
+    TResult? Function(_ListarProveedores value)? listarProveedores,
+    TResult? Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
+  }) {
+    return obtenerDetalleProveedor?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_RegistrarProveedor value)? registrarProveedor,
+    TResult Function(_ListarProveedores value)? listarProveedores,
+    TResult Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
+    required TResult orElse(),
+  }) {
+    if (obtenerDetalleProveedor != null) {
+      return obtenerDetalleProveedor(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _ObtenerDetalleProveedor implements SupplierEvent {
+  const factory _ObtenerDetalleProveedor({required final int proveedorId}) =
+      _$ObtenerDetalleProveedorImpl;
+
+  int get proveedorId;
+
+  /// Create a copy of SupplierEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ObtenerDetalleProveedorImplCopyWith<_$ObtenerDetalleProveedorImpl>
+  get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -240,6 +508,8 @@ mixin _$SupplierState {
     required TResult Function() initial,
     required TResult Function() loading,
     required TResult Function(SupplierRegistroResponse response) success,
+    required TResult Function(SupplierListResponse response) listLoaded,
+    required TResult Function(SupplierDetailResponse response) detailLoaded,
     required TResult Function(String message) error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -247,6 +517,8 @@ mixin _$SupplierState {
     TResult? Function()? initial,
     TResult? Function()? loading,
     TResult? Function(SupplierRegistroResponse response)? success,
+    TResult? Function(SupplierListResponse response)? listLoaded,
+    TResult? Function(SupplierDetailResponse response)? detailLoaded,
     TResult? Function(String message)? error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -254,6 +526,8 @@ mixin _$SupplierState {
     TResult Function()? initial,
     TResult Function()? loading,
     TResult Function(SupplierRegistroResponse response)? success,
+    TResult Function(SupplierListResponse response)? listLoaded,
+    TResult Function(SupplierDetailResponse response)? detailLoaded,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
@@ -262,6 +536,8 @@ mixin _$SupplierState {
     required TResult Function(_Initial value) initial,
     required TResult Function(_Loading value) loading,
     required TResult Function(_Success value) success,
+    required TResult Function(_ListLoaded value) listLoaded,
+    required TResult Function(_DetailLoaded value) detailLoaded,
     required TResult Function(_Error value) error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -269,6 +545,8 @@ mixin _$SupplierState {
     TResult? Function(_Initial value)? initial,
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Success value)? success,
+    TResult? Function(_ListLoaded value)? listLoaded,
+    TResult? Function(_DetailLoaded value)? detailLoaded,
     TResult? Function(_Error value)? error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -276,6 +554,8 @@ mixin _$SupplierState {
     TResult Function(_Initial value)? initial,
     TResult Function(_Loading value)? loading,
     TResult Function(_Success value)? success,
+    TResult Function(_ListLoaded value)? listLoaded,
+    TResult Function(_DetailLoaded value)? detailLoaded,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
@@ -349,6 +629,8 @@ class _$InitialImpl implements _Initial {
     required TResult Function() initial,
     required TResult Function() loading,
     required TResult Function(SupplierRegistroResponse response) success,
+    required TResult Function(SupplierListResponse response) listLoaded,
+    required TResult Function(SupplierDetailResponse response) detailLoaded,
     required TResult Function(String message) error,
   }) {
     return initial();
@@ -360,6 +642,8 @@ class _$InitialImpl implements _Initial {
     TResult? Function()? initial,
     TResult? Function()? loading,
     TResult? Function(SupplierRegistroResponse response)? success,
+    TResult? Function(SupplierListResponse response)? listLoaded,
+    TResult? Function(SupplierDetailResponse response)? detailLoaded,
     TResult? Function(String message)? error,
   }) {
     return initial?.call();
@@ -371,6 +655,8 @@ class _$InitialImpl implements _Initial {
     TResult Function()? initial,
     TResult Function()? loading,
     TResult Function(SupplierRegistroResponse response)? success,
+    TResult Function(SupplierListResponse response)? listLoaded,
+    TResult Function(SupplierDetailResponse response)? detailLoaded,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -386,6 +672,8 @@ class _$InitialImpl implements _Initial {
     required TResult Function(_Initial value) initial,
     required TResult Function(_Loading value) loading,
     required TResult Function(_Success value) success,
+    required TResult Function(_ListLoaded value) listLoaded,
+    required TResult Function(_DetailLoaded value) detailLoaded,
     required TResult Function(_Error value) error,
   }) {
     return initial(this);
@@ -397,6 +685,8 @@ class _$InitialImpl implements _Initial {
     TResult? Function(_Initial value)? initial,
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Success value)? success,
+    TResult? Function(_ListLoaded value)? listLoaded,
+    TResult? Function(_DetailLoaded value)? detailLoaded,
     TResult? Function(_Error value)? error,
   }) {
     return initial?.call(this);
@@ -408,6 +698,8 @@ class _$InitialImpl implements _Initial {
     TResult Function(_Initial value)? initial,
     TResult Function(_Loading value)? loading,
     TResult Function(_Success value)? success,
+    TResult Function(_ListLoaded value)? listLoaded,
+    TResult Function(_DetailLoaded value)? detailLoaded,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {
@@ -468,6 +760,8 @@ class _$LoadingImpl implements _Loading {
     required TResult Function() initial,
     required TResult Function() loading,
     required TResult Function(SupplierRegistroResponse response) success,
+    required TResult Function(SupplierListResponse response) listLoaded,
+    required TResult Function(SupplierDetailResponse response) detailLoaded,
     required TResult Function(String message) error,
   }) {
     return loading();
@@ -479,6 +773,8 @@ class _$LoadingImpl implements _Loading {
     TResult? Function()? initial,
     TResult? Function()? loading,
     TResult? Function(SupplierRegistroResponse response)? success,
+    TResult? Function(SupplierListResponse response)? listLoaded,
+    TResult? Function(SupplierDetailResponse response)? detailLoaded,
     TResult? Function(String message)? error,
   }) {
     return loading?.call();
@@ -490,6 +786,8 @@ class _$LoadingImpl implements _Loading {
     TResult Function()? initial,
     TResult Function()? loading,
     TResult Function(SupplierRegistroResponse response)? success,
+    TResult Function(SupplierListResponse response)? listLoaded,
+    TResult Function(SupplierDetailResponse response)? detailLoaded,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -505,6 +803,8 @@ class _$LoadingImpl implements _Loading {
     required TResult Function(_Initial value) initial,
     required TResult Function(_Loading value) loading,
     required TResult Function(_Success value) success,
+    required TResult Function(_ListLoaded value) listLoaded,
+    required TResult Function(_DetailLoaded value) detailLoaded,
     required TResult Function(_Error value) error,
   }) {
     return loading(this);
@@ -516,6 +816,8 @@ class _$LoadingImpl implements _Loading {
     TResult? Function(_Initial value)? initial,
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Success value)? success,
+    TResult? Function(_ListLoaded value)? listLoaded,
+    TResult? Function(_DetailLoaded value)? detailLoaded,
     TResult? Function(_Error value)? error,
   }) {
     return loading?.call(this);
@@ -527,6 +829,8 @@ class _$LoadingImpl implements _Loading {
     TResult Function(_Initial value)? initial,
     TResult Function(_Loading value)? loading,
     TResult Function(_Success value)? success,
+    TResult Function(_ListLoaded value)? listLoaded,
+    TResult Function(_DetailLoaded value)? detailLoaded,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {
@@ -615,6 +919,8 @@ class _$SuccessImpl implements _Success {
     required TResult Function() initial,
     required TResult Function() loading,
     required TResult Function(SupplierRegistroResponse response) success,
+    required TResult Function(SupplierListResponse response) listLoaded,
+    required TResult Function(SupplierDetailResponse response) detailLoaded,
     required TResult Function(String message) error,
   }) {
     return success(response);
@@ -626,6 +932,8 @@ class _$SuccessImpl implements _Success {
     TResult? Function()? initial,
     TResult? Function()? loading,
     TResult? Function(SupplierRegistroResponse response)? success,
+    TResult? Function(SupplierListResponse response)? listLoaded,
+    TResult? Function(SupplierDetailResponse response)? detailLoaded,
     TResult? Function(String message)? error,
   }) {
     return success?.call(response);
@@ -637,6 +945,8 @@ class _$SuccessImpl implements _Success {
     TResult Function()? initial,
     TResult Function()? loading,
     TResult Function(SupplierRegistroResponse response)? success,
+    TResult Function(SupplierListResponse response)? listLoaded,
+    TResult Function(SupplierDetailResponse response)? detailLoaded,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -652,6 +962,8 @@ class _$SuccessImpl implements _Success {
     required TResult Function(_Initial value) initial,
     required TResult Function(_Loading value) loading,
     required TResult Function(_Success value) success,
+    required TResult Function(_ListLoaded value) listLoaded,
+    required TResult Function(_DetailLoaded value) detailLoaded,
     required TResult Function(_Error value) error,
   }) {
     return success(this);
@@ -663,6 +975,8 @@ class _$SuccessImpl implements _Success {
     TResult? Function(_Initial value)? initial,
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Success value)? success,
+    TResult? Function(_ListLoaded value)? listLoaded,
+    TResult? Function(_DetailLoaded value)? detailLoaded,
     TResult? Function(_Error value)? error,
   }) {
     return success?.call(this);
@@ -674,6 +988,8 @@ class _$SuccessImpl implements _Success {
     TResult Function(_Initial value)? initial,
     TResult Function(_Loading value)? loading,
     TResult Function(_Success value)? success,
+    TResult Function(_ListLoaded value)? listLoaded,
+    TResult Function(_DetailLoaded value)? detailLoaded,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {
@@ -694,6 +1010,343 @@ abstract class _Success implements SupplierState {
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$SuccessImplCopyWith<_$SuccessImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$ListLoadedImplCopyWith<$Res> {
+  factory _$$ListLoadedImplCopyWith(
+    _$ListLoadedImpl value,
+    $Res Function(_$ListLoadedImpl) then,
+  ) = __$$ListLoadedImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({SupplierListResponse response});
+}
+
+/// @nodoc
+class __$$ListLoadedImplCopyWithImpl<$Res>
+    extends _$SupplierStateCopyWithImpl<$Res, _$ListLoadedImpl>
+    implements _$$ListLoadedImplCopyWith<$Res> {
+  __$$ListLoadedImplCopyWithImpl(
+    _$ListLoadedImpl _value,
+    $Res Function(_$ListLoadedImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of SupplierState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? response = null}) {
+    return _then(
+      _$ListLoadedImpl(
+        response: null == response
+            ? _value.response
+            : response // ignore: cast_nullable_to_non_nullable
+                  as SupplierListResponse,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$ListLoadedImpl implements _ListLoaded {
+  const _$ListLoadedImpl({required this.response});
+
+  @override
+  final SupplierListResponse response;
+
+  @override
+  String toString() {
+    return 'SupplierState.listLoaded(response: $response)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ListLoadedImpl &&
+            (identical(other.response, response) ||
+                other.response == response));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, response);
+
+  /// Create a copy of SupplierState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ListLoadedImplCopyWith<_$ListLoadedImpl> get copyWith =>
+      __$$ListLoadedImplCopyWithImpl<_$ListLoadedImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() initial,
+    required TResult Function() loading,
+    required TResult Function(SupplierRegistroResponse response) success,
+    required TResult Function(SupplierListResponse response) listLoaded,
+    required TResult Function(SupplierDetailResponse response) detailLoaded,
+    required TResult Function(String message) error,
+  }) {
+    return listLoaded(response);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? initial,
+    TResult? Function()? loading,
+    TResult? Function(SupplierRegistroResponse response)? success,
+    TResult? Function(SupplierListResponse response)? listLoaded,
+    TResult? Function(SupplierDetailResponse response)? detailLoaded,
+    TResult? Function(String message)? error,
+  }) {
+    return listLoaded?.call(response);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? initial,
+    TResult Function()? loading,
+    TResult Function(SupplierRegistroResponse response)? success,
+    TResult Function(SupplierListResponse response)? listLoaded,
+    TResult Function(SupplierDetailResponse response)? detailLoaded,
+    TResult Function(String message)? error,
+    required TResult orElse(),
+  }) {
+    if (listLoaded != null) {
+      return listLoaded(response);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_Initial value) initial,
+    required TResult Function(_Loading value) loading,
+    required TResult Function(_Success value) success,
+    required TResult Function(_ListLoaded value) listLoaded,
+    required TResult Function(_DetailLoaded value) detailLoaded,
+    required TResult Function(_Error value) error,
+  }) {
+    return listLoaded(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_Initial value)? initial,
+    TResult? Function(_Loading value)? loading,
+    TResult? Function(_Success value)? success,
+    TResult? Function(_ListLoaded value)? listLoaded,
+    TResult? Function(_DetailLoaded value)? detailLoaded,
+    TResult? Function(_Error value)? error,
+  }) {
+    return listLoaded?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_Initial value)? initial,
+    TResult Function(_Loading value)? loading,
+    TResult Function(_Success value)? success,
+    TResult Function(_ListLoaded value)? listLoaded,
+    TResult Function(_DetailLoaded value)? detailLoaded,
+    TResult Function(_Error value)? error,
+    required TResult orElse(),
+  }) {
+    if (listLoaded != null) {
+      return listLoaded(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _ListLoaded implements SupplierState {
+  const factory _ListLoaded({required final SupplierListResponse response}) =
+      _$ListLoadedImpl;
+
+  SupplierListResponse get response;
+
+  /// Create a copy of SupplierState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ListLoadedImplCopyWith<_$ListLoadedImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$DetailLoadedImplCopyWith<$Res> {
+  factory _$$DetailLoadedImplCopyWith(
+    _$DetailLoadedImpl value,
+    $Res Function(_$DetailLoadedImpl) then,
+  ) = __$$DetailLoadedImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({SupplierDetailResponse response});
+}
+
+/// @nodoc
+class __$$DetailLoadedImplCopyWithImpl<$Res>
+    extends _$SupplierStateCopyWithImpl<$Res, _$DetailLoadedImpl>
+    implements _$$DetailLoadedImplCopyWith<$Res> {
+  __$$DetailLoadedImplCopyWithImpl(
+    _$DetailLoadedImpl _value,
+    $Res Function(_$DetailLoadedImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of SupplierState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? response = freezed}) {
+    return _then(
+      _$DetailLoadedImpl(
+        response: freezed == response
+            ? _value.response
+            : response // ignore: cast_nullable_to_non_nullable
+                  as SupplierDetailResponse,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$DetailLoadedImpl implements _DetailLoaded {
+  const _$DetailLoadedImpl({required this.response});
+
+  @override
+  final SupplierDetailResponse response;
+
+  @override
+  String toString() {
+    return 'SupplierState.detailLoaded(response: $response)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$DetailLoadedImpl &&
+            const DeepCollectionEquality().equals(other.response, response));
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(response));
+
+  /// Create a copy of SupplierState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$DetailLoadedImplCopyWith<_$DetailLoadedImpl> get copyWith =>
+      __$$DetailLoadedImplCopyWithImpl<_$DetailLoadedImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() initial,
+    required TResult Function() loading,
+    required TResult Function(SupplierRegistroResponse response) success,
+    required TResult Function(SupplierListResponse response) listLoaded,
+    required TResult Function(SupplierDetailResponse response) detailLoaded,
+    required TResult Function(String message) error,
+  }) {
+    return detailLoaded(response);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? initial,
+    TResult? Function()? loading,
+    TResult? Function(SupplierRegistroResponse response)? success,
+    TResult? Function(SupplierListResponse response)? listLoaded,
+    TResult? Function(SupplierDetailResponse response)? detailLoaded,
+    TResult? Function(String message)? error,
+  }) {
+    return detailLoaded?.call(response);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? initial,
+    TResult Function()? loading,
+    TResult Function(SupplierRegistroResponse response)? success,
+    TResult Function(SupplierListResponse response)? listLoaded,
+    TResult Function(SupplierDetailResponse response)? detailLoaded,
+    TResult Function(String message)? error,
+    required TResult orElse(),
+  }) {
+    if (detailLoaded != null) {
+      return detailLoaded(response);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_Initial value) initial,
+    required TResult Function(_Loading value) loading,
+    required TResult Function(_Success value) success,
+    required TResult Function(_ListLoaded value) listLoaded,
+    required TResult Function(_DetailLoaded value) detailLoaded,
+    required TResult Function(_Error value) error,
+  }) {
+    return detailLoaded(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_Initial value)? initial,
+    TResult? Function(_Loading value)? loading,
+    TResult? Function(_Success value)? success,
+    TResult? Function(_ListLoaded value)? listLoaded,
+    TResult? Function(_DetailLoaded value)? detailLoaded,
+    TResult? Function(_Error value)? error,
+  }) {
+    return detailLoaded?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_Initial value)? initial,
+    TResult Function(_Loading value)? loading,
+    TResult Function(_Success value)? success,
+    TResult Function(_ListLoaded value)? listLoaded,
+    TResult Function(_DetailLoaded value)? detailLoaded,
+    TResult Function(_Error value)? error,
+    required TResult orElse(),
+  }) {
+    if (detailLoaded != null) {
+      return detailLoaded(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _DetailLoaded implements SupplierState {
+  const factory _DetailLoaded({
+    required final SupplierDetailResponse response,
+  }) = _$DetailLoadedImpl;
+
+  SupplierDetailResponse get response;
+
+  /// Create a copy of SupplierState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$DetailLoadedImplCopyWith<_$DetailLoadedImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -770,6 +1423,8 @@ class _$ErrorImpl implements _Error {
     required TResult Function() initial,
     required TResult Function() loading,
     required TResult Function(SupplierRegistroResponse response) success,
+    required TResult Function(SupplierListResponse response) listLoaded,
+    required TResult Function(SupplierDetailResponse response) detailLoaded,
     required TResult Function(String message) error,
   }) {
     return error(message);
@@ -781,6 +1436,8 @@ class _$ErrorImpl implements _Error {
     TResult? Function()? initial,
     TResult? Function()? loading,
     TResult? Function(SupplierRegistroResponse response)? success,
+    TResult? Function(SupplierListResponse response)? listLoaded,
+    TResult? Function(SupplierDetailResponse response)? detailLoaded,
     TResult? Function(String message)? error,
   }) {
     return error?.call(message);
@@ -792,6 +1449,8 @@ class _$ErrorImpl implements _Error {
     TResult Function()? initial,
     TResult Function()? loading,
     TResult Function(SupplierRegistroResponse response)? success,
+    TResult Function(SupplierListResponse response)? listLoaded,
+    TResult Function(SupplierDetailResponse response)? detailLoaded,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -807,6 +1466,8 @@ class _$ErrorImpl implements _Error {
     required TResult Function(_Initial value) initial,
     required TResult Function(_Loading value) loading,
     required TResult Function(_Success value) success,
+    required TResult Function(_ListLoaded value) listLoaded,
+    required TResult Function(_DetailLoaded value) detailLoaded,
     required TResult Function(_Error value) error,
   }) {
     return error(this);
@@ -818,6 +1479,8 @@ class _$ErrorImpl implements _Error {
     TResult? Function(_Initial value)? initial,
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Success value)? success,
+    TResult? Function(_ListLoaded value)? listLoaded,
+    TResult? Function(_DetailLoaded value)? detailLoaded,
     TResult? Function(_Error value)? error,
   }) {
     return error?.call(this);
@@ -829,6 +1492,8 @@ class _$ErrorImpl implements _Error {
     TResult Function(_Initial value)? initial,
     TResult Function(_Loading value)? loading,
     TResult Function(_Success value)? success,
+    TResult Function(_ListLoaded value)? listLoaded,
+    TResult Function(_DetailLoaded value)? detailLoaded,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {
