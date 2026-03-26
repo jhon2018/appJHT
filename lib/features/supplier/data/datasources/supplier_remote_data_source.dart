@@ -1,6 +1,10 @@
 // lib/features/supplier/data/datasources/supplier_remote_data_source.dart
+// Descripcion: Data source remoto para proveedores, maneja las llamadas HTTP a la API para registrar, listar, obtener detalles y actualizar proveedores.
+
 import 'package:app_jht_front/core/network/http_client.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
+import 'package:app_jht_front/features/supplier/data/models/supplier_actualizar_dto.dart';
+import 'package:app_jht_front/features/supplier/data/models/supplier_actualizar_response.dart';
 import 'package:app_jht_front/features/supplier/data/models/supplier_registro_dto.dart';
 import 'package:app_jht_front/features/supplier/data/models/supplier_registro_response.dart';
 import 'package:app_jht_front/features/supplier/data/models/tipo_telefono_model.dart';
@@ -20,6 +24,9 @@ abstract class SupplierRemoteDataSource {
   // NUEVOS MÉTODOS - AGREGAR ESTOS
   Future<SupplierListResponse> listarProveedores();
   Future<SupplierDetailResponse> obtenerDetalleProveedor(int proveedorId);
+
+  Future<SupplierActualizarResponse> actualizarProveedor(SupplierActualizarDto dto);
+
 }
 
 class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource 
@@ -186,6 +193,50 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
     }
   }
 
+ @override
+  Future<SupplierActualizarResponse> actualizarProveedor(SupplierActualizarDto dto) async {
+    try {
+      print('🔵 Actualizando proveedor ID: ${dto.proveedorId}');
+      
+      final String? token = await TokenService.getToken();
+      
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación.');
+      }
+
+      final response = await http.put(
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/general/actualizar-proveedor'),
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode(dto.toJson()),
+      );
+
+      print('🟡 Response status actualizar: ${response.statusCode}');
+      print('🟡 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        return SupplierActualizarResponse.fromJson(responseData);
+      } else if (response.statusCode == 401) {
+        throw Exception('No autorizado. Token inválido o expirado.');
+      } else if (response.statusCode == 403) {
+        throw Exception('No tienes permisos para actualizar proveedores.');
+      } else if (response.statusCode == 404) {
+        throw Exception('Proveedor no encontrado.');
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(_getErrorMessage(errorData));
+      }
+    } catch (e) {
+      print('❌ ERROR en actualizar proveedor: $e');
+      rethrow;
+    }
+  }
+
+
   String _getErrorMessage(Map<String, dynamic> errorData) {
     print('🔍 Error data: $errorData');
 
@@ -209,4 +260,5 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
 
     return 'Error en el registro del proveedor';
   }
+
 }

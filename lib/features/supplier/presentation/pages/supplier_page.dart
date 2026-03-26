@@ -2,6 +2,7 @@
 // description: Página principal de proveedores con menú lateral, tabla responsiva y paginación.
 
 import 'package:app_jht_front/core/network/http_client.dart';
+import 'package:app_jht_front/features/supplier/domain/usecases/actualizar_supplier_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
 import 'package:app_jht_front/features/supplier/presentation/widgets/add_supplier_modal.dart';
@@ -41,6 +42,7 @@ class _SupplierPageState extends State<SupplierPage> {
         registrarSupplierUseCase: RegistrarSupplierUseCase(repository: repository),
         listarProveedoresUseCase: ListarProveedoresUseCase(repository: repository),
         obtenerDetalleProveedorUseCase: ObtenerDetalleProveedorUseCase(repository: repository),
+        actualizarSupplierUseCase: ActualizarSupplierUseCase(repository: repository),
       ),
       child: _SupplierPageContent(
         userName: widget.userName,
@@ -70,6 +72,7 @@ class __SupplierPageContentState extends State<_SupplierPageContent> {
   bool _isLoading = false;
   final TextEditingController _searchController = TextEditingController();
 
+ bool _isMobile = false; 
   // ✅ PAGINACIÓN: 5 registros por página
   int _currentPage = 1;
   int _itemsPerPage = 5;
@@ -77,7 +80,7 @@ class __SupplierPageContentState extends State<_SupplierPageContent> {
 
   int get _totalPages => _filteredProveedores.isEmpty ? 1 : (_filteredProveedores.length / _itemsPerPage).ceil();
 
-  bool get _isMobile => MediaQuery.of(context).size.width < 768;
+  // bool get _isMobile => MediaQuery.of(context).size.width < 768;
 
   @override
   void initState() {
@@ -170,15 +173,21 @@ class __SupplierPageContentState extends State<_SupplierPageContent> {
     });
   }
 
-  Color _getEstadoColor(String estado) {
-    final estadoLower = estado.toLowerCase();
-    if (estadoLower.contains('acti')) {
-      return Colors.green[800]!;
-    } else if (estadoLower.contains('inacti')) {
-      return Colors.red[800]!;
-    }
+Color _getEstadoColor(String estado) {
+  final estadoLower = estado.toLowerCase();
+  print('🔍 Estado recibido: "$estado" -> Lower: "$estadoLower"'); // Para debug
+  
+  if (estadoLower == 'activo' || estadoLower.contains('activo')) {
+    return Colors.green[800]!;
+  } else if (estadoLower == 'inactivo' || estadoLower.contains('inactivo')) {
+    return Colors.red[800]!;
+  } else {
+    // Para cualquier otro estado (como ACTIVO, INACTIVO en mayúsculas)
+    if (estado == 'ACTIVO') return Colors.green[800]!;
+    if (estado == 'INACTIVO') return Colors.red[800]!;
     return Colors.grey[800]!;
   }
+}
 
   void _verDetalleProveedor(int proveedorId) {
     if (mounted) {
@@ -234,49 +243,72 @@ class __SupplierPageContentState extends State<_SupplierPageContent> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return BlocListener<SupplierBloc, SupplierState>(
-      listener: (context, state) {
-        state.when(
-          initial: () {},
-          loading: () {
-            if (mounted) setState(() => _isLoading = true);
-          },
-          success: (response) {},
-          listLoaded: (response) {
-            if (mounted) {
-              setState(() {
-                _isLoading = false;
-                _proveedores = response.data;
-                _filteredProveedores = response.data;
-                _actualizarPagina();
-              });
-            }
-          },
-          detailLoaded: (response) {
-            if (mounted) {
-              setState(() => _isLoading = false);
-              showDialog(
-                context: context,
-                builder: (context) => DetalleSupplierModal(proveedor: response.data),
-              );
-            }
-          },
-          error: (message) {
-            if (mounted) {
-              setState(() => _isLoading = false);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Error: $message'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          },
-        );
-      },
-      child: Scaffold(
+@override
+Widget build(BuildContext context) {
+_isMobile = MediaQuery.of(context).size.width < 768;
+  _isMobile = MediaQuery.of(context).size.width < 768;
+
+  return BlocListener<SupplierBloc, SupplierState>(
+    listener: (context, state) {
+      state.when(
+        initial: () {},
+        loading: () {
+          if (mounted) setState(() => _isLoading = true);
+        },
+        success: (response) {},
+        listLoaded: (response) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _proveedores = response.data;
+              _filteredProveedores = response.data;
+              _actualizarPagina();
+            });
+          }
+        },
+// En supplier_page.dart, en el BlocListener:
+detailLoaded: (response) {
+  if (mounted) {
+    setState(() => _isLoading = false);
+    
+    // ✅ Obtener el BLoC ANTES de mostrar el diálogo
+    final supplierBloc = BlocProvider.of<SupplierBloc>(context);
+    
+    showDialog(
+      context: context,
+      builder: (context) => DetalleSupplierModal(
+        proveedor: response.data,
+        supplierBloc: supplierBloc, // ✅ PASAR EL BLOC COMO PARÁMETRO
+      ),
+    );
+  }
+},
+        updateSuccess: (response) {
+          if (mounted) {
+            setState(() => _isLoading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(response.message),
+                backgroundColor: const Color(0xFF303366),
+              ),
+            );
+            _cargarProveedores();
+          }
+        },
+        error: (message) {
+          if (mounted) {
+            setState(() => _isLoading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: $message'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+      );
+    },
+    child: Scaffold(
         key: _scaffoldKey,
         endDrawer: Drawer(
           child: SideMenu(

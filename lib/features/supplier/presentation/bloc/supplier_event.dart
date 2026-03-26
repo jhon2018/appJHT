@@ -14,4 +14,9 @@ class SupplierEvent with _$SupplierEvent {
     required int proveedorId,
   }) = _ObtenerDetalleProveedor;
 
+  const factory SupplierEvent.actualizarProveedor({
+    required SupplierActualizarDto dto,
+  }) = _ActualizarProveedor;
+
+
 } 

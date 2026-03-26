@@ -1,20 +1,30 @@
 // lib/features/supplier/presentation/widgets/detalle_supplier_modal.dart
 import 'package:app_jht_front/features/supplier/data/models/supplier_detail_model.dart';
+import 'package:app_jht_front/features/supplier/presentation/bloc/supplier_bloc.dart';
+import 'package:app_jht_front/features/supplier/presentation/widgets/edit_supplier_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DetalleSupplierModal extends StatelessWidget {
   final SupplierDetailModel proveedor;
+  final SupplierBloc supplierBloc; // ✅ RECIBIR EL BLOC COMO PARÁMETRO
 
   const DetalleSupplierModal({
     super.key,
     required this.proveedor,
+    required this.supplierBloc, // ✅ REQUERIDO
   });
-
-  // Función para abrir URLs - AHORA RECIBE EL CONTEXT COMO PARÁMETRO
+Color _getEstadoColor(String estado) {
+  if (estado == 'ACTIVO' || estado.toLowerCase() == 'activo') {
+    return Colors.green;
+  } else if (estado == 'INACTIVO' || estado.toLowerCase() == 'inactivo') {
+    return Colors.red;
+  }
+  return Colors.grey;
+}
   Future<void> _abrirEnlace(String url, BuildContext context) async {
     try {
-      // Asegurar que la URL tenga el protocolo
       String urlCompleta = url;
       if (!urlCompleta.startsWith('http://') && !urlCompleta.startsWith('https://')) {
         urlCompleta = 'https://$urlCompleta';
@@ -47,6 +57,10 @@ class DetalleSupplierModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+     print('🔍 [DEBUG] Teléfonos recibidos: ${proveedor.telefonos.length}');
+  for (var tel in proveedor.telefonos) {
+    print('   - ID: ${tel.telefonoId}, Número: ${tel.numero}, Tipo: ${tel.tipo}, Uso: ${tel.uso}');
+  }
     final bool isMobile = MediaQuery.of(context).size.width < 768;
     final bool isTablet = MediaQuery.of(context).size.width >= 768 && MediaQuery.of(context).size.width < 1024;
 
@@ -62,7 +76,6 @@ class DetalleSupplierModal extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header con título y botón cerrar
             Container(
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
@@ -91,14 +104,12 @@ class DetalleSupplierModal extends StatelessWidget {
               ),
             ),
             
-            // Contenido del modal
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Estado y acciones
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -108,9 +119,7 @@ class DetalleSupplierModal extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: proveedor.estado.toLowerCase() == 'activo'
-                                ? Colors.green
-                                : Colors.red,
+                     color: _getEstadoColor(proveedor.estado),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
@@ -122,10 +131,34 @@ class DetalleSupplierModal extends StatelessWidget {
                             ),
                           ),
                         ),
+                        // ✅ BOTÓN EDITAR CORREGIDO - USA EL BLOC QUE RECIBIMOS
                         ElevatedButton.icon(
                           onPressed: () {
-                            // Aquí irá la lógica de edición
-                            print('Editar proveedor ID: ${proveedor.proveedorId}');
+                            print('🔵 [DEBUG] Botón EDITAR presionado');
+                            
+                            // ✅ CERRAR EL MODAL ACTUAL
+                            print('   Cerrando modal de detalle...');
+                            Navigator.of(context).pop();
+                            
+                            // ✅ ABRIR MODAL DE EDICIÓN CON EL MISMO BLOC
+                            print('   Abriendo modal de edición...');
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (dialogContext) {
+                                print('   Builder del diálogo ejecutándose');
+                                return BlocProvider.value(
+                                  value: supplierBloc, // ✅ USAR EL BLOC RECIBIDO
+                                  child: EditSupplierModal(
+                                    proveedor: proveedor,
+                                    onEditComplete: () {
+                                      print('   onEditComplete llamado - Recargando lista');
+                                      supplierBloc.add(const SupplierEvent.listarProveedores());
+                                    },
+                                  ),
+                                );
+                              },
+                            );
                           },
                           icon: const Icon(Icons.edit, size: 18),
                           label: const Text('EDITAR'),
@@ -141,18 +174,10 @@ class DetalleSupplierModal extends StatelessWidget {
                     ),
                     
                     const SizedBox(height: 24),
-                    
-                    // Información principal con layout responsivo
                     _buildSeccionInfo(context, isMobile),
-                    
                     const SizedBox(height: 24),
-                    
-                    // Teléfonos
                     _buildSeccionTelefonos(context),
-                    
                     const SizedBox(height: 24),
-                    
-                    // Observaciones
                     if (proveedor.observaciones.isNotEmpty)
                       _buildSeccionObservaciones(context),
                   ],
@@ -165,6 +190,7 @@ class DetalleSupplierModal extends StatelessWidget {
     );
   }
 
+  // ... resto de los métodos _buildSeccionInfo, _buildSeccionTelefonos, etc. (igual que antes)
   Widget _buildSeccionInfo(BuildContext context, bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +207,6 @@ class DetalleSupplierModal extends StatelessWidget {
         const Divider(height: 1),
         const SizedBox(height: 16),
         
-        // Layout responsivo para la información
         if (isMobile) ...[
           _buildInfoRow('Razón Social:', proveedor.razonSocial),
           _buildInfoRow('Representante:', proveedor.representante),
@@ -195,7 +220,6 @@ class DetalleSupplierModal extends StatelessWidget {
           _buildInfoRow('N° Cuenta:', proveedor.numeroCuenta.toString()),
           _buildInfoRow('Encargado:', proveedor.encargado),
         ] else ...[
-          // En desktop, podemos usar 2 columnas
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -231,32 +255,31 @@ class DetalleSupplierModal extends StatelessWidget {
   }
 
   Widget _buildSeccionTelefonos(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'TELÉFONOS',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF303366),
-          ),
+ return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'TELÉFONOS',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF303366),
         ),
-        const SizedBox(height: 16),
-        const Divider(height: 1),
-        const SizedBox(height: 16),
-        
-        if (proveedor.telefonos.isEmpty)
-          const Text(
-            'No hay teléfonos registrados',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-              fontStyle: FontStyle.italic,
-            ),
-          )
+      ),
+      const SizedBox(height: 16),
+      const Divider(height: 1),
+      const SizedBox(height: 16),
+      
+      if (proveedor.telefonos.isEmpty)
+        const Text(
+          'No hay teléfonos registrados',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey,
+            fontStyle: FontStyle.italic,
+          ),
+        )
         else
-          // Grid responsivo para teléfonos
           LayoutBuilder(
             builder: (context, constraints) {
               int crossAxisCount = constraints.maxWidth > 600 ? 2 : 1;
@@ -279,42 +302,41 @@ class DetalleSupplierModal extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.grey[300]!),
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF303366).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.phone,
-                            color: Color(0xFF303366),
-                            size: 20,
-                          ),
+             child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF303366).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.phone,
+                    color: Color(0xFF303366),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${telefono.tipo} - ${telefono.uso}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                '${telefono.tipo} - ${telefono.uso}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                telefono.numero,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        telefono.numero,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF303366),
+                        ),
                               ),
                             ],
                           ),
@@ -413,7 +435,7 @@ class DetalleSupplierModal extends StatelessWidget {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () => _abrirEnlace(url, context), // <-- AHORA PASA EL CONTEXT
+              onTap: () => _abrirEnlace(url, context),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(

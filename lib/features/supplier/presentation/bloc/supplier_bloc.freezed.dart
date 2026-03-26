@@ -22,18 +22,21 @@ mixin _$SupplierEvent {
     required TResult Function(SupplierRegistroDto dto) registrarProveedor,
     required TResult Function() listarProveedores,
     required TResult Function(int proveedorId) obtenerDetalleProveedor,
+    required TResult Function(SupplierActualizarDto dto) actualizarProveedor,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(SupplierRegistroDto dto)? registrarProveedor,
     TResult? Function()? listarProveedores,
     TResult? Function(int proveedorId)? obtenerDetalleProveedor,
+    TResult? Function(SupplierActualizarDto dto)? actualizarProveedor,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(SupplierRegistroDto dto)? registrarProveedor,
     TResult Function()? listarProveedores,
     TResult Function(int proveedorId)? obtenerDetalleProveedor,
+    TResult Function(SupplierActualizarDto dto)? actualizarProveedor,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -42,18 +45,21 @@ mixin _$SupplierEvent {
     required TResult Function(_ListarProveedores value) listarProveedores,
     required TResult Function(_ObtenerDetalleProveedor value)
     obtenerDetalleProveedor,
+    required TResult Function(_ActualizarProveedor value) actualizarProveedor,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_RegistrarProveedor value)? registrarProveedor,
     TResult? Function(_ListarProveedores value)? listarProveedores,
     TResult? Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
+    TResult? Function(_ActualizarProveedor value)? actualizarProveedor,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_RegistrarProveedor value)? registrarProveedor,
     TResult Function(_ListarProveedores value)? listarProveedores,
     TResult Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
+    TResult Function(_ActualizarProveedor value)? actualizarProveedor,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
 }
@@ -156,6 +162,7 @@ class _$RegistrarProveedorImpl implements _RegistrarProveedor {
     required TResult Function(SupplierRegistroDto dto) registrarProveedor,
     required TResult Function() listarProveedores,
     required TResult Function(int proveedorId) obtenerDetalleProveedor,
+    required TResult Function(SupplierActualizarDto dto) actualizarProveedor,
   }) {
     return registrarProveedor(dto);
   }
@@ -166,6 +173,7 @@ class _$RegistrarProveedorImpl implements _RegistrarProveedor {
     TResult? Function(SupplierRegistroDto dto)? registrarProveedor,
     TResult? Function()? listarProveedores,
     TResult? Function(int proveedorId)? obtenerDetalleProveedor,
+    TResult? Function(SupplierActualizarDto dto)? actualizarProveedor,
   }) {
     return registrarProveedor?.call(dto);
   }
@@ -176,6 +184,7 @@ class _$RegistrarProveedorImpl implements _RegistrarProveedor {
     TResult Function(SupplierRegistroDto dto)? registrarProveedor,
     TResult Function()? listarProveedores,
     TResult Function(int proveedorId)? obtenerDetalleProveedor,
+    TResult Function(SupplierActualizarDto dto)? actualizarProveedor,
     required TResult orElse(),
   }) {
     if (registrarProveedor != null) {
@@ -191,6 +200,7 @@ class _$RegistrarProveedorImpl implements _RegistrarProveedor {
     required TResult Function(_ListarProveedores value) listarProveedores,
     required TResult Function(_ObtenerDetalleProveedor value)
     obtenerDetalleProveedor,
+    required TResult Function(_ActualizarProveedor value) actualizarProveedor,
   }) {
     return registrarProveedor(this);
   }
@@ -201,6 +211,7 @@ class _$RegistrarProveedorImpl implements _RegistrarProveedor {
     TResult? Function(_RegistrarProveedor value)? registrarProveedor,
     TResult? Function(_ListarProveedores value)? listarProveedores,
     TResult? Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
+    TResult? Function(_ActualizarProveedor value)? actualizarProveedor,
   }) {
     return registrarProveedor?.call(this);
   }
@@ -211,6 +222,7 @@ class _$RegistrarProveedorImpl implements _RegistrarProveedor {
     TResult Function(_RegistrarProveedor value)? registrarProveedor,
     TResult Function(_ListarProveedores value)? listarProveedores,
     TResult Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
+    TResult Function(_ActualizarProveedor value)? actualizarProveedor,
     required TResult orElse(),
   }) {
     if (registrarProveedor != null) {
@@ -279,6 +291,7 @@ class _$ListarProveedoresImpl implements _ListarProveedores {
     required TResult Function(SupplierRegistroDto dto) registrarProveedor,
     required TResult Function() listarProveedores,
     required TResult Function(int proveedorId) obtenerDetalleProveedor,
+    required TResult Function(SupplierActualizarDto dto) actualizarProveedor,
   }) {
     return listarProveedores();
   }
@@ -289,6 +302,7 @@ class _$ListarProveedoresImpl implements _ListarProveedores {
     TResult? Function(SupplierRegistroDto dto)? registrarProveedor,
     TResult? Function()? listarProveedores,
     TResult? Function(int proveedorId)? obtenerDetalleProveedor,
+    TResult? Function(SupplierActualizarDto dto)? actualizarProveedor,
   }) {
     return listarProveedores?.call();
   }
@@ -299,6 +313,7 @@ class _$ListarProveedoresImpl implements _ListarProveedores {
     TResult Function(SupplierRegistroDto dto)? registrarProveedor,
     TResult Function()? listarProveedores,
     TResult Function(int proveedorId)? obtenerDetalleProveedor,
+    TResult Function(SupplierActualizarDto dto)? actualizarProveedor,
     required TResult orElse(),
   }) {
     if (listarProveedores != null) {
@@ -314,6 +329,7 @@ class _$ListarProveedoresImpl implements _ListarProveedores {
     required TResult Function(_ListarProveedores value) listarProveedores,
     required TResult Function(_ObtenerDetalleProveedor value)
     obtenerDetalleProveedor,
+    required TResult Function(_ActualizarProveedor value) actualizarProveedor,
   }) {
     return listarProveedores(this);
   }
@@ -324,6 +340,7 @@ class _$ListarProveedoresImpl implements _ListarProveedores {
     TResult? Function(_RegistrarProveedor value)? registrarProveedor,
     TResult? Function(_ListarProveedores value)? listarProveedores,
     TResult? Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
+    TResult? Function(_ActualizarProveedor value)? actualizarProveedor,
   }) {
     return listarProveedores?.call(this);
   }
@@ -334,6 +351,7 @@ class _$ListarProveedoresImpl implements _ListarProveedores {
     TResult Function(_RegistrarProveedor value)? registrarProveedor,
     TResult Function(_ListarProveedores value)? listarProveedores,
     TResult Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
+    TResult Function(_ActualizarProveedor value)? actualizarProveedor,
     required TResult orElse(),
   }) {
     if (listarProveedores != null) {
@@ -424,6 +442,7 @@ class _$ObtenerDetalleProveedorImpl implements _ObtenerDetalleProveedor {
     required TResult Function(SupplierRegistroDto dto) registrarProveedor,
     required TResult Function() listarProveedores,
     required TResult Function(int proveedorId) obtenerDetalleProveedor,
+    required TResult Function(SupplierActualizarDto dto) actualizarProveedor,
   }) {
     return obtenerDetalleProveedor(proveedorId);
   }
@@ -434,6 +453,7 @@ class _$ObtenerDetalleProveedorImpl implements _ObtenerDetalleProveedor {
     TResult? Function(SupplierRegistroDto dto)? registrarProveedor,
     TResult? Function()? listarProveedores,
     TResult? Function(int proveedorId)? obtenerDetalleProveedor,
+    TResult? Function(SupplierActualizarDto dto)? actualizarProveedor,
   }) {
     return obtenerDetalleProveedor?.call(proveedorId);
   }
@@ -444,6 +464,7 @@ class _$ObtenerDetalleProveedorImpl implements _ObtenerDetalleProveedor {
     TResult Function(SupplierRegistroDto dto)? registrarProveedor,
     TResult Function()? listarProveedores,
     TResult Function(int proveedorId)? obtenerDetalleProveedor,
+    TResult Function(SupplierActualizarDto dto)? actualizarProveedor,
     required TResult orElse(),
   }) {
     if (obtenerDetalleProveedor != null) {
@@ -459,6 +480,7 @@ class _$ObtenerDetalleProveedorImpl implements _ObtenerDetalleProveedor {
     required TResult Function(_ListarProveedores value) listarProveedores,
     required TResult Function(_ObtenerDetalleProveedor value)
     obtenerDetalleProveedor,
+    required TResult Function(_ActualizarProveedor value) actualizarProveedor,
   }) {
     return obtenerDetalleProveedor(this);
   }
@@ -469,6 +491,7 @@ class _$ObtenerDetalleProveedorImpl implements _ObtenerDetalleProveedor {
     TResult? Function(_RegistrarProveedor value)? registrarProveedor,
     TResult? Function(_ListarProveedores value)? listarProveedores,
     TResult? Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
+    TResult? Function(_ActualizarProveedor value)? actualizarProveedor,
   }) {
     return obtenerDetalleProveedor?.call(this);
   }
@@ -479,6 +502,7 @@ class _$ObtenerDetalleProveedorImpl implements _ObtenerDetalleProveedor {
     TResult Function(_RegistrarProveedor value)? registrarProveedor,
     TResult Function(_ListarProveedores value)? listarProveedores,
     TResult Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
+    TResult Function(_ActualizarProveedor value)? actualizarProveedor,
     required TResult orElse(),
   }) {
     if (obtenerDetalleProveedor != null) {
@@ -502,6 +526,166 @@ abstract class _ObtenerDetalleProveedor implements SupplierEvent {
 }
 
 /// @nodoc
+abstract class _$$ActualizarProveedorImplCopyWith<$Res> {
+  factory _$$ActualizarProveedorImplCopyWith(
+    _$ActualizarProveedorImpl value,
+    $Res Function(_$ActualizarProveedorImpl) then,
+  ) = __$$ActualizarProveedorImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({SupplierActualizarDto dto});
+}
+
+/// @nodoc
+class __$$ActualizarProveedorImplCopyWithImpl<$Res>
+    extends _$SupplierEventCopyWithImpl<$Res, _$ActualizarProveedorImpl>
+    implements _$$ActualizarProveedorImplCopyWith<$Res> {
+  __$$ActualizarProveedorImplCopyWithImpl(
+    _$ActualizarProveedorImpl _value,
+    $Res Function(_$ActualizarProveedorImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of SupplierEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? dto = null}) {
+    return _then(
+      _$ActualizarProveedorImpl(
+        dto: null == dto
+            ? _value.dto
+            : dto // ignore: cast_nullable_to_non_nullable
+                  as SupplierActualizarDto,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$ActualizarProveedorImpl implements _ActualizarProveedor {
+  const _$ActualizarProveedorImpl({required this.dto});
+
+  @override
+  final SupplierActualizarDto dto;
+
+  @override
+  String toString() {
+    return 'SupplierEvent.actualizarProveedor(dto: $dto)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ActualizarProveedorImpl &&
+            (identical(other.dto, dto) || other.dto == dto));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, dto);
+
+  /// Create a copy of SupplierEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ActualizarProveedorImplCopyWith<_$ActualizarProveedorImpl> get copyWith =>
+      __$$ActualizarProveedorImplCopyWithImpl<_$ActualizarProveedorImpl>(
+        this,
+        _$identity,
+      );
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(SupplierRegistroDto dto) registrarProveedor,
+    required TResult Function() listarProveedores,
+    required TResult Function(int proveedorId) obtenerDetalleProveedor,
+    required TResult Function(SupplierActualizarDto dto) actualizarProveedor,
+  }) {
+    return actualizarProveedor(dto);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(SupplierRegistroDto dto)? registrarProveedor,
+    TResult? Function()? listarProveedores,
+    TResult? Function(int proveedorId)? obtenerDetalleProveedor,
+    TResult? Function(SupplierActualizarDto dto)? actualizarProveedor,
+  }) {
+    return actualizarProveedor?.call(dto);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(SupplierRegistroDto dto)? registrarProveedor,
+    TResult Function()? listarProveedores,
+    TResult Function(int proveedorId)? obtenerDetalleProveedor,
+    TResult Function(SupplierActualizarDto dto)? actualizarProveedor,
+    required TResult orElse(),
+  }) {
+    if (actualizarProveedor != null) {
+      return actualizarProveedor(dto);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_RegistrarProveedor value) registrarProveedor,
+    required TResult Function(_ListarProveedores value) listarProveedores,
+    required TResult Function(_ObtenerDetalleProveedor value)
+    obtenerDetalleProveedor,
+    required TResult Function(_ActualizarProveedor value) actualizarProveedor,
+  }) {
+    return actualizarProveedor(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_RegistrarProveedor value)? registrarProveedor,
+    TResult? Function(_ListarProveedores value)? listarProveedores,
+    TResult? Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
+    TResult? Function(_ActualizarProveedor value)? actualizarProveedor,
+  }) {
+    return actualizarProveedor?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_RegistrarProveedor value)? registrarProveedor,
+    TResult Function(_ListarProveedores value)? listarProveedores,
+    TResult Function(_ObtenerDetalleProveedor value)? obtenerDetalleProveedor,
+    TResult Function(_ActualizarProveedor value)? actualizarProveedor,
+    required TResult orElse(),
+  }) {
+    if (actualizarProveedor != null) {
+      return actualizarProveedor(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _ActualizarProveedor implements SupplierEvent {
+  const factory _ActualizarProveedor({
+    required final SupplierActualizarDto dto,
+  }) = _$ActualizarProveedorImpl;
+
+  SupplierActualizarDto get dto;
+
+  /// Create a copy of SupplierEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ActualizarProveedorImplCopyWith<_$ActualizarProveedorImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$SupplierState {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
@@ -510,6 +694,8 @@ mixin _$SupplierState {
     required TResult Function(SupplierRegistroResponse response) success,
     required TResult Function(SupplierListResponse response) listLoaded,
     required TResult Function(SupplierDetailResponse response) detailLoaded,
+    required TResult Function(SupplierActualizarResponse response)
+    updateSuccess,
     required TResult Function(String message) error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -519,6 +705,7 @@ mixin _$SupplierState {
     TResult? Function(SupplierRegistroResponse response)? success,
     TResult? Function(SupplierListResponse response)? listLoaded,
     TResult? Function(SupplierDetailResponse response)? detailLoaded,
+    TResult? Function(SupplierActualizarResponse response)? updateSuccess,
     TResult? Function(String message)? error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -528,6 +715,7 @@ mixin _$SupplierState {
     TResult Function(SupplierRegistroResponse response)? success,
     TResult Function(SupplierListResponse response)? listLoaded,
     TResult Function(SupplierDetailResponse response)? detailLoaded,
+    TResult Function(SupplierActualizarResponse response)? updateSuccess,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
@@ -538,6 +726,7 @@ mixin _$SupplierState {
     required TResult Function(_Success value) success,
     required TResult Function(_ListLoaded value) listLoaded,
     required TResult Function(_DetailLoaded value) detailLoaded,
+    required TResult Function(_UpdateSuccess value) updateSuccess,
     required TResult Function(_Error value) error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -547,6 +736,7 @@ mixin _$SupplierState {
     TResult? Function(_Success value)? success,
     TResult? Function(_ListLoaded value)? listLoaded,
     TResult? Function(_DetailLoaded value)? detailLoaded,
+    TResult? Function(_UpdateSuccess value)? updateSuccess,
     TResult? Function(_Error value)? error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -556,6 +746,7 @@ mixin _$SupplierState {
     TResult Function(_Success value)? success,
     TResult Function(_ListLoaded value)? listLoaded,
     TResult Function(_DetailLoaded value)? detailLoaded,
+    TResult Function(_UpdateSuccess value)? updateSuccess,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
@@ -631,6 +822,8 @@ class _$InitialImpl implements _Initial {
     required TResult Function(SupplierRegistroResponse response) success,
     required TResult Function(SupplierListResponse response) listLoaded,
     required TResult Function(SupplierDetailResponse response) detailLoaded,
+    required TResult Function(SupplierActualizarResponse response)
+    updateSuccess,
     required TResult Function(String message) error,
   }) {
     return initial();
@@ -644,6 +837,7 @@ class _$InitialImpl implements _Initial {
     TResult? Function(SupplierRegistroResponse response)? success,
     TResult? Function(SupplierListResponse response)? listLoaded,
     TResult? Function(SupplierDetailResponse response)? detailLoaded,
+    TResult? Function(SupplierActualizarResponse response)? updateSuccess,
     TResult? Function(String message)? error,
   }) {
     return initial?.call();
@@ -657,6 +851,7 @@ class _$InitialImpl implements _Initial {
     TResult Function(SupplierRegistroResponse response)? success,
     TResult Function(SupplierListResponse response)? listLoaded,
     TResult Function(SupplierDetailResponse response)? detailLoaded,
+    TResult Function(SupplierActualizarResponse response)? updateSuccess,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -674,6 +869,7 @@ class _$InitialImpl implements _Initial {
     required TResult Function(_Success value) success,
     required TResult Function(_ListLoaded value) listLoaded,
     required TResult Function(_DetailLoaded value) detailLoaded,
+    required TResult Function(_UpdateSuccess value) updateSuccess,
     required TResult Function(_Error value) error,
   }) {
     return initial(this);
@@ -687,6 +883,7 @@ class _$InitialImpl implements _Initial {
     TResult? Function(_Success value)? success,
     TResult? Function(_ListLoaded value)? listLoaded,
     TResult? Function(_DetailLoaded value)? detailLoaded,
+    TResult? Function(_UpdateSuccess value)? updateSuccess,
     TResult? Function(_Error value)? error,
   }) {
     return initial?.call(this);
@@ -700,6 +897,7 @@ class _$InitialImpl implements _Initial {
     TResult Function(_Success value)? success,
     TResult Function(_ListLoaded value)? listLoaded,
     TResult Function(_DetailLoaded value)? detailLoaded,
+    TResult Function(_UpdateSuccess value)? updateSuccess,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {
@@ -762,6 +960,8 @@ class _$LoadingImpl implements _Loading {
     required TResult Function(SupplierRegistroResponse response) success,
     required TResult Function(SupplierListResponse response) listLoaded,
     required TResult Function(SupplierDetailResponse response) detailLoaded,
+    required TResult Function(SupplierActualizarResponse response)
+    updateSuccess,
     required TResult Function(String message) error,
   }) {
     return loading();
@@ -775,6 +975,7 @@ class _$LoadingImpl implements _Loading {
     TResult? Function(SupplierRegistroResponse response)? success,
     TResult? Function(SupplierListResponse response)? listLoaded,
     TResult? Function(SupplierDetailResponse response)? detailLoaded,
+    TResult? Function(SupplierActualizarResponse response)? updateSuccess,
     TResult? Function(String message)? error,
   }) {
     return loading?.call();
@@ -788,6 +989,7 @@ class _$LoadingImpl implements _Loading {
     TResult Function(SupplierRegistroResponse response)? success,
     TResult Function(SupplierListResponse response)? listLoaded,
     TResult Function(SupplierDetailResponse response)? detailLoaded,
+    TResult Function(SupplierActualizarResponse response)? updateSuccess,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -805,6 +1007,7 @@ class _$LoadingImpl implements _Loading {
     required TResult Function(_Success value) success,
     required TResult Function(_ListLoaded value) listLoaded,
     required TResult Function(_DetailLoaded value) detailLoaded,
+    required TResult Function(_UpdateSuccess value) updateSuccess,
     required TResult Function(_Error value) error,
   }) {
     return loading(this);
@@ -818,6 +1021,7 @@ class _$LoadingImpl implements _Loading {
     TResult? Function(_Success value)? success,
     TResult? Function(_ListLoaded value)? listLoaded,
     TResult? Function(_DetailLoaded value)? detailLoaded,
+    TResult? Function(_UpdateSuccess value)? updateSuccess,
     TResult? Function(_Error value)? error,
   }) {
     return loading?.call(this);
@@ -831,6 +1035,7 @@ class _$LoadingImpl implements _Loading {
     TResult Function(_Success value)? success,
     TResult Function(_ListLoaded value)? listLoaded,
     TResult Function(_DetailLoaded value)? detailLoaded,
+    TResult Function(_UpdateSuccess value)? updateSuccess,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {
@@ -921,6 +1126,8 @@ class _$SuccessImpl implements _Success {
     required TResult Function(SupplierRegistroResponse response) success,
     required TResult Function(SupplierListResponse response) listLoaded,
     required TResult Function(SupplierDetailResponse response) detailLoaded,
+    required TResult Function(SupplierActualizarResponse response)
+    updateSuccess,
     required TResult Function(String message) error,
   }) {
     return success(response);
@@ -934,6 +1141,7 @@ class _$SuccessImpl implements _Success {
     TResult? Function(SupplierRegistroResponse response)? success,
     TResult? Function(SupplierListResponse response)? listLoaded,
     TResult? Function(SupplierDetailResponse response)? detailLoaded,
+    TResult? Function(SupplierActualizarResponse response)? updateSuccess,
     TResult? Function(String message)? error,
   }) {
     return success?.call(response);
@@ -947,6 +1155,7 @@ class _$SuccessImpl implements _Success {
     TResult Function(SupplierRegistroResponse response)? success,
     TResult Function(SupplierListResponse response)? listLoaded,
     TResult Function(SupplierDetailResponse response)? detailLoaded,
+    TResult Function(SupplierActualizarResponse response)? updateSuccess,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -964,6 +1173,7 @@ class _$SuccessImpl implements _Success {
     required TResult Function(_Success value) success,
     required TResult Function(_ListLoaded value) listLoaded,
     required TResult Function(_DetailLoaded value) detailLoaded,
+    required TResult Function(_UpdateSuccess value) updateSuccess,
     required TResult Function(_Error value) error,
   }) {
     return success(this);
@@ -977,6 +1187,7 @@ class _$SuccessImpl implements _Success {
     TResult? Function(_Success value)? success,
     TResult? Function(_ListLoaded value)? listLoaded,
     TResult? Function(_DetailLoaded value)? detailLoaded,
+    TResult? Function(_UpdateSuccess value)? updateSuccess,
     TResult? Function(_Error value)? error,
   }) {
     return success?.call(this);
@@ -990,6 +1201,7 @@ class _$SuccessImpl implements _Success {
     TResult Function(_Success value)? success,
     TResult Function(_ListLoaded value)? listLoaded,
     TResult Function(_DetailLoaded value)? detailLoaded,
+    TResult Function(_UpdateSuccess value)? updateSuccess,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {
@@ -1089,6 +1301,8 @@ class _$ListLoadedImpl implements _ListLoaded {
     required TResult Function(SupplierRegistroResponse response) success,
     required TResult Function(SupplierListResponse response) listLoaded,
     required TResult Function(SupplierDetailResponse response) detailLoaded,
+    required TResult Function(SupplierActualizarResponse response)
+    updateSuccess,
     required TResult Function(String message) error,
   }) {
     return listLoaded(response);
@@ -1102,6 +1316,7 @@ class _$ListLoadedImpl implements _ListLoaded {
     TResult? Function(SupplierRegistroResponse response)? success,
     TResult? Function(SupplierListResponse response)? listLoaded,
     TResult? Function(SupplierDetailResponse response)? detailLoaded,
+    TResult? Function(SupplierActualizarResponse response)? updateSuccess,
     TResult? Function(String message)? error,
   }) {
     return listLoaded?.call(response);
@@ -1115,6 +1330,7 @@ class _$ListLoadedImpl implements _ListLoaded {
     TResult Function(SupplierRegistroResponse response)? success,
     TResult Function(SupplierListResponse response)? listLoaded,
     TResult Function(SupplierDetailResponse response)? detailLoaded,
+    TResult Function(SupplierActualizarResponse response)? updateSuccess,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -1132,6 +1348,7 @@ class _$ListLoadedImpl implements _ListLoaded {
     required TResult Function(_Success value) success,
     required TResult Function(_ListLoaded value) listLoaded,
     required TResult Function(_DetailLoaded value) detailLoaded,
+    required TResult Function(_UpdateSuccess value) updateSuccess,
     required TResult Function(_Error value) error,
   }) {
     return listLoaded(this);
@@ -1145,6 +1362,7 @@ class _$ListLoadedImpl implements _ListLoaded {
     TResult? Function(_Success value)? success,
     TResult? Function(_ListLoaded value)? listLoaded,
     TResult? Function(_DetailLoaded value)? detailLoaded,
+    TResult? Function(_UpdateSuccess value)? updateSuccess,
     TResult? Function(_Error value)? error,
   }) {
     return listLoaded?.call(this);
@@ -1158,6 +1376,7 @@ class _$ListLoadedImpl implements _ListLoaded {
     TResult Function(_Success value)? success,
     TResult Function(_ListLoaded value)? listLoaded,
     TResult Function(_DetailLoaded value)? detailLoaded,
+    TResult Function(_UpdateSuccess value)? updateSuccess,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {
@@ -1204,10 +1423,10 @@ class __$$DetailLoadedImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? response = freezed}) {
+  $Res call({Object? response = null}) {
     return _then(
       _$DetailLoadedImpl(
-        response: freezed == response
+        response: null == response
             ? _value.response
             : response // ignore: cast_nullable_to_non_nullable
                   as SupplierDetailResponse,
@@ -1234,12 +1453,12 @@ class _$DetailLoadedImpl implements _DetailLoaded {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$DetailLoadedImpl &&
-            const DeepCollectionEquality().equals(other.response, response));
+            (identical(other.response, response) ||
+                other.response == response));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(response));
+  int get hashCode => Object.hash(runtimeType, response);
 
   /// Create a copy of SupplierState
   /// with the given fields replaced by the non-null parameter values.
@@ -1257,6 +1476,8 @@ class _$DetailLoadedImpl implements _DetailLoaded {
     required TResult Function(SupplierRegistroResponse response) success,
     required TResult Function(SupplierListResponse response) listLoaded,
     required TResult Function(SupplierDetailResponse response) detailLoaded,
+    required TResult Function(SupplierActualizarResponse response)
+    updateSuccess,
     required TResult Function(String message) error,
   }) {
     return detailLoaded(response);
@@ -1270,6 +1491,7 @@ class _$DetailLoadedImpl implements _DetailLoaded {
     TResult? Function(SupplierRegistroResponse response)? success,
     TResult? Function(SupplierListResponse response)? listLoaded,
     TResult? Function(SupplierDetailResponse response)? detailLoaded,
+    TResult? Function(SupplierActualizarResponse response)? updateSuccess,
     TResult? Function(String message)? error,
   }) {
     return detailLoaded?.call(response);
@@ -1283,6 +1505,7 @@ class _$DetailLoadedImpl implements _DetailLoaded {
     TResult Function(SupplierRegistroResponse response)? success,
     TResult Function(SupplierListResponse response)? listLoaded,
     TResult Function(SupplierDetailResponse response)? detailLoaded,
+    TResult Function(SupplierActualizarResponse response)? updateSuccess,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -1300,6 +1523,7 @@ class _$DetailLoadedImpl implements _DetailLoaded {
     required TResult Function(_Success value) success,
     required TResult Function(_ListLoaded value) listLoaded,
     required TResult Function(_DetailLoaded value) detailLoaded,
+    required TResult Function(_UpdateSuccess value) updateSuccess,
     required TResult Function(_Error value) error,
   }) {
     return detailLoaded(this);
@@ -1313,6 +1537,7 @@ class _$DetailLoadedImpl implements _DetailLoaded {
     TResult? Function(_Success value)? success,
     TResult? Function(_ListLoaded value)? listLoaded,
     TResult? Function(_DetailLoaded value)? detailLoaded,
+    TResult? Function(_UpdateSuccess value)? updateSuccess,
     TResult? Function(_Error value)? error,
   }) {
     return detailLoaded?.call(this);
@@ -1326,6 +1551,7 @@ class _$DetailLoadedImpl implements _DetailLoaded {
     TResult Function(_Success value)? success,
     TResult Function(_ListLoaded value)? listLoaded,
     TResult Function(_DetailLoaded value)? detailLoaded,
+    TResult Function(_UpdateSuccess value)? updateSuccess,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {
@@ -1347,6 +1573,182 @@ abstract class _DetailLoaded implements SupplierState {
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$DetailLoadedImplCopyWith<_$DetailLoadedImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$UpdateSuccessImplCopyWith<$Res> {
+  factory _$$UpdateSuccessImplCopyWith(
+    _$UpdateSuccessImpl value,
+    $Res Function(_$UpdateSuccessImpl) then,
+  ) = __$$UpdateSuccessImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({SupplierActualizarResponse response});
+}
+
+/// @nodoc
+class __$$UpdateSuccessImplCopyWithImpl<$Res>
+    extends _$SupplierStateCopyWithImpl<$Res, _$UpdateSuccessImpl>
+    implements _$$UpdateSuccessImplCopyWith<$Res> {
+  __$$UpdateSuccessImplCopyWithImpl(
+    _$UpdateSuccessImpl _value,
+    $Res Function(_$UpdateSuccessImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of SupplierState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? response = null}) {
+    return _then(
+      _$UpdateSuccessImpl(
+        response: null == response
+            ? _value.response
+            : response // ignore: cast_nullable_to_non_nullable
+                  as SupplierActualizarResponse,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$UpdateSuccessImpl implements _UpdateSuccess {
+  const _$UpdateSuccessImpl({required this.response});
+
+  @override
+  final SupplierActualizarResponse response;
+
+  @override
+  String toString() {
+    return 'SupplierState.updateSuccess(response: $response)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$UpdateSuccessImpl &&
+            (identical(other.response, response) ||
+                other.response == response));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, response);
+
+  /// Create a copy of SupplierState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$UpdateSuccessImplCopyWith<_$UpdateSuccessImpl> get copyWith =>
+      __$$UpdateSuccessImplCopyWithImpl<_$UpdateSuccessImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() initial,
+    required TResult Function() loading,
+    required TResult Function(SupplierRegistroResponse response) success,
+    required TResult Function(SupplierListResponse response) listLoaded,
+    required TResult Function(SupplierDetailResponse response) detailLoaded,
+    required TResult Function(SupplierActualizarResponse response)
+    updateSuccess,
+    required TResult Function(String message) error,
+  }) {
+    return updateSuccess(response);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? initial,
+    TResult? Function()? loading,
+    TResult? Function(SupplierRegistroResponse response)? success,
+    TResult? Function(SupplierListResponse response)? listLoaded,
+    TResult? Function(SupplierDetailResponse response)? detailLoaded,
+    TResult? Function(SupplierActualizarResponse response)? updateSuccess,
+    TResult? Function(String message)? error,
+  }) {
+    return updateSuccess?.call(response);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? initial,
+    TResult Function()? loading,
+    TResult Function(SupplierRegistroResponse response)? success,
+    TResult Function(SupplierListResponse response)? listLoaded,
+    TResult Function(SupplierDetailResponse response)? detailLoaded,
+    TResult Function(SupplierActualizarResponse response)? updateSuccess,
+    TResult Function(String message)? error,
+    required TResult orElse(),
+  }) {
+    if (updateSuccess != null) {
+      return updateSuccess(response);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_Initial value) initial,
+    required TResult Function(_Loading value) loading,
+    required TResult Function(_Success value) success,
+    required TResult Function(_ListLoaded value) listLoaded,
+    required TResult Function(_DetailLoaded value) detailLoaded,
+    required TResult Function(_UpdateSuccess value) updateSuccess,
+    required TResult Function(_Error value) error,
+  }) {
+    return updateSuccess(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_Initial value)? initial,
+    TResult? Function(_Loading value)? loading,
+    TResult? Function(_Success value)? success,
+    TResult? Function(_ListLoaded value)? listLoaded,
+    TResult? Function(_DetailLoaded value)? detailLoaded,
+    TResult? Function(_UpdateSuccess value)? updateSuccess,
+    TResult? Function(_Error value)? error,
+  }) {
+    return updateSuccess?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_Initial value)? initial,
+    TResult Function(_Loading value)? loading,
+    TResult Function(_Success value)? success,
+    TResult Function(_ListLoaded value)? listLoaded,
+    TResult Function(_DetailLoaded value)? detailLoaded,
+    TResult Function(_UpdateSuccess value)? updateSuccess,
+    TResult Function(_Error value)? error,
+    required TResult orElse(),
+  }) {
+    if (updateSuccess != null) {
+      return updateSuccess(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _UpdateSuccess implements SupplierState {
+  const factory _UpdateSuccess({
+    required final SupplierActualizarResponse response,
+  }) = _$UpdateSuccessImpl;
+
+  SupplierActualizarResponse get response;
+
+  /// Create a copy of SupplierState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$UpdateSuccessImplCopyWith<_$UpdateSuccessImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -1425,6 +1827,8 @@ class _$ErrorImpl implements _Error {
     required TResult Function(SupplierRegistroResponse response) success,
     required TResult Function(SupplierListResponse response) listLoaded,
     required TResult Function(SupplierDetailResponse response) detailLoaded,
+    required TResult Function(SupplierActualizarResponse response)
+    updateSuccess,
     required TResult Function(String message) error,
   }) {
     return error(message);
@@ -1438,6 +1842,7 @@ class _$ErrorImpl implements _Error {
     TResult? Function(SupplierRegistroResponse response)? success,
     TResult? Function(SupplierListResponse response)? listLoaded,
     TResult? Function(SupplierDetailResponse response)? detailLoaded,
+    TResult? Function(SupplierActualizarResponse response)? updateSuccess,
     TResult? Function(String message)? error,
   }) {
     return error?.call(message);
@@ -1451,6 +1856,7 @@ class _$ErrorImpl implements _Error {
     TResult Function(SupplierRegistroResponse response)? success,
     TResult Function(SupplierListResponse response)? listLoaded,
     TResult Function(SupplierDetailResponse response)? detailLoaded,
+    TResult Function(SupplierActualizarResponse response)? updateSuccess,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -1468,6 +1874,7 @@ class _$ErrorImpl implements _Error {
     required TResult Function(_Success value) success,
     required TResult Function(_ListLoaded value) listLoaded,
     required TResult Function(_DetailLoaded value) detailLoaded,
+    required TResult Function(_UpdateSuccess value) updateSuccess,
     required TResult Function(_Error value) error,
   }) {
     return error(this);
@@ -1481,6 +1888,7 @@ class _$ErrorImpl implements _Error {
     TResult? Function(_Success value)? success,
     TResult? Function(_ListLoaded value)? listLoaded,
     TResult? Function(_DetailLoaded value)? detailLoaded,
+    TResult? Function(_UpdateSuccess value)? updateSuccess,
     TResult? Function(_Error value)? error,
   }) {
     return error?.call(this);
@@ -1494,6 +1902,7 @@ class _$ErrorImpl implements _Error {
     TResult Function(_Success value)? success,
     TResult Function(_ListLoaded value)? listLoaded,
     TResult Function(_DetailLoaded value)? detailLoaded,
+    TResult Function(_UpdateSuccess value)? updateSuccess,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {

@@ -1,7 +1,5 @@
 // lib/features/supplier/presentation/widgets/add_supplier_modal.dart
 // DESCRIPCIÓN: Modal para agregar un nuevo proveedor con todos los campos requeridos.
-import 'package:app_jht_front/features/supplier/data/models/supplier_detail_response.dart';
-import 'package:app_jht_front/features/supplier/data/models/supplier_list_response.dart';
 import 'package:app_jht_front/features/supplier/data/models/tipo_telefono_model.dart';
 import 'package:app_jht_front/features/supplier/presentation/bloc/supplier_bloc.dart';
 import 'package:app_jht_front/features/supplier/data/models/supplier_registro_dto.dart';
@@ -12,15 +10,14 @@ import 'package:http/http.dart' as http;
 import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/features/config/environment_config.dart';
 
-
 class AddSupplierModal extends StatefulWidget {
   final Function()? onSupplierAdded;
-  final BuildContext parentContext; // ← NUEVO
+  final BuildContext parentContext;
 
   const AddSupplierModal({
     super.key,
     this.onSupplierAdded,
-    required this.parentContext, // ← NUEVO
+    required this.parentContext,
   });
 
   @override
@@ -47,18 +44,13 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
   final List<TextEditingController> _telefonoControllers = [
     TextEditingController(),
   ];
-  final List<String?> _telefonoTipos = [
-    null,
-  ]; // Ahora guarda "Celular - Personal"
+  final List<String?> _telefonoTipos = [null];
 
   // Variables para dropdowns
   String? _estadoValue;
-
-  // Opciones
   final List<String> _estadoOptions = ['Activo', 'Inactivo'];
-  List<TipoTelefonoModel> _tiposTelefonoList = []; // Lista dinámica
+  List<TipoTelefonoModel> _tiposTelefonoList = [];
 
-  // En initState, carga los datos:
   @override
   void initState() {
     super.initState();
@@ -67,15 +59,13 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
 
   Future<void> _cargarTiposTelefono() async {
     try {
-      print('🟡 Cargando tipos de teléfono...');  
+      print('🟡 Cargando tipos de teléfono...');
 
       final String? token = await TokenService.getToken();
-
       if (token == null || token.isEmpty) {
         throw Exception('No hay token de autenticación.');
       }
 
-      // ✅ Usando la URL base centralizada de EnvironmentConfig
       final response = await http.get(
         Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/consulta_tipo_telefono'),
         headers: {
@@ -89,22 +79,17 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         final data = responseData['data'] as List;
-        final tipos = data
-            .map((item) => TipoTelefonoModel.fromJson(item))
-            .toList();
+        final tipos = data.map((item) => TipoTelefonoModel.fromJson(item)).toList();
 
         setState(() {
           _tiposTelefonoList = tipos;
         });
         print('🟢 Tipos de teléfono cargados: ${tipos.length}');
       } else {
-        throw Exception(
-          'Error al obtener tipos de teléfono: ${response.statusCode}',
-        );
+        throw Exception('Error al obtener tipos de teléfono: ${response.statusCode}');
       }
     } catch (e) {
       print('❌ ERROR al cargar tipos de teléfono: $e');
-      // Mantén algunas opciones por defecto si falla
       setState(() {
         _tiposTelefonoList = [
           TipoTelefonoModel(id: 1, tipo: 'Celular', uso: 'Personal'),
@@ -128,11 +113,9 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
     _correoController.dispose();
     _numeroCuentaController.dispose();
     _observacionController.dispose();
-
     for (var controller in _telefonoControllers) {
       controller.dispose();
     }
-
     super.dispose();
   }
 
@@ -196,7 +179,6 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
     // Validar que todos los teléfonos tengan tipo y uso seleccionados
     for (int i = 0; i < _telefonoControllers.length; i++) {
       if (_telefonoTipos[i] == null || _telefonoTipos[i]!.isEmpty) {
-        // USAR parentContext
         ScaffoldMessenger.of(widget.parentContext).showSnackBar(
           SnackBar(
             content: Text('Seleccione el tipo y uso para el teléfono ${i + 1}'),
@@ -206,14 +188,12 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
         return;
       }
     }
-    // Validar formulario
+
     if (_formKey.currentState!.validate() && _estadoValue != null) {
-      // Crear lista de teléfonos DTO
       final telefonos = List<TelefonoDto>.generate(
         _telefonoControllers.length,
         (index) {
           final tipoUso = _telefonoTipos[index]!;
-          // Separar "Celular - Personal" en tipo y uso
           final parts = tipoUso.split(' - ');
           final tipo = parts[0];
           final uso = parts.length > 1 ? parts[1] : '';
@@ -226,7 +206,6 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
         },
       );
 
-      // Crear DTO para enviar a la API
       final dto = SupplierRegistroDto(
         razonSocial: _razonSocialController.text,
         representante: _representanteController.text,
@@ -243,13 +222,11 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
         telefonos: telefonos,
       );
 
-      // Obtener el bloc del contexto actual
       final bloc = BlocProvider.of<SupplierBloc>(context);
       bloc.add(SupplierEvent.registrarProveedor(dto: dto));
     }
   }
 
-  // Método para agregar nuevo campo de teléfono
   void _agregarTelefono() {
     setState(() {
       _telefonoControllers.add(TextEditingController());
@@ -257,7 +234,6 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
     });
   }
 
-  // Método para eliminar campo de teléfono
   void _eliminarTelefono(int index) {
     if (_telefonoControllers.length > 1) {
       setState(() {
@@ -276,13 +252,9 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
       listener: (context, state) {
         state.when(
           initial: () {},
-          loading: () {
-            // Podrías mostrar un loading aquí si quieres
-          },
+          loading: () {},
           success: (response) {
-            Navigator.of(context).pop(); // Cierra el modal
-
-            // USAR parentContext para el SnackBar
+            Navigator.of(context).pop();
             ScaffoldMessenger.of(widget.parentContext).showSnackBar(
               SnackBar(
                 content: Text(response.message),
@@ -290,20 +262,21 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
                 duration: const Duration(seconds: 5),
               ),
             );
-
             if (widget.onSupplierAdded != null) {
               widget.onSupplierAdded!();
             }
           },
+          listLoaded: (response) {},
+          detailLoaded: (response) {},
+          updateSuccess: (response) {},
           error: (message) {
-            // USAR parentContext para el SnackBar
             ScaffoldMessenger.of(widget.parentContext).showSnackBar(
               SnackBar(
                 content: Text('Error: $message'),
                 backgroundColor: Colors.red,
               ),
             );
-          }, listLoaded: (SupplierListResponse response) {  }, detailLoaded: (SupplierDetailResponse response) {  },
+          },
         );
       },
       child: Dialog(
@@ -405,9 +378,7 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
                           ),
 
                         // Dirección
-                        _buildFormField('Dirección', _direccionController, (
-                          value,
-                        ) {
+                        _buildFormField('Dirección', _direccionController, (value) {
                           if (value == null || value.isEmpty) {
                             return 'Ingrese la dirección';
                           }
@@ -454,9 +425,7 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
                                 }
                                 return null;
                               }),
-                              _buildFormField('Banco', _bancoController, (
-                                value,
-                              ) {
+                              _buildFormField('Banco', _bancoController, (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Ingrese el banco';
                                 }
@@ -466,9 +435,7 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
                           ),
 
                         // Encargado
-                        _buildFormField('Encargado', _encargadoController, (
-                          value,
-                        ) {
+                        _buildFormField('Encargado', _encargadoController, (value) {
                           if (value == null || value.isEmpty) {
                             return 'Ingrese el encargado';
                           }
@@ -489,14 +456,10 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
                             ),
                             const SizedBox(height: 8),
 
-                            // Lista de teléfonos
-                            ...List.generate(_telefonoControllers.length, (
-                              index,
-                            ) {
+                            ...List.generate(_telefonoControllers.length, (index) {
                               return _buildTelefonoRow(index, isMobile);
                             }),
 
-                            // Botón para agregar más teléfonos
                             Container(
                               width: double.infinity,
                               height: 40,
@@ -505,9 +468,7 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
                                 onPressed: _agregarTelefono,
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: const Color(0xFF303366),
-                                  side: const BorderSide(
-                                    color: Color(0xFF303366),
-                                  ),
+                                  side: const BorderSide(color: Color(0xFF303366)),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -549,7 +510,7 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
                         _buildFormField(
                           'Link de Ubicación',
                           _ubicacionLinkController,
-                          (value) => null, // Opcional
+                          (value) => null,
                         ),
 
                         // Correo
@@ -588,7 +549,7 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
                         _buildFormField(
                           'Observaciones',
                           _observacionController,
-                          (value) => null, // Opcional
+                          (value) => null,
                           maxLines: 3,
                         ),
 
@@ -628,7 +589,6 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
     );
   }
 
-  // Widget para fila de teléfono (ahora solo un dropdown combinado)
   Widget _buildTelefonoRow(int index, bool isMobile) {
     return Column(
       children: [
@@ -636,7 +596,6 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Tipo y Uso combinados (un solo dropdown)
             Expanded(
               flex: 2,
               child: Column(
@@ -669,7 +628,7 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
                         ),
                         items: _tiposTelefonoList.map((TipoTelefonoModel tipo) {
                           return DropdownMenuItem<String>(
-                            value: tipo.displayText, // "Celular - Personal"
+                            value: tipo.displayText,
                             child: Text(
                               tipo.displayText,
                               style: const TextStyle(fontSize: 12),
@@ -689,7 +648,6 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
             ),
             const SizedBox(width: 8),
 
-            // Número de teléfono
             Expanded(
               flex: 2,
               child: Column(
@@ -729,7 +687,6 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
               ),
             ),
 
-            // Botón eliminar (solo si hay más de uno)
             if (_telefonoControllers.length > 1)
               Padding(
                 padding: const EdgeInsets.only(top: 28, left: 8),
