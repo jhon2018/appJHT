@@ -1,18 +1,32 @@
-// Ruta: lib/features/supplier/presentation/data/datasources/supplier_remote_data_source.dart
+// lib/features/supplier/data/datasources/supplier_remote_data_source.dart
+// Descripcion: Data source remoto para proveedores, maneja las llamadas HTTP a la API para registrar, listar, obtener detalles y actualizar proveedores.
+
 import 'package:app_jht_front/core/network/http_client.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
+import 'package:app_jht_front/features/supplier/data/models/supplier_actualizar_dto.dart';
+import 'package:app_jht_front/features/supplier/data/models/supplier_actualizar_response.dart';
 import 'package:app_jht_front/features/supplier/data/models/supplier_registro_dto.dart';
 import 'package:app_jht_front/features/supplier/data/models/supplier_registro_response.dart';
 import 'package:app_jht_front/features/supplier/data/models/tipo_telefono_model.dart';
+import 'package:app_jht_front/features/supplier/data/models/supplier_list_response.dart';
+import 'package:app_jht_front/features/supplier/data/models/supplier_detail_response.dart';
 import 'package:app_jht_front/features/config/environment_config.dart';
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:app_jht_front/core/network/base_remote_data_source.dart';
 
 abstract class SupplierRemoteDataSource {
+  // Métodos existentes
   Future<SupplierRegistroResponse> registrarProveedor(SupplierRegistroDto dto);
+  Future<List<TipoTelefonoModel>> getTiposTelefono();
+  
+  // NUEVOS MÉTODOS - AGREGAR ESTOS
+  Future<SupplierListResponse> listarProveedores();
+  Future<SupplierDetailResponse> obtenerDetalleProveedor(int proveedorId);
+
+  Future<SupplierActualizarResponse> actualizarProveedor(SupplierActualizarDto dto);
+
 }
 
 class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource 
@@ -35,7 +49,6 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
       
       print('🟡 Token obtenido: ${token.substring(0, 20)}...');
 
-      // ✅ Usando EnvironmentConfig.baseUrl de forma global
       final response = await http.post(
         Uri.parse('${EnvironmentConfig.baseUrl}/api/general/insertar-proveedor'),
         headers: {
@@ -66,6 +79,164 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
     }
   }
 
+  @override
+  Future<List<TipoTelefonoModel>> getTiposTelefono() async {
+    try {
+      print('🟡 Obteniendo tipos de teléfono...');
+      
+      final String? token = await TokenService.getToken();
+      
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación.');
+      }
+
+      final response = await http.get(
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/consulta_tipo_telefono'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'accept': 'application/json',
+        },
+      );
+
+      print('🟡 Response status tipos teléfono: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        final data = responseData['data'] as List;
+        return data.map((item) => TipoTelefonoModel.fromJson(item)).toList();
+      } else {
+        throw Exception('Error al obtener tipos de teléfono: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ ERROR en getTiposTelefono: $e');
+      throw Exception('Error en getTiposTelefono: $e');
+    }
+  }
+
+  // NUEVO MÉTODO - AGREGAR ESTA IMPLEMENTACIÓN
+  @override
+  Future<SupplierListResponse> listarProveedores() async {
+    try {
+      print('🔵 Listando proveedores...');
+      
+      final String? token = await TokenService.getToken();
+      
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación.');
+      }
+
+      final response = await http.get(
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/general/listar-proveedores'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'accept': 'application/json',
+        },
+      );
+
+      print('🟡 Response status listar proveedores: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        return SupplierListResponse.fromJson(responseData);
+      } else if (response.statusCode == 401) {
+        throw Exception('No autorizado. Token inválido o expirado.');
+      } else if (response.statusCode == 403) {
+        throw Exception('No tienes permisos para listar proveedores.');
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(_getErrorMessage(errorData));
+      }
+    } catch (e) {
+      print('❌ ERROR en listar proveedores: $e');
+      rethrow;
+    }
+  }
+
+  // NUEVO MÉTODO - AGREGAR ESTA IMPLEMENTACIÓN
+  @override
+  Future<SupplierDetailResponse> obtenerDetalleProveedor(int proveedorId) async {
+    try {
+      print('🔵 Obteniendo detalle del proveedor ID: $proveedorId');
+      
+      final String? token = await TokenService.getToken();
+      
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación.');
+      }
+
+      final response = await http.get(
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/general/detalle-proveedor/$proveedorId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'accept': 'application/json',
+        },
+      );
+
+      print('🟡 Response status detalle proveedor: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        return SupplierDetailResponse.fromJson(responseData);
+      } else if (response.statusCode == 401) {
+        throw Exception('No autorizado. Token inválido o expirado.');
+      } else if (response.statusCode == 403) {
+        throw Exception('No tienes permisos para ver detalle de proveedores.');
+      } else if (response.statusCode == 404) {
+        throw Exception('Proveedor no encontrado.');
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(_getErrorMessage(errorData));
+      }
+    } catch (e) {
+      print('❌ ERROR en obtener detalle proveedor: $e');
+      rethrow;
+    }
+  }
+
+ @override
+  Future<SupplierActualizarResponse> actualizarProveedor(SupplierActualizarDto dto) async {
+    try {
+      print('🔵 Actualizando proveedor ID: ${dto.proveedorId}');
+      
+      final String? token = await TokenService.getToken();
+      
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación.');
+      }
+
+      final response = await http.put(
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/general/actualizar-proveedor'),
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode(dto.toJson()),
+      );
+
+      print('🟡 Response status actualizar: ${response.statusCode}');
+      print('🟡 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        return SupplierActualizarResponse.fromJson(responseData);
+      } else if (response.statusCode == 401) {
+        throw Exception('No autorizado. Token inválido o expirado.');
+      } else if (response.statusCode == 403) {
+        throw Exception('No tienes permisos para actualizar proveedores.');
+      } else if (response.statusCode == 404) {
+        throw Exception('Proveedor no encontrado.');
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(_getErrorMessage(errorData));
+      }
+    } catch (e) {
+      print('❌ ERROR en actualizar proveedor: $e');
+      rethrow;
+    }
+  }
+
+
   String _getErrorMessage(Map<String, dynamic> errorData) {
     print('🔍 Error data: $errorData');
 
@@ -90,37 +261,4 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
     return 'Error en el registro del proveedor';
   }
 
-  Future<List<TipoTelefonoModel>> getTiposTelefono() async {
-    try {
-      print('🟡 Obteniendo tipos de teléfono...');
-      
-      final String? token = await TokenService.getToken();
-      
-      if (token == null || token.isEmpty) {
-        throw Exception('No hay token de autenticación.');
-      }
-
-      // ✅ Usando EnvironmentConfig.baseUrl de forma global
-      final response = await http.get(
-        Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/consulta_tipo_telefono'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'accept': 'application/json',
-        },
-      );
-
-      print('🟡 Response status tipos teléfono: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        final data = responseData['data'] as List;
-        return data.map((item) => TipoTelefonoModel.fromJson(item)).toList();
-      } else {
-        throw Exception('Error al obtener tipos de teléfono: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('❌ ERROR en getTiposTelefono: $e');
-      throw Exception('Error en getTiposTelefono: $e');
-    }
-  }
 }
