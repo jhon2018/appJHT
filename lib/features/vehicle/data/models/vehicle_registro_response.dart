@@ -1,3 +1,4 @@
+//lib\features\vehicle\data\models\vehicle_registro_response.dart
 import 'package:app_jht_front/features/vehicle/data/models/vehicle_registro_dto.dart';
 
 /// Definición: Modelo de respuesta del API al registrar vehículo

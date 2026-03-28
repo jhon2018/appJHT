@@ -1,9 +1,5 @@
-// Ruta: lib/features/vehicle/data/repositories/vehicle_repository_impl.dart
-/// Definición: Implementación concreta del repositorio de vehículos
-/// Objetivo: Orquestar las fuentes de datos y manejar errores
-library;
-
-
+// lib/features/vehicle/data/repositories/vehicle_repository_impl.dart
+import 'package:app_jht_front/features/vehicle/data/models/vehicle_list_response.dart';
 import 'package:dartz/dartz.dart';
 import 'package:app_jht_front/core/error/failures.dart';
 import 'package:app_jht_front/features/vehicle/data/datasources/vehicle_remote_data_source.dart';
@@ -14,7 +10,7 @@ import 'package:app_jht_front/features/vehicle/domain/repositories/vehicle_repos
 class VehicleRepositoryImpl implements VehicleRepository {
   final VehicleRemoteDataSource remoteDataSource;
 
-  VehicleRepositoryImpl({required this.remoteDataSource});
+  const VehicleRepositoryImpl({required this.remoteDataSource}); // ✅ AGREGAR const
 
   @override
   Future<Either<Failure, VehicleRegistroResponse>> registrarVehiculo(
@@ -22,6 +18,17 @@ class VehicleRepositoryImpl implements VehicleRepository {
     try {
       final response = await remoteDataSource.registrarVehiculo(dto);
       return Right(response);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  // ✅ IMPLEMENTACIÓN CORRECTA
+  @override
+  Future<Either<Failure, List<VehicleListData>>> getAllVehicles() async {
+    try {
+      final vehicles = await remoteDataSource.getAllVehicles();
+      return Right(vehicles);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }

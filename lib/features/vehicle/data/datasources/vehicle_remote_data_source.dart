@@ -1,50 +1,45 @@
-// Ruta: lib/features/vehicle/data/datasources/vehicle_remote_data_source.dart
-// Definición: Fuente de datos remota para operaciones de vehículos
-// Objetivo: Comunicarse con el API backend para operaciones CRUD usando autenticación Bearer Token
-
+// lib/features/vehicle/data/datasources/vehicle_remote_data_source.dart
 import 'package:app_jht_front/core/network/http_client.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
+import 'package:app_jht_front/features/vehicle/data/models/vehicle_list_response.dart';
 import 'package:app_jht_front/features/vehicle/data/models/vehicle_registro_dto.dart';
 import 'package:app_jht_front/features/vehicle/data/models/vehicle_registro_response.dart';
 import 'package:app_jht_front/features/config/environment_config.dart';
+import 'package:app_jht_front/core/network/base_remote_data_source.dart';
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+// ... resto del código igual
 
 abstract class VehicleRemoteDataSource {
   Future<VehicleRegistroResponse> registrarVehiculo(VehicleRegistroDto dto);
+  Future<List<VehicleListData>> getAllVehicles(); // ✅ MÉTODO DECLARADO
 }
 
-class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
-  final HttpClient httpClient;
-
-  VehicleRemoteDataSourceImpl({required this.httpClient});
+class VehicleRemoteDataSourceImpl extends BaseRemoteDataSource // ✅ EXTENDER BaseRemoteDataSource
+    implements VehicleRemoteDataSource {
+  
+  VehicleRemoteDataSourceImpl({required HttpClient httpClient});
 
   @override
   Future<VehicleRegistroResponse> registrarVehiculo(VehicleRegistroDto dto) async {
     try {
       print('🔵 Iniciando registro de vehículo: ${dto.vehVplaca}');
       
-      // 1. OBTENER TOKEN DE AUTENTICACIÓN
       final String? token = await TokenService.getToken();
       
       if (token == null || token.isEmpty) {
         throw Exception('No hay token de autenticación. Por favor inicie sesión nuevamente.');
       }
       
-      print('🟡 Token obtenido: ${token.substring(0, 20)}...'); // Log parcial del token
+      print('🟡 Token obtenido: ${token.substring(0, 20)}...');
 
-      // 2. CONFIGURACIÓN DE URL CENTRALIZADA
-      // Se eliminó getBaseUrl() local para usar EnvironmentConfig.baseUrl
-
-      // 3. LLAMADA REAL AL API CON AUTENTICACIÓN
       final response = await http.post(
-        // ✅ Cambio a URL Global unificada
         Uri.parse('${EnvironmentConfig.baseUrl}/api/general/registro_vehiculo'),
         headers: {
           'Content-Type': 'application/json', 
           'accept': '*/*',
-          'Authorization': 'Bearer $token', // ← TOKEN INCLUIDO AQUÍ
+          'Authorization': 'Bearer $token',
         },
         body: json.encode(dto.toJson()),
       );
@@ -52,7 +47,6 @@ class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
       print('🟡 Response status: ${response.statusCode}');
       print('🟡 Response body: ${response.body}');
 
-      // 4. MANEJAR RESPUESTA
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         return VehicleRegistroResponse.fromJson(responseData);
@@ -70,10 +64,33 @@ class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
     }
   }
 
+  // ✅ IMPLEMENTACIÓN CORRECTA del método getAllVehicles
+  @override
+  Future<List<VehicleListData>> getAllVehicles() async {
+    try {
+      final response = await protectedGet('/api/general/Listar-todos-vehiculos');
+      
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        final vehicleResponse = VehicleListResponse.fromJson(jsonData);
+        return vehicleResponse.data;
+      } else if (response.statusCode == 401) {
+        throw Exception('No autorizado. Token inválido o expirado.');
+      } else if (response.statusCode == 403) {
+        throw Exception('No tienes permisos para listar vehículos.');
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(getErrorMessage(errorData));
+      }
+    } catch (e) {
+      print('❌ ERROR al listar vehículos: $e');
+      rethrow;
+    }
+  }
+
   String _getErrorMessage(Map<String, dynamic> errorData) {
     print('🔍 Error data: $errorData');
 
-    // Mismo manejo de errores que en el login
     if (errorData['mensaje'] != null) {
       return errorData['mensaje'].toString();
     }
