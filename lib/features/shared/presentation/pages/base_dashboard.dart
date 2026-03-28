@@ -19,6 +19,7 @@ import 'package:app_jht_front/features/shared/presentation/mixins/dashboard_resp
 import 'package:app_jht_front/features/supplier/presentation/pages/supplier_page.dart';
 import 'package:app_jht_front/features/vehicle/data/datasources/vehicle_remote_data_source.dart';
 import 'package:app_jht_front/features/vehicle/data/repositories/vehicle_repository_impl.dart';
+import 'package:app_jht_front/features/vehicle/domain/usecases/listar_vehiculos_usecase.dart';
 import 'package:app_jht_front/features/vehicle/domain/usecases/registrar_vehiculo_usecase.dart';
 import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
 import 'package:app_jht_front/features/vehicle/presentation/pages/vehicle_page.dart';
@@ -456,28 +457,37 @@ class _BaseDashboardState extends State<BaseDashboard>
   // ✅ FUNCIÓN DE NAVEGACIÓN (se mantiene igual)
   void _navigateToPage(String pageName) {
     switch (pageName) {
-      case 'Vehículo':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => BlocProvider(
-              create: (context) => VehicleBloc(
-                registrarVehiculoUseCase: RegistrarVehiculoUseCase(
-                  repository: VehicleRepositoryImpl(
-                    remoteDataSource: VehicleRemoteDataSourceImpl(
-                      httpClient: HttpClient(),
-                    ),
-                  ),
-                ),
-              ),
-              child: VehiclePage(
-                userName: widget.userName,
-                userRole: widget.userRole,
-              ),
+case 'Vehículo':
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => BlocProvider(
+        create: (context) {
+          final vehicleDataSource = VehicleRemoteDataSourceImpl(
+            httpClient: HttpClient(),
+          );
+          
+          final vehicleRepository = VehicleRepositoryImpl(
+            remoteDataSource: vehicleDataSource,
+          );
+          
+          return VehicleBloc(
+            registrarVehiculoUseCase: RegistrarVehiculoUseCase(
+              vehicleRepository, // ✅ POSICIONAL
             ),
-          ),
-        );
-        break;
+            listarVehiculosUseCase: ListarVehiculosUseCase(
+              vehicleRepository, // ✅ POSICIONAL
+            ),
+          );
+        },
+        child: VehiclePage(
+          userName: widget.userName,
+          userRole: widget.userRole,
+        ),
+      ),
+    ),
+  );
+  break;
       case 'Mantenimiento':
         Navigator.push(
           context,
