@@ -8,4 +8,9 @@ class VehicleEvent with _$VehicleEvent {
   }) = _RegistrarVehiculo;
   
   const factory VehicleEvent.cargarVehiculos() = _CargarVehiculos;
+
+  const factory VehicleEvent.actualizarVehiculo({
+    required VehicleUpdateDto dto,
+  }) = _ActualizarVehiculo;
+
 }

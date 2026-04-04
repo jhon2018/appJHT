@@ -1,5 +1,7 @@
 // lib/features/vehicle/data/repositories/vehicle_repository_impl.dart
 import 'package:app_jht_front/features/vehicle/data/models/vehicle_list_response.dart';
+import 'package:app_jht_front/features/vehicle/data/models/vehicle_update_dto.dart';
+import 'package:app_jht_front/features/vehicle/data/models/vehicle_update_response.dart';
 import 'package:dartz/dartz.dart';
 import 'package:app_jht_front/core/error/failures.dart';
 import 'package:app_jht_front/features/vehicle/data/datasources/vehicle_remote_data_source.dart';
@@ -33,4 +35,17 @@ class VehicleRepositoryImpl implements VehicleRepository {
       return Left(ServerFailure(message: e.toString()));
     }
   }
+
+@override
+Future<Either<Failure, VehicleUpdateResponse>> actualizarVehiculo(
+  VehicleUpdateDto dto,
+) async {
+  try {
+    final response = await remoteDataSource.actualizarVehiculo(dto);
+    return Right(response);
+  } catch (e) {
+    return Left(ServerFailure(message: e.toString()));
+  }
+}
+
 }
