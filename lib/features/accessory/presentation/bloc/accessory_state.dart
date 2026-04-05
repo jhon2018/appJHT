@@ -1,4 +1,5 @@
 // lib/features/accessory/presentation/bloc/accessory_state.dart
+
 part of 'accessory_bloc.dart';
 
 abstract class AccessoryState {}
@@ -38,9 +39,8 @@ class AccesoriosByVehiculoLoaded extends AccessoryState {
   AccesoriosByVehiculoLoaded({required this.accesorios});
 }
 
-// accessory_state.dart
 class DetalleAccesorioLoading extends AccessoryState {
-  final String? nombreAccesorio; // ← nuevo
+  final String? nombreAccesorio;
   DetalleAccesorioLoading({this.nombreAccesorio});
 }
 
@@ -70,4 +70,21 @@ class TipoAccesorioRegistrado extends AccessoryState {
 class TipoAccesorioRegistroError extends AccessoryState {
   final String message;
   TipoAccesorioRegistroError({required this.message});
+}
+
+// ─── REQF08 ───────────────────────────────────────────────────────────────────
+/// Guardando cambios en API20
+class ActualizandoAccesorio extends AccessoryState {}
+
+/// Actualización exitosa — incluye el vehiculoId para que la página
+/// pueda recargar automáticamente la lista.
+class AccesorioActualizado extends AccessoryState {
+  final int vehiculoId;
+  AccesorioActualizado({required this.vehiculoId});
+}
+
+/// Error al actualizar
+class ActualizacionError extends AccessoryState {
+  final String message;
+  ActualizacionError({required this.message});
 }

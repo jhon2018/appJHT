@@ -8,7 +8,7 @@ import '../../data/models/accesorio_registro_dto.dart';
 import '../../data/models/tipo_accesorio_registro_dto.dart';
 import '../entities/accesorio_entity.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_model.dart';
-
+ import 'package:app_jht_front/features/accessory/data/models/accesorio_actualizar_dto.dart';
 
 abstract class AccessoryRepository {
   Future<List<SegmentoModel>> listarSegmentos();
@@ -26,5 +26,9 @@ abstract class AccessoryRepository {
 
   // Ya tienes este método, puedes dejarlo o usarlo como el principal
   // Future<AccesorioDetalleModel> getAccesorioDetalle(int id);
+
+  Future<void> actualizarAccesorio(AccesorioActualizarDto dto);
+
+
 
 }

@@ -8,6 +8,7 @@ import 'package:app_jht_front/features/accessory/domain/repositories/accessory_r
 import 'package:app_jht_front/features/accessory/data/models/segmento_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/vehiculo_model.dart';
+import 'package:app_jht_front/features/accessory/data/models/accesorio_actualizar_dto.dart';
 
 import '../../domain/entities/accesorio_entity.dart';
 
@@ -56,6 +57,11 @@ Future<AccesorioDetalleModel> getDetalleAccesorio(int accId) async {
   @override
   Future<List<VehiculoModel>> listarVehiculos() async {
     return await remoteDataSource.listarVehiculos();
+  }
+
+  @override
+  Future<void> actualizarAccesorio(AccesorioActualizarDto dto) async {
+    return await remoteDataSource.actualizarAccesorio(dto);
   }
 
   // En el método registrarAccesorio
