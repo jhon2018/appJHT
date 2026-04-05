@@ -14,6 +14,7 @@ import 'package:app_jht_front/features/vehicle/data/repositories/vehicle_reposit
 import 'package:app_jht_front/features/vehicle/domain/usecases/registrar_vehiculo_usecase.dart';
 import 'package:app_jht_front/features/vehicle/domain/usecases/listar_vehiculos_usecase.dart';
 import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
+import 'package:app_jht_front/features/vehicle/domain/usecases/actualizar_vehiculo_usecase.dart';
 
 // Accessory imports
 import 'package:app_jht_front/features/accessory/presentation/bloc/accessory_bloc.dart';
@@ -62,6 +63,7 @@ BlocProvider(
     return VehicleBloc(
       registrarVehiculoUseCase: RegistrarVehiculoUseCase(vehicleRepository),
       listarVehiculosUseCase: ListarVehiculosUseCase(vehicleRepository),
+       actualizarVehiculoUseCase: ActualizarVehiculoUseCase(vehicleRepository),
     );
   },
 ),

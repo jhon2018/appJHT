@@ -21,32 +21,38 @@ mixin _$VehicleEvent {
   TResult when<TResult extends Object?>({
     required TResult Function(VehicleRegistroDto dto) registrarVehiculo,
     required TResult Function() cargarVehiculos,
+    required TResult Function(VehicleUpdateDto dto) actualizarVehiculo,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(VehicleRegistroDto dto)? registrarVehiculo,
     TResult? Function()? cargarVehiculos,
+    TResult? Function(VehicleUpdateDto dto)? actualizarVehiculo,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(VehicleRegistroDto dto)? registrarVehiculo,
     TResult Function()? cargarVehiculos,
+    TResult Function(VehicleUpdateDto dto)? actualizarVehiculo,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_RegistrarVehiculo value) registrarVehiculo,
     required TResult Function(_CargarVehiculos value) cargarVehiculos,
+    required TResult Function(_ActualizarVehiculo value) actualizarVehiculo,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_RegistrarVehiculo value)? registrarVehiculo,
     TResult? Function(_CargarVehiculos value)? cargarVehiculos,
+    TResult? Function(_ActualizarVehiculo value)? actualizarVehiculo,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_RegistrarVehiculo value)? registrarVehiculo,
     TResult Function(_CargarVehiculos value)? cargarVehiculos,
+    TResult Function(_ActualizarVehiculo value)? actualizarVehiculo,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
 }
@@ -148,6 +154,7 @@ class _$RegistrarVehiculoImpl implements _RegistrarVehiculo {
   TResult when<TResult extends Object?>({
     required TResult Function(VehicleRegistroDto dto) registrarVehiculo,
     required TResult Function() cargarVehiculos,
+    required TResult Function(VehicleUpdateDto dto) actualizarVehiculo,
   }) {
     return registrarVehiculo(dto);
   }
@@ -157,6 +164,7 @@ class _$RegistrarVehiculoImpl implements _RegistrarVehiculo {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(VehicleRegistroDto dto)? registrarVehiculo,
     TResult? Function()? cargarVehiculos,
+    TResult? Function(VehicleUpdateDto dto)? actualizarVehiculo,
   }) {
     return registrarVehiculo?.call(dto);
   }
@@ -166,6 +174,7 @@ class _$RegistrarVehiculoImpl implements _RegistrarVehiculo {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(VehicleRegistroDto dto)? registrarVehiculo,
     TResult Function()? cargarVehiculos,
+    TResult Function(VehicleUpdateDto dto)? actualizarVehiculo,
     required TResult orElse(),
   }) {
     if (registrarVehiculo != null) {
@@ -179,6 +188,7 @@ class _$RegistrarVehiculoImpl implements _RegistrarVehiculo {
   TResult map<TResult extends Object?>({
     required TResult Function(_RegistrarVehiculo value) registrarVehiculo,
     required TResult Function(_CargarVehiculos value) cargarVehiculos,
+    required TResult Function(_ActualizarVehiculo value) actualizarVehiculo,
   }) {
     return registrarVehiculo(this);
   }
@@ -188,6 +198,7 @@ class _$RegistrarVehiculoImpl implements _RegistrarVehiculo {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_RegistrarVehiculo value)? registrarVehiculo,
     TResult? Function(_CargarVehiculos value)? cargarVehiculos,
+    TResult? Function(_ActualizarVehiculo value)? actualizarVehiculo,
   }) {
     return registrarVehiculo?.call(this);
   }
@@ -197,6 +208,7 @@ class _$RegistrarVehiculoImpl implements _RegistrarVehiculo {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_RegistrarVehiculo value)? registrarVehiculo,
     TResult Function(_CargarVehiculos value)? cargarVehiculos,
+    TResult Function(_ActualizarVehiculo value)? actualizarVehiculo,
     required TResult orElse(),
   }) {
     if (registrarVehiculo != null) {
@@ -264,6 +276,7 @@ class _$CargarVehiculosImpl implements _CargarVehiculos {
   TResult when<TResult extends Object?>({
     required TResult Function(VehicleRegistroDto dto) registrarVehiculo,
     required TResult Function() cargarVehiculos,
+    required TResult Function(VehicleUpdateDto dto) actualizarVehiculo,
   }) {
     return cargarVehiculos();
   }
@@ -273,6 +286,7 @@ class _$CargarVehiculosImpl implements _CargarVehiculos {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(VehicleRegistroDto dto)? registrarVehiculo,
     TResult? Function()? cargarVehiculos,
+    TResult? Function(VehicleUpdateDto dto)? actualizarVehiculo,
   }) {
     return cargarVehiculos?.call();
   }
@@ -282,6 +296,7 @@ class _$CargarVehiculosImpl implements _CargarVehiculos {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(VehicleRegistroDto dto)? registrarVehiculo,
     TResult Function()? cargarVehiculos,
+    TResult Function(VehicleUpdateDto dto)? actualizarVehiculo,
     required TResult orElse(),
   }) {
     if (cargarVehiculos != null) {
@@ -295,6 +310,7 @@ class _$CargarVehiculosImpl implements _CargarVehiculos {
   TResult map<TResult extends Object?>({
     required TResult Function(_RegistrarVehiculo value) registrarVehiculo,
     required TResult Function(_CargarVehiculos value) cargarVehiculos,
+    required TResult Function(_ActualizarVehiculo value) actualizarVehiculo,
   }) {
     return cargarVehiculos(this);
   }
@@ -304,6 +320,7 @@ class _$CargarVehiculosImpl implements _CargarVehiculos {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_RegistrarVehiculo value)? registrarVehiculo,
     TResult? Function(_CargarVehiculos value)? cargarVehiculos,
+    TResult? Function(_ActualizarVehiculo value)? actualizarVehiculo,
   }) {
     return cargarVehiculos?.call(this);
   }
@@ -313,6 +330,7 @@ class _$CargarVehiculosImpl implements _CargarVehiculos {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_RegistrarVehiculo value)? registrarVehiculo,
     TResult Function(_CargarVehiculos value)? cargarVehiculos,
+    TResult Function(_ActualizarVehiculo value)? actualizarVehiculo,
     required TResult orElse(),
   }) {
     if (cargarVehiculos != null) {
@@ -327,6 +345,158 @@ abstract class _CargarVehiculos implements VehicleEvent {
 }
 
 /// @nodoc
+abstract class _$$ActualizarVehiculoImplCopyWith<$Res> {
+  factory _$$ActualizarVehiculoImplCopyWith(
+    _$ActualizarVehiculoImpl value,
+    $Res Function(_$ActualizarVehiculoImpl) then,
+  ) = __$$ActualizarVehiculoImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({VehicleUpdateDto dto});
+}
+
+/// @nodoc
+class __$$ActualizarVehiculoImplCopyWithImpl<$Res>
+    extends _$VehicleEventCopyWithImpl<$Res, _$ActualizarVehiculoImpl>
+    implements _$$ActualizarVehiculoImplCopyWith<$Res> {
+  __$$ActualizarVehiculoImplCopyWithImpl(
+    _$ActualizarVehiculoImpl _value,
+    $Res Function(_$ActualizarVehiculoImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of VehicleEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? dto = null}) {
+    return _then(
+      _$ActualizarVehiculoImpl(
+        dto: null == dto
+            ? _value.dto
+            : dto // ignore: cast_nullable_to_non_nullable
+                  as VehicleUpdateDto,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$ActualizarVehiculoImpl implements _ActualizarVehiculo {
+  const _$ActualizarVehiculoImpl({required this.dto});
+
+  @override
+  final VehicleUpdateDto dto;
+
+  @override
+  String toString() {
+    return 'VehicleEvent.actualizarVehiculo(dto: $dto)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ActualizarVehiculoImpl &&
+            (identical(other.dto, dto) || other.dto == dto));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, dto);
+
+  /// Create a copy of VehicleEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ActualizarVehiculoImplCopyWith<_$ActualizarVehiculoImpl> get copyWith =>
+      __$$ActualizarVehiculoImplCopyWithImpl<_$ActualizarVehiculoImpl>(
+        this,
+        _$identity,
+      );
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(VehicleRegistroDto dto) registrarVehiculo,
+    required TResult Function() cargarVehiculos,
+    required TResult Function(VehicleUpdateDto dto) actualizarVehiculo,
+  }) {
+    return actualizarVehiculo(dto);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(VehicleRegistroDto dto)? registrarVehiculo,
+    TResult? Function()? cargarVehiculos,
+    TResult? Function(VehicleUpdateDto dto)? actualizarVehiculo,
+  }) {
+    return actualizarVehiculo?.call(dto);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(VehicleRegistroDto dto)? registrarVehiculo,
+    TResult Function()? cargarVehiculos,
+    TResult Function(VehicleUpdateDto dto)? actualizarVehiculo,
+    required TResult orElse(),
+  }) {
+    if (actualizarVehiculo != null) {
+      return actualizarVehiculo(dto);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_RegistrarVehiculo value) registrarVehiculo,
+    required TResult Function(_CargarVehiculos value) cargarVehiculos,
+    required TResult Function(_ActualizarVehiculo value) actualizarVehiculo,
+  }) {
+    return actualizarVehiculo(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_RegistrarVehiculo value)? registrarVehiculo,
+    TResult? Function(_CargarVehiculos value)? cargarVehiculos,
+    TResult? Function(_ActualizarVehiculo value)? actualizarVehiculo,
+  }) {
+    return actualizarVehiculo?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_RegistrarVehiculo value)? registrarVehiculo,
+    TResult Function(_CargarVehiculos value)? cargarVehiculos,
+    TResult Function(_ActualizarVehiculo value)? actualizarVehiculo,
+    required TResult orElse(),
+  }) {
+    if (actualizarVehiculo != null) {
+      return actualizarVehiculo(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _ActualizarVehiculo implements VehicleEvent {
+  const factory _ActualizarVehiculo({required final VehicleUpdateDto dto}) =
+      _$ActualizarVehiculoImpl;
+
+  VehicleUpdateDto get dto;
+
+  /// Create a copy of VehicleEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ActualizarVehiculoImplCopyWith<_$ActualizarVehiculoImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$VehicleState {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
@@ -334,6 +504,8 @@ mixin _$VehicleState {
     required TResult Function() loading,
     required TResult Function(VehicleRegistroResponse response) registroExitoso,
     required TResult Function(List<VehicleListData> vehicles) vehiculosCargados,
+    required TResult Function(VehicleUpdateResponse response)
+    actualizacionExitosa,
     required TResult Function(String message) error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -342,6 +514,7 @@ mixin _$VehicleState {
     TResult? Function()? loading,
     TResult? Function(VehicleRegistroResponse response)? registroExitoso,
     TResult? Function(List<VehicleListData> vehicles)? vehiculosCargados,
+    TResult? Function(VehicleUpdateResponse response)? actualizacionExitosa,
     TResult? Function(String message)? error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -350,6 +523,7 @@ mixin _$VehicleState {
     TResult Function()? loading,
     TResult Function(VehicleRegistroResponse response)? registroExitoso,
     TResult Function(List<VehicleListData> vehicles)? vehiculosCargados,
+    TResult Function(VehicleUpdateResponse response)? actualizacionExitosa,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
@@ -359,6 +533,7 @@ mixin _$VehicleState {
     required TResult Function(_Loading value) loading,
     required TResult Function(_RegistroExitoso value) registroExitoso,
     required TResult Function(_VehiculosCargados value) vehiculosCargados,
+    required TResult Function(_ActualizacionExitosa value) actualizacionExitosa,
     required TResult Function(_Error value) error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -367,6 +542,7 @@ mixin _$VehicleState {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_RegistroExitoso value)? registroExitoso,
     TResult? Function(_VehiculosCargados value)? vehiculosCargados,
+    TResult? Function(_ActualizacionExitosa value)? actualizacionExitosa,
     TResult? Function(_Error value)? error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -375,6 +551,7 @@ mixin _$VehicleState {
     TResult Function(_Loading value)? loading,
     TResult Function(_RegistroExitoso value)? registroExitoso,
     TResult Function(_VehiculosCargados value)? vehiculosCargados,
+    TResult Function(_ActualizacionExitosa value)? actualizacionExitosa,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
@@ -449,6 +626,8 @@ class _$InitialImpl implements _Initial {
     required TResult Function() loading,
     required TResult Function(VehicleRegistroResponse response) registroExitoso,
     required TResult Function(List<VehicleListData> vehicles) vehiculosCargados,
+    required TResult Function(VehicleUpdateResponse response)
+    actualizacionExitosa,
     required TResult Function(String message) error,
   }) {
     return initial();
@@ -461,6 +640,7 @@ class _$InitialImpl implements _Initial {
     TResult? Function()? loading,
     TResult? Function(VehicleRegistroResponse response)? registroExitoso,
     TResult? Function(List<VehicleListData> vehicles)? vehiculosCargados,
+    TResult? Function(VehicleUpdateResponse response)? actualizacionExitosa,
     TResult? Function(String message)? error,
   }) {
     return initial?.call();
@@ -473,6 +653,7 @@ class _$InitialImpl implements _Initial {
     TResult Function()? loading,
     TResult Function(VehicleRegistroResponse response)? registroExitoso,
     TResult Function(List<VehicleListData> vehicles)? vehiculosCargados,
+    TResult Function(VehicleUpdateResponse response)? actualizacionExitosa,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -489,6 +670,7 @@ class _$InitialImpl implements _Initial {
     required TResult Function(_Loading value) loading,
     required TResult Function(_RegistroExitoso value) registroExitoso,
     required TResult Function(_VehiculosCargados value) vehiculosCargados,
+    required TResult Function(_ActualizacionExitosa value) actualizacionExitosa,
     required TResult Function(_Error value) error,
   }) {
     return initial(this);
@@ -501,6 +683,7 @@ class _$InitialImpl implements _Initial {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_RegistroExitoso value)? registroExitoso,
     TResult? Function(_VehiculosCargados value)? vehiculosCargados,
+    TResult? Function(_ActualizacionExitosa value)? actualizacionExitosa,
     TResult? Function(_Error value)? error,
   }) {
     return initial?.call(this);
@@ -513,6 +696,7 @@ class _$InitialImpl implements _Initial {
     TResult Function(_Loading value)? loading,
     TResult Function(_RegistroExitoso value)? registroExitoso,
     TResult Function(_VehiculosCargados value)? vehiculosCargados,
+    TResult Function(_ActualizacionExitosa value)? actualizacionExitosa,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {
@@ -574,6 +758,8 @@ class _$LoadingImpl implements _Loading {
     required TResult Function() loading,
     required TResult Function(VehicleRegistroResponse response) registroExitoso,
     required TResult Function(List<VehicleListData> vehicles) vehiculosCargados,
+    required TResult Function(VehicleUpdateResponse response)
+    actualizacionExitosa,
     required TResult Function(String message) error,
   }) {
     return loading();
@@ -586,6 +772,7 @@ class _$LoadingImpl implements _Loading {
     TResult? Function()? loading,
     TResult? Function(VehicleRegistroResponse response)? registroExitoso,
     TResult? Function(List<VehicleListData> vehicles)? vehiculosCargados,
+    TResult? Function(VehicleUpdateResponse response)? actualizacionExitosa,
     TResult? Function(String message)? error,
   }) {
     return loading?.call();
@@ -598,6 +785,7 @@ class _$LoadingImpl implements _Loading {
     TResult Function()? loading,
     TResult Function(VehicleRegistroResponse response)? registroExitoso,
     TResult Function(List<VehicleListData> vehicles)? vehiculosCargados,
+    TResult Function(VehicleUpdateResponse response)? actualizacionExitosa,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -614,6 +802,7 @@ class _$LoadingImpl implements _Loading {
     required TResult Function(_Loading value) loading,
     required TResult Function(_RegistroExitoso value) registroExitoso,
     required TResult Function(_VehiculosCargados value) vehiculosCargados,
+    required TResult Function(_ActualizacionExitosa value) actualizacionExitosa,
     required TResult Function(_Error value) error,
   }) {
     return loading(this);
@@ -626,6 +815,7 @@ class _$LoadingImpl implements _Loading {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_RegistroExitoso value)? registroExitoso,
     TResult? Function(_VehiculosCargados value)? vehiculosCargados,
+    TResult? Function(_ActualizacionExitosa value)? actualizacionExitosa,
     TResult? Function(_Error value)? error,
   }) {
     return loading?.call(this);
@@ -638,6 +828,7 @@ class _$LoadingImpl implements _Loading {
     TResult Function(_Loading value)? loading,
     TResult Function(_RegistroExitoso value)? registroExitoso,
     TResult Function(_VehiculosCargados value)? vehiculosCargados,
+    TResult Function(_ActualizacionExitosa value)? actualizacionExitosa,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {
@@ -730,6 +921,8 @@ class _$RegistroExitosoImpl implements _RegistroExitoso {
     required TResult Function() loading,
     required TResult Function(VehicleRegistroResponse response) registroExitoso,
     required TResult Function(List<VehicleListData> vehicles) vehiculosCargados,
+    required TResult Function(VehicleUpdateResponse response)
+    actualizacionExitosa,
     required TResult Function(String message) error,
   }) {
     return registroExitoso(response);
@@ -742,6 +935,7 @@ class _$RegistroExitosoImpl implements _RegistroExitoso {
     TResult? Function()? loading,
     TResult? Function(VehicleRegistroResponse response)? registroExitoso,
     TResult? Function(List<VehicleListData> vehicles)? vehiculosCargados,
+    TResult? Function(VehicleUpdateResponse response)? actualizacionExitosa,
     TResult? Function(String message)? error,
   }) {
     return registroExitoso?.call(response);
@@ -754,6 +948,7 @@ class _$RegistroExitosoImpl implements _RegistroExitoso {
     TResult Function()? loading,
     TResult Function(VehicleRegistroResponse response)? registroExitoso,
     TResult Function(List<VehicleListData> vehicles)? vehiculosCargados,
+    TResult Function(VehicleUpdateResponse response)? actualizacionExitosa,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -770,6 +965,7 @@ class _$RegistroExitosoImpl implements _RegistroExitoso {
     required TResult Function(_Loading value) loading,
     required TResult Function(_RegistroExitoso value) registroExitoso,
     required TResult Function(_VehiculosCargados value) vehiculosCargados,
+    required TResult Function(_ActualizacionExitosa value) actualizacionExitosa,
     required TResult Function(_Error value) error,
   }) {
     return registroExitoso(this);
@@ -782,6 +978,7 @@ class _$RegistroExitosoImpl implements _RegistroExitoso {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_RegistroExitoso value)? registroExitoso,
     TResult? Function(_VehiculosCargados value)? vehiculosCargados,
+    TResult? Function(_ActualizacionExitosa value)? actualizacionExitosa,
     TResult? Function(_Error value)? error,
   }) {
     return registroExitoso?.call(this);
@@ -794,6 +991,7 @@ class _$RegistroExitosoImpl implements _RegistroExitoso {
     TResult Function(_Loading value)? loading,
     TResult Function(_RegistroExitoso value)? registroExitoso,
     TResult Function(_VehiculosCargados value)? vehiculosCargados,
+    TResult Function(_ActualizacionExitosa value)? actualizacionExitosa,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {
@@ -902,6 +1100,8 @@ class _$VehiculosCargadosImpl implements _VehiculosCargados {
     required TResult Function() loading,
     required TResult Function(VehicleRegistroResponse response) registroExitoso,
     required TResult Function(List<VehicleListData> vehicles) vehiculosCargados,
+    required TResult Function(VehicleUpdateResponse response)
+    actualizacionExitosa,
     required TResult Function(String message) error,
   }) {
     return vehiculosCargados(vehicles);
@@ -914,6 +1114,7 @@ class _$VehiculosCargadosImpl implements _VehiculosCargados {
     TResult? Function()? loading,
     TResult? Function(VehicleRegistroResponse response)? registroExitoso,
     TResult? Function(List<VehicleListData> vehicles)? vehiculosCargados,
+    TResult? Function(VehicleUpdateResponse response)? actualizacionExitosa,
     TResult? Function(String message)? error,
   }) {
     return vehiculosCargados?.call(vehicles);
@@ -926,6 +1127,7 @@ class _$VehiculosCargadosImpl implements _VehiculosCargados {
     TResult Function()? loading,
     TResult Function(VehicleRegistroResponse response)? registroExitoso,
     TResult Function(List<VehicleListData> vehicles)? vehiculosCargados,
+    TResult Function(VehicleUpdateResponse response)? actualizacionExitosa,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -942,6 +1144,7 @@ class _$VehiculosCargadosImpl implements _VehiculosCargados {
     required TResult Function(_Loading value) loading,
     required TResult Function(_RegistroExitoso value) registroExitoso,
     required TResult Function(_VehiculosCargados value) vehiculosCargados,
+    required TResult Function(_ActualizacionExitosa value) actualizacionExitosa,
     required TResult Function(_Error value) error,
   }) {
     return vehiculosCargados(this);
@@ -954,6 +1157,7 @@ class _$VehiculosCargadosImpl implements _VehiculosCargados {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_RegistroExitoso value)? registroExitoso,
     TResult? Function(_VehiculosCargados value)? vehiculosCargados,
+    TResult? Function(_ActualizacionExitosa value)? actualizacionExitosa,
     TResult? Function(_Error value)? error,
   }) {
     return vehiculosCargados?.call(this);
@@ -966,6 +1170,7 @@ class _$VehiculosCargadosImpl implements _VehiculosCargados {
     TResult Function(_Loading value)? loading,
     TResult Function(_RegistroExitoso value)? registroExitoso,
     TResult Function(_VehiculosCargados value)? vehiculosCargados,
+    TResult Function(_ActualizacionExitosa value)? actualizacionExitosa,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {
@@ -988,6 +1193,180 @@ abstract class _VehiculosCargados implements VehicleState {
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$VehiculosCargadosImplCopyWith<_$VehiculosCargadosImpl> get copyWith =>
       throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$ActualizacionExitosaImplCopyWith<$Res> {
+  factory _$$ActualizacionExitosaImplCopyWith(
+    _$ActualizacionExitosaImpl value,
+    $Res Function(_$ActualizacionExitosaImpl) then,
+  ) = __$$ActualizacionExitosaImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({VehicleUpdateResponse response});
+}
+
+/// @nodoc
+class __$$ActualizacionExitosaImplCopyWithImpl<$Res>
+    extends _$VehicleStateCopyWithImpl<$Res, _$ActualizacionExitosaImpl>
+    implements _$$ActualizacionExitosaImplCopyWith<$Res> {
+  __$$ActualizacionExitosaImplCopyWithImpl(
+    _$ActualizacionExitosaImpl _value,
+    $Res Function(_$ActualizacionExitosaImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of VehicleState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? response = null}) {
+    return _then(
+      _$ActualizacionExitosaImpl(
+        response: null == response
+            ? _value.response
+            : response // ignore: cast_nullable_to_non_nullable
+                  as VehicleUpdateResponse,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$ActualizacionExitosaImpl implements _ActualizacionExitosa {
+  const _$ActualizacionExitosaImpl({required this.response});
+
+  @override
+  final VehicleUpdateResponse response;
+
+  @override
+  String toString() {
+    return 'VehicleState.actualizacionExitosa(response: $response)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ActualizacionExitosaImpl &&
+            (identical(other.response, response) ||
+                other.response == response));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, response);
+
+  /// Create a copy of VehicleState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ActualizacionExitosaImplCopyWith<_$ActualizacionExitosaImpl>
+  get copyWith =>
+      __$$ActualizacionExitosaImplCopyWithImpl<_$ActualizacionExitosaImpl>(
+        this,
+        _$identity,
+      );
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() initial,
+    required TResult Function() loading,
+    required TResult Function(VehicleRegistroResponse response) registroExitoso,
+    required TResult Function(List<VehicleListData> vehicles) vehiculosCargados,
+    required TResult Function(VehicleUpdateResponse response)
+    actualizacionExitosa,
+    required TResult Function(String message) error,
+  }) {
+    return actualizacionExitosa(response);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? initial,
+    TResult? Function()? loading,
+    TResult? Function(VehicleRegistroResponse response)? registroExitoso,
+    TResult? Function(List<VehicleListData> vehicles)? vehiculosCargados,
+    TResult? Function(VehicleUpdateResponse response)? actualizacionExitosa,
+    TResult? Function(String message)? error,
+  }) {
+    return actualizacionExitosa?.call(response);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? initial,
+    TResult Function()? loading,
+    TResult Function(VehicleRegistroResponse response)? registroExitoso,
+    TResult Function(List<VehicleListData> vehicles)? vehiculosCargados,
+    TResult Function(VehicleUpdateResponse response)? actualizacionExitosa,
+    TResult Function(String message)? error,
+    required TResult orElse(),
+  }) {
+    if (actualizacionExitosa != null) {
+      return actualizacionExitosa(response);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_Initial value) initial,
+    required TResult Function(_Loading value) loading,
+    required TResult Function(_RegistroExitoso value) registroExitoso,
+    required TResult Function(_VehiculosCargados value) vehiculosCargados,
+    required TResult Function(_ActualizacionExitosa value) actualizacionExitosa,
+    required TResult Function(_Error value) error,
+  }) {
+    return actualizacionExitosa(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_Initial value)? initial,
+    TResult? Function(_Loading value)? loading,
+    TResult? Function(_RegistroExitoso value)? registroExitoso,
+    TResult? Function(_VehiculosCargados value)? vehiculosCargados,
+    TResult? Function(_ActualizacionExitosa value)? actualizacionExitosa,
+    TResult? Function(_Error value)? error,
+  }) {
+    return actualizacionExitosa?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_Initial value)? initial,
+    TResult Function(_Loading value)? loading,
+    TResult Function(_RegistroExitoso value)? registroExitoso,
+    TResult Function(_VehiculosCargados value)? vehiculosCargados,
+    TResult Function(_ActualizacionExitosa value)? actualizacionExitosa,
+    TResult Function(_Error value)? error,
+    required TResult orElse(),
+  }) {
+    if (actualizacionExitosa != null) {
+      return actualizacionExitosa(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _ActualizacionExitosa implements VehicleState {
+  const factory _ActualizacionExitosa({
+    required final VehicleUpdateResponse response,
+  }) = _$ActualizacionExitosaImpl;
+
+  VehicleUpdateResponse get response;
+
+  /// Create a copy of VehicleState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ActualizacionExitosaImplCopyWith<_$ActualizacionExitosaImpl>
+  get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -1064,6 +1443,8 @@ class _$ErrorImpl implements _Error {
     required TResult Function() loading,
     required TResult Function(VehicleRegistroResponse response) registroExitoso,
     required TResult Function(List<VehicleListData> vehicles) vehiculosCargados,
+    required TResult Function(VehicleUpdateResponse response)
+    actualizacionExitosa,
     required TResult Function(String message) error,
   }) {
     return error(message);
@@ -1076,6 +1457,7 @@ class _$ErrorImpl implements _Error {
     TResult? Function()? loading,
     TResult? Function(VehicleRegistroResponse response)? registroExitoso,
     TResult? Function(List<VehicleListData> vehicles)? vehiculosCargados,
+    TResult? Function(VehicleUpdateResponse response)? actualizacionExitosa,
     TResult? Function(String message)? error,
   }) {
     return error?.call(message);
@@ -1088,6 +1470,7 @@ class _$ErrorImpl implements _Error {
     TResult Function()? loading,
     TResult Function(VehicleRegistroResponse response)? registroExitoso,
     TResult Function(List<VehicleListData> vehicles)? vehiculosCargados,
+    TResult Function(VehicleUpdateResponse response)? actualizacionExitosa,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -1104,6 +1487,7 @@ class _$ErrorImpl implements _Error {
     required TResult Function(_Loading value) loading,
     required TResult Function(_RegistroExitoso value) registroExitoso,
     required TResult Function(_VehiculosCargados value) vehiculosCargados,
+    required TResult Function(_ActualizacionExitosa value) actualizacionExitosa,
     required TResult Function(_Error value) error,
   }) {
     return error(this);
@@ -1116,6 +1500,7 @@ class _$ErrorImpl implements _Error {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_RegistroExitoso value)? registroExitoso,
     TResult? Function(_VehiculosCargados value)? vehiculosCargados,
+    TResult? Function(_ActualizacionExitosa value)? actualizacionExitosa,
     TResult? Function(_Error value)? error,
   }) {
     return error?.call(this);
@@ -1128,6 +1513,7 @@ class _$ErrorImpl implements _Error {
     TResult Function(_Loading value)? loading,
     TResult Function(_RegistroExitoso value)? registroExitoso,
     TResult Function(_VehiculosCargados value)? vehiculosCargados,
+    TResult Function(_ActualizacionExitosa value)? actualizacionExitosa,
     TResult Function(_Error value)? error,
     required TResult orElse(),
   }) {

@@ -6,6 +6,8 @@ import 'package:app_jht_front/features/vehicle/data/models/vehicle_registro_dto.
 import 'package:app_jht_front/features/vehicle/data/models/vehicle_registro_response.dart';
 import 'package:app_jht_front/features/config/environment_config.dart';
 import 'package:app_jht_front/core/network/base_remote_data_source.dart';
+import 'package:app_jht_front/features/vehicle/data/models/vehicle_update_dto.dart';
+import 'package:app_jht_front/features/vehicle/data/models/vehicle_update_response.dart';
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -13,10 +15,11 @@ import 'dart:convert';
 
 abstract class VehicleRemoteDataSource {
   Future<VehicleRegistroResponse> registrarVehiculo(VehicleRegistroDto dto);
-  Future<List<VehicleListData>> getAllVehicles(); // ✅ MÉTODO DECLARADO
+  Future<List<VehicleListData>> getAllVehicles(); 
+  Future<VehicleUpdateResponse> actualizarVehiculo(VehicleUpdateDto dto); 
 }
 
-class VehicleRemoteDataSourceImpl extends BaseRemoteDataSource // ✅ EXTENDER BaseRemoteDataSource
+class VehicleRemoteDataSourceImpl extends BaseRemoteDataSource // 
     implements VehicleRemoteDataSource {
   
   VehicleRemoteDataSourceImpl({required HttpClient httpClient});
@@ -56,7 +59,7 @@ class VehicleRemoteDataSourceImpl extends BaseRemoteDataSource // ✅ EXTENDER B
         throw Exception('No tienes permisos para registrar vehículos.');
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(_getErrorMessage(errorData));
+        throw Exception(getErrorMessage(errorData));
       }
     } catch (e) {
       print('❌ ERROR en registro de vehículo: $e');
@@ -88,6 +91,48 @@ class VehicleRemoteDataSourceImpl extends BaseRemoteDataSource // ✅ EXTENDER B
     }
   }
 
+
+
+@override
+Future<VehicleUpdateResponse> actualizarVehiculo(
+  VehicleUpdateDto dto,
+) async {
+  try {
+    print('🔵 Actualizando vehículo en API: ${dto.vehiculoId}');
+    
+    final String? token = await TokenService.getToken();
+    
+    if (token == null || token.isEmpty) {
+      throw Exception('No hay token de autenticación.');
+    }
+
+    final response = await http.put(
+      Uri.parse('${EnvironmentConfig.baseUrl}/api/general/actualizar-vehiculo'),
+      headers: {
+        'Content-Type': 'application/json',
+        'accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode(dto.toJson()),
+    );
+
+    print('🟡 Response status actualizar: ${response.statusCode}');
+    print('🟡 Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      return VehicleUpdateResponse.fromJson(responseData);
+    } else {
+      final errorData = json.decode(response.body);
+      throw Exception(getErrorMessage(errorData)); // ← Usar getErrorMessage (de BaseRemoteDataSource)
+    }
+  } catch (e) {
+    print('❌ ERROR en actualizar vehículo: $e');
+    rethrow;
+  }
+}
+
+
   String _getErrorMessage(Map<String, dynamic> errorData) {
     print('🔍 Error data: $errorData');
 
@@ -116,6 +161,8 @@ class VehicleRemoteDataSourceImpl extends BaseRemoteDataSource // ✅ EXTENDER B
       return errorData['title'].toString();
     }
 
-    return 'Error en el registro del vehículo';
+    return 'Error al actualizar el vehículo';
   }
+
+
 }

@@ -23,7 +23,7 @@ class VehicleListResponse {
 }
 
 class VehicleListData {
-  final int id;
+  final int vehiculoId; 
   final String placa;
   final String marca;
   final String modelo;
@@ -48,7 +48,7 @@ class VehicleListData {
   final String estado;
 
   VehicleListData({
-    required this.id,
+    required this.vehiculoId, 
     required this.placa,
     required this.marca,
     required this.modelo,
@@ -73,9 +73,9 @@ class VehicleListData {
     required this.estado,
   });
 
-  factory VehicleListData.fromJson(Map<String, dynamic> json) {
+ factory VehicleListData.fromJson(Map<String, dynamic> json) {
     return VehicleListData(
-      id: json['vehiculoId'] ?? 0,
+      vehiculoId: json['vehiculoId'] ?? 0,  // ← Cambiar 'id' por 'vehiculoId'
       placa: json['placa'] ?? '',
       marca: json['marca'] ?? '',
       modelo: json['modelo'] ?? '',
@@ -100,4 +100,5 @@ class VehicleListData {
       estado: json['estado'] ?? '',
     );
   }
+
 }

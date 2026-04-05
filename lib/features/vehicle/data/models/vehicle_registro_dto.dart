@@ -47,26 +47,32 @@ class VehicleRegistroDto {
     required this.vehVestado,
   });
 
-  Map<String, dynamic> toJson() => {
-        "veh_vplaca": vehVplaca,
-        "veh_vmarca": vehVmarca,
-        "veh_vmodelo": vehVmodelo,
-        "veh_vnumero_vin": vehVnumeroVin,
-        "veh_vcolor": vehVcolor,
-        "veh_inum_asientos": vehInumAsientos,
-        "veh_inum_ejes": vehInumEjes,
-        "veh_bpeso_neto": vehBpesoNeto,
-        "veh_bpeso_bruto": vehBpesoBruto,
-        "veh_bcarga_util": vehBcargaUtil,
-        "veh_dfech_fabricacion": vehDfechFabricacion,
-        "veh_blargo": vehBlargo,
-        "veh_bancho": vehBancho,
-        "veh_balto": vehBalto,
-        "veh_vtipo": vehVtipo,
-        "veh_ikilometraje": vehIkilometraje,
-        "veh_vtarjeta_unica_circulacion": vehVtarjetaUnicaCirculacion,
-        "veh_dfech_habilitacion_tuc": vehDfechHabilitacionTuc,
-        "veh_dfech_vencimiento_tuc": vehDfechVencimientoTuc,
-        "veh_vestado": vehVestado,
-      };
+
+
+Map<String, dynamic> toJson() { //sirce para registro y actualización, pero en actualización se omiten campos como fecha_registro, fecha_baja, etc.
+  return {
+    'veh_vplaca': vehVplaca,
+    'veh_vmarca': vehVmarca,
+    'veh_vmodelo': vehVmodelo,
+    'veh_vnumero_vin': vehVnumeroVin,
+    'veh_vcolor': vehVcolor,
+    'veh_inum_asientos': vehInumAsientos,
+    'veh_inum_ejes': vehInumEjes,
+    'veh_bpeso_neto': vehBpesoNeto,
+    'veh_bpeso_bruto': vehBpesoBruto,
+    'veh_bcarga_util': vehBcargaUtil,
+    'veh_dfech_fabricacion': vehDfechFabricacion,
+    'veh_blargo': vehBlargo,
+    'veh_bancho': vehBancho,
+    'veh_balto': vehBalto,
+    'veh_vtipo': vehVtipo,
+    'veh_ikilometraje': vehIkilometraje,
+    'veh_vtarjeta_unica_circulacion': vehVtarjetaUnicaCirculacion,
+    'veh_dfech_habilitacion_tuc': vehDfechHabilitacionTuc,
+    'veh_dfech_vencimiento_tuc': vehDfechVencimientoTuc,
+    'veh_fecha_registro': DateTime.now().toIso8601String(),
+    'veh_fecha_baja': null,
+    'veh_vestado': vehVestado,
+  };
+}
 }

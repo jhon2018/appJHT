@@ -1,8 +1,9 @@
 // lib/features/supplier/data/models/supplier_actualizar_dto.dart
+
 class TelefonoActualizarDto {
-  final int telId; // ID del teléfono (0 si es nuevo)
+  final int telId;
   final String numero;
-  final int titId; // ID del tipo de teléfono
+  final int titId;
 
   TelefonoActualizarDto({
     required this.telId,
@@ -11,7 +12,12 @@ class TelefonoActualizarDto {
   });
 
   Map<String, dynamic> toJson() => {
-        'telId': telId,
+        // ✅ FIX: El backend espera telId=0 para todos los teléfonos.
+        // Cuando recibe telId>0 intenta hacer UPDATE en tbl_htelefono y
+        // pisa tel_vfuente con NULL → error 500.
+        // Con telId=0 el backend los trata como registros nuevos (INSERT)
+        // y setea tel_vfuente='Proveedor' correctamente.
+        'telId': 0,
         'numero': numero,
         'titId': titId,
       };

@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
 import 'package:app_jht_front/features/vehicle/presentation/widgets/add_vehicle_modal.dart';
 import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
+import 'package:app_jht_front/features/vehicle/presentation/widgets/edit_vehicle_modal.dart';
+import 'package:app_jht_front/features/vehicle/domain/entities/vehicle_entity.dart';
 
 class VehiclePage extends StatefulWidget {
   final String userName;
@@ -72,28 +74,24 @@ class _VehiclePageState extends State<VehiclePage> {
     });
   }
 
-  void _openAddVehicleModal() {
-    final vehicleBloc = context.read<VehicleBloc>();
-    
-    showDialog(
-      context: context,
-      builder: (context) => BlocProvider.value(
-        value: vehicleBloc,
-        child: AddVehicleModal(
-          onVehicleAdded: (_) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Vehículo registrado exitosamente'),
-                backgroundColor: Color(0xFF303366),
-              ),
-            );
-            vehicleBloc.add(const VehicleEvent.cargarVehiculos());
-            _resetPagination();
-          },
-        ),
+void _openAddVehicleModal() {
+  final vehicleBloc = context.read<VehicleBloc>();
+ 
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => BlocProvider.value(
+      value: vehicleBloc,
+      child: AddVehicleModal(
+        onVehicleAdded: () {
+          // ← Se llama desde el modal cuando el registro es exitoso
+          vehicleBloc.add(const VehicleEvent.cargarVehiculos());
+          _resetPagination();
+        },
       ),
-    );
-  }
+    ),
+  );
+}
 
   List<VehicleListData> _filterVehicles(List<VehicleListData> vehicles) {
     return vehicles.where((vehicle) {
@@ -118,15 +116,48 @@ class _VehiclePageState extends State<VehiclePage> {
       ),
     );
   }
+void _openEditVehicleModal(VehicleListData vehicle) {
+  final vehicleBloc = context.read<VehicleBloc>(); // ← capturar ANTES del showDialog
 
-  void _openEditVehicleModal(VehicleListData vehicle) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Editar vehículo: ${vehicle.placa} - Próximamente'),
-        backgroundColor: const Color(0xFF303366),
-      ),
-    );
-  }
+  final vehicleEntity = VehicleEntity(
+    vehiculoId: vehicle.vehiculoId,
+    placa: vehicle.placa,
+    marca: vehicle.marca,
+    modelo: vehicle.modelo,
+    numeroVin: vehicle.numeroVin,
+    color: vehicle.color,
+    numAsientos: vehicle.numAsientos,
+    numEjes: vehicle.numEjes,
+    pesoNeto: vehicle.pesoNeto,
+    pesoBruto: vehicle.pesoBruto,
+    cargaUtil: vehicle.cargaUtil,
+    fechaFabricacion: DateTime.parse(vehicle.fechaFabricacion),
+    largo: vehicle.largo,
+    ancho: vehicle.ancho,
+    alto: vehicle.alto,
+    tipo: vehicle.tipo,
+    kilometraje: vehicle.kilometraje,
+    tarjetaUnicaCirculacion: vehicle.tarjetaUnicaCirculacion,
+    fechaHabilitacionTUC: DateTime.parse(vehicle.fechaHabilitacionTUC),
+    fechaVencimientoTUC: DateTime.parse(vehicle.fechaVencimientoTUC),
+    fechaRegistro: DateTime.parse(vehicle.fechaRegistro),
+    fechaBaja: vehicle.fechaBaja != null
+        ? DateTime.parse(vehicle.fechaBaja!)
+        : null,
+    estado: vehicle.estado,
+  );
+
+  print('🔵 VehicleEntity creado - ID: ${vehicleEntity.vehiculoId}');
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => BlocProvider.value( // ← ESTO ES LO QUE FALTABA
+      value: vehicleBloc,
+      child: EditVehicleModal(vehicle: vehicleEntity),
+    ),
+  );
+}
 
   void _openAccesoriosModal(VehicleListData vehicle) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -137,22 +168,61 @@ class _VehiclePageState extends State<VehiclePage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 768;
-    
-    return Scaffold(
-      key: _scaffoldKey,
-      endDrawer: Drawer(
-        child: SideMenu(
-          userName: widget.userName,
-          userRole: widget.userRole,
-          onClose: () => Navigator.pop(context),
-          onItemSelected: _handleMenuSelection,
-        ),
+@override
+Widget build(BuildContext context) {
+  final bool isMobile = MediaQuery.of(context).size.width < 768;
+  
+  return Scaffold(
+    key: _scaffoldKey,
+    endDrawer: Drawer(
+      child: SideMenu(
+        userName: widget.userName,
+        userRole: widget.userRole,
+        onClose: () => Navigator.pop(context),
+        onItemSelected: _handleMenuSelection,
       ),
-      backgroundColor: Colors.white,
-      body: Column(
+    ),
+    backgroundColor: Colors.white,
+    body: BlocListener<VehicleBloc, VehicleState>(
+      listener: (context, state) {
+        state.maybeWhen(
+actualizacionExitosa: (response) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          const Icon(Icons.check_circle, color: Colors.white, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              response.message, // "Vehículo actualizado correctamente"
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.green[700],
+      duration: const Duration(seconds: 4),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    ),
+  );
+  context.read<VehicleBloc>().add(const VehicleEvent.cargarVehiculos());
+  _resetPagination();
+},
+          error: (message) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(message),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          },
+          orElse: () {},
+        );
+      },
+      child: Column(
         children: [
           Expanded(
             child: CustomScrollView(
@@ -198,7 +268,8 @@ class _VehiclePageState extends State<VehiclePage> {
           _buildCopyright(),
         ],
       ),
-    );
+    ),
+  );  
   }
 
   Widget _buildMenuButton() {
