@@ -1,24 +1,25 @@
 // lib/features/accessory/presentation/bloc/accessory_bloc.dart
+
 import 'package:app_jht_front/features/accessory/data/models/accesorio_detalle_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_registro_dto.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_registro_response.dart';
 import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_registro_dto.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_model.dart';
+import 'package:app_jht_front/features/accessory/data/models/accesorio_actualizar_dto.dart';
 import 'package:app_jht_front/features/accessory/data/models/segmento_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/vehiculo_model.dart';
 import 'package:app_jht_front/features/accessory/domain/repositories/accessory_repository.dart';
 import 'package:app_jht_front/features/accessory/domain/usecases/registrar_accesorio_usecase.dart';
+
 part 'accessory_event.dart';
 part 'accessory_state.dart';
-
 
 class AccessoryBloc extends Bloc<AccessoryEvent, AccessoryState> {
   final AccessoryRepository repository;
 
   AccessoryBloc({required this.repository}) : super(AccessoryInitial()) {
-    // Registro de eventos
     on<LoadSegmentosEvent>(_onLoadSegmentos);
     on<LoadTiposAccesorioEvent>(_onLoadTiposAccesorio);
     on<LoadVehiculosEvent>(_onLoadVehiculos);
@@ -26,9 +27,11 @@ class AccessoryBloc extends Bloc<AccessoryEvent, AccessoryState> {
     on<RegistrarTipoAccesorioEvent>(_onRegistrarTipoAccesorio);
     on<OnFetchAccesoriosByVehiculo>(_onFetchAccesoriosByVehiculo);
     on<OnFetchDetalleAccesorio>(_onFetchDetalleAccesorio);
+    // REQF08
+    on<ActualizarAccesorioEvent>(_onActualizarAccesorio);
   }
 
-  // REQF07 - API 26: Listar accesorios de un vehículo
+  // REQF07 - API26
   Future<void> _onFetchAccesoriosByVehiculo(
     OnFetchAccesoriosByVehiculo event,
     Emitter<AccessoryState> emit,
@@ -42,22 +45,21 @@ class AccessoryBloc extends Bloc<AccessoryEvent, AccessoryState> {
     }
   }
 
-  // REQF07 - API 27: Obtener detalle de un accesorio
-// accessory_bloc.dart - _onFetchDetalleAccesorio
-Future<void> _onFetchDetalleAccesorio(
-  OnFetchDetalleAccesorio event,
-  Emitter<AccessoryState> emit,
-) async {
-  emit(DetalleAccesorioLoading(nombreAccesorio: "Accesorio")); // puedes mejorar esto después
-  try {
-    final detalle = await repository.getDetalleAccesorio(event.accesorioId);
-    emit(DetalleAccesorioLoaded(detalle: detalle));  // ← ahora detalle es AccesorioDetalleModel
-  } catch (e) {
-    emit(AccessoryError(message: "Error al obtener detalle: ${e.toString()}"));
+  // REQF07 - API27
+  Future<void> _onFetchDetalleAccesorio(
+    OnFetchDetalleAccesorio event,
+    Emitter<AccessoryState> emit,
+  ) async {
+    emit(DetalleAccesorioLoading(nombreAccesorio: "Accesorio"));
+    try {
+      final detalle = await repository.getDetalleAccesorio(event.accesorioId);
+      emit(DetalleAccesorioLoaded(detalle: detalle));
+    } catch (e) {
+      emit(AccessoryError(message: "Error al obtener detalle: ${e.toString()}"));
+    }
   }
-}
 
-  // Cargar Vehículos (API 04)
+  // API04
   Future<void> _onLoadVehiculos(
     LoadVehiculosEvent event,
     Emitter<AccessoryState> emit,
@@ -71,7 +73,7 @@ Future<void> _onFetchDetalleAccesorio(
     }
   }
 
-  // Cargar Segmentos
+  // API03
   Future<void> _onLoadSegmentos(
     LoadSegmentosEvent event,
     Emitter<AccessoryState> emit,
@@ -85,7 +87,7 @@ Future<void> _onFetchDetalleAccesorio(
     }
   }
 
-  // Cargar Tipos de Accesorio
+  // API05
   Future<void> _onLoadTiposAccesorio(
     LoadTiposAccesorioEvent event,
     Emitter<AccessoryState> emit,
@@ -99,7 +101,6 @@ Future<void> _onFetchDetalleAccesorio(
     }
   }
 
-  // Registrar Nuevo Accesorio
   Future<void> _onRegistrarAccesorio(
     RegistrarAccesorioEvent event,
     Emitter<AccessoryState> emit,
@@ -120,7 +121,6 @@ Future<void> _onFetchDetalleAccesorio(
     }
   }
 
-  // Registrar Nuevo Tipo de Accesorio
   Future<void> _onRegistrarTipoAccesorio(
     RegistrarTipoAccesorioEvent event,
     Emitter<AccessoryState> emit,
@@ -134,6 +134,17 @@ Future<void> _onFetchDetalleAccesorio(
     }
   }
 
-
-  
+  // ─── REQF08 - API20 ────────────────────────────────────────────────────────
+  Future<void> _onActualizarAccesorio(
+    ActualizarAccesorioEvent event,
+    Emitter<AccessoryState> emit,
+  ) async {
+    emit(ActualizandoAccesorio());
+    try {
+      await repository.actualizarAccesorio(event.dto);
+      emit(AccesorioActualizado(vehiculoId: event.vehiculoIdActual));
+    } catch (e) {
+      emit(ActualizacionError(message: "Error al actualizar accesorio: ${e.toString()}"));
+    }
+  }
 }

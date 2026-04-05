@@ -1,8 +1,10 @@
 // lib/features/accessory/data/datasources/accessory_remote_data_source.dart
-// Descripción: Implementación del datasource remoto para accesorios, incluyendo métodos para listar segmentos, tipos de accesorio y vehículos con autenticación.
-// Objetivo: Completar la implementación del datasource remoto para accesorios.
+// Descripción: Implementación del datasource remoto para accesorios.
+// CAMBIOS REQF08: Se agrega actualizarAccesorio() a la interfaz e implementación.
+
 import 'package:app_jht_front/features/accessory/data/models/accesorio_detalle_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_model.dart';
+import 'package:app_jht_front/features/accessory/data/models/accesorio_actualizar_dto.dart';
 import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_registro_dto.dart';
 import 'package:app_jht_front/features/config/environment_config.dart';
 import '../models/accesorio_registro_dto.dart';
@@ -16,7 +18,7 @@ import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_mode
 import 'package:app_jht_front/features/accessory/data/models/vehiculo_model.dart';
 import 'package:http/http.dart' as http;
 
-// INTERFAZ ABSTRACTRA
+// INTERFAZ ABSTRACTA
 abstract class AccessoryRemoteDataSource {
   Future<List<SegmentoModel>> listarSegmentos();
   Future<List<TipoAccesorioModel>> listarTiposAccesorioPorSegmento(int segmentoId);
@@ -26,6 +28,8 @@ abstract class AccessoryRemoteDataSource {
   Future<List<AccesorioModel>> listarAccesoriosPorVehiculo(int vehId);
   Future<AccesorioModel> obtenerDetalleAccesorio(int accId);
   Future<AccesorioDetalleModel> getAccesorioDetalle(int accId);
+  // REQF08 - API20
+  Future<void> actualizarAccesorio(AccesorioActualizarDto dto);
 }
 
 // IMPLEMENTACIÓN
@@ -47,7 +51,6 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
       print('📡 Enviando DTO: ${dto.toJson()}');
 
       final response = await http.post(
-        // ✅ Cambio a URL Global
         Uri.parse('${EnvironmentConfig.baseUrl}/api/general/insertar-accesorio'),
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +88,6 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
       }
 
       final response = await http.get(
-        // ✅ Cambio a URL Global
         Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/listar_segmento_accesorio'),
         headers: {
           'Content-Type': 'application/json',
@@ -122,7 +124,6 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
       }
 
       final response = await http.get(
-        // ✅ Cambio a URL Global
         Uri.parse('${EnvironmentConfig.baseUrl}/api/general/listar-tipos-accesorio-por-segmento/$segmentoId'),
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +168,6 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
       }
 
       final response = await http.get(
-        // ✅ Cambio a URL Global
         Uri.parse('${EnvironmentConfig.baseUrl}/api/general/listar-vehiculos'),
         headers: {
           'Content-Type': 'application/json',
@@ -197,7 +197,6 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
     if (token == null || token.isEmpty) throw Exception('No hay token.');
 
     final response = await http.post(
-      // ✅ Cambio a URL Global
       Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/registro_tipo_accesorio'),
       headers: {
         'Authorization': 'Bearer $token',
@@ -218,7 +217,6 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
   Future<List<AccesorioModel>> listarAccesoriosPorVehiculo(int vehId) async {
     try {
       final token = await TokenService.getToken();
-      // ✅ Cambio a URL Global unificada
       final response = await http.get(
         Uri.parse('${EnvironmentConfig.baseUrl}/api/general/vehiculo/$vehId/accesorios'),
         headers: {
@@ -243,7 +241,6 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
   Future<AccesorioModel> obtenerDetalleAccesorio(int accId) async {
     try {
       final token = await TokenService.getToken();
-      // ✅ Cambio a URL Global unificada
       final response = await http.get(
         Uri.parse('${EnvironmentConfig.baseUrl}/api/general/accesorio/$accId'),
         headers: {
@@ -267,7 +264,6 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
   Future<AccesorioDetalleModel> getAccesorioDetalle(int accId) async {
     try {
       final token = await TokenService.getToken();
-      // ✅ Cambio a URL Global unificada
       final response = await http.get(
         Uri.parse('${EnvironmentConfig.baseUrl}/api/general/accesorio/$accId'),
         headers: {
@@ -283,6 +279,45 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
         throw Exception('Error al obtener detalle completo: ${response.statusCode}');
       }
     } catch (e) {
+      rethrow;
+    }
+  }
+
+  // ─── REQF08 - API20: Actualizar accesorio ──────────────────────────────────
+  @override
+  Future<void> actualizarAccesorio(AccesorioActualizarDto dto) async {
+    try {
+      print('🔵 Iniciando actualización de accesorio ID: ${dto.accesorioId}');
+
+      final String? token = await TokenService.getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación.');
+      }
+
+      print('📡 Enviando DTO actualización: ${dto.toJson()}');
+
+      final response = await http.put(
+        Uri.parse('${EnvironmentConfig.baseUrl}/api/general/actualizar-accesorio'),
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': '*/*',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode(dto.toJson()),
+      );
+
+      print('🟡 Response status: ${response.statusCode}');
+      print('🟡 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw Exception('No autorizado. Token inválido o expirado.');
+      } else {
+        throw Exception('Error al actualizar accesorio: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      print('❌ ERROR en actualizarAccesorio: $e');
       rethrow;
     }
   }

@@ -1,4 +1,6 @@
 // lib/features/vehicle/domain/repositories/vehicle_repository.dart
+import 'package:app_jht_front/features/vehicle/data/models/vehicle_update_dto.dart';
+import 'package:app_jht_front/features/vehicle/data/models/vehicle_update_response.dart';
 import 'package:dartz/dartz.dart';
 import 'package:app_jht_front/core/error/failures.dart';
 import 'package:app_jht_front/features/vehicle/data/models/vehicle_registro_dto.dart';
@@ -10,4 +12,9 @@ abstract class VehicleRepository {
       VehicleRegistroDto dto);
   
   Future<Either<Failure, List<VehicleListData>>> getAllVehicles();
+  
+  Future<Either<Failure, VehicleUpdateResponse>> actualizarVehiculo(
+    VehicleUpdateDto dto,
+  );
+
 }

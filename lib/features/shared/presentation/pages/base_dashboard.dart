@@ -19,6 +19,7 @@ import 'package:app_jht_front/features/shared/presentation/mixins/dashboard_resp
 import 'package:app_jht_front/features/supplier/presentation/pages/supplier_page.dart';
 import 'package:app_jht_front/features/vehicle/data/datasources/vehicle_remote_data_source.dart';
 import 'package:app_jht_front/features/vehicle/data/repositories/vehicle_repository_impl.dart';
+import 'package:app_jht_front/features/vehicle/domain/usecases/actualizar_vehiculo_usecase.dart';
 import 'package:app_jht_front/features/vehicle/domain/usecases/listar_vehiculos_usecase.dart';
 import 'package:app_jht_front/features/vehicle/domain/usecases/registrar_vehiculo_usecase.dart';
 import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
@@ -476,6 +477,9 @@ case 'Vehículo':
               vehicleRepository, // ✅ POSICIONAL
             ),
             listarVehiculosUseCase: ListarVehiculosUseCase(
+              vehicleRepository, // ✅ POSICIONAL
+            ),
+            actualizarVehiculoUseCase: ActualizarVehiculoUseCase(
               vehicleRepository, // ✅ POSICIONAL
             ),
           );

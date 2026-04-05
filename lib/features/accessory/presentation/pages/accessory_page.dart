@@ -1,5 +1,9 @@
 // lib/features/accessory/presentation/pages/accessory_page.dart
-// description: Página principal de accesorios con menú lateral, tabla responsiva y paginación.
+// CAMBIOS vs versión anterior:
+//   1. _marcaAccesorioSeleccionado: guarda marca de AccesorioModel al presionar lápiz
+//   2. _openEditAccessoryModal: pasa marcaFromLista al modal
+//   3. _buildEstadoChip: colores semánticos Activo=verde / Completado=azul / Inactivo=gris
+//   Todo lo demás idéntico al original.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
 import 'package:app_jht_front/features/accessory/presentation/widgets/add_accessory_modal.dart';
 import 'package:app_jht_front/features/accessory/presentation/widgets/detalle_accessory_modal.dart';
+import 'package:app_jht_front/features/accessory/presentation/widgets/edit_accessory_modal.dart';
 import 'package:app_jht_front/features/accessory/presentation/bloc/accessory_bloc.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_detalle_model.dart';
@@ -30,21 +35,22 @@ class _AccessoryPageState extends State<AccessoryPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _horizontalScrollController = ScrollController();
 
-  // Variables para el combobox de vehículos
   List<VehiculoModel> _vehiclesList = [];
   VehiculoModel? _selectedVehicle;
-  
-  // Variables para paginación
+
   int _currentPage = 1;
   final int _itemsPerPage = 5;
+
+  // Guarda la marca del AccesorioModel (API26) antes de llamar API27
+  // porque API27 no devuelve el campo marca.
+  String _marcaAccesorioSeleccionado = '';
+
+  // Controla qué modal abrir cuando llega DetalleAccesorioLoaded
+  _PendingAction _pendingAction = _PendingAction.none;
 
   @override
   void initState() {
     super.initState();
-    _cargarVehiculos();
-  }
-
-  void _cargarVehiculos() {
     context.read<AccessoryBloc>().add(LoadVehiculosEvent());
   }
 
@@ -54,41 +60,84 @@ class _AccessoryPageState extends State<AccessoryPage> {
     super.dispose();
   }
 
+  // ── Color de fila por alerta de mantenimiento ─────────────────────────────
   Color _getRowColor(AccesorioModel acc) {
     if (acc.ultimoMantenimiento == null) return Colors.transparent;
-
-    final mant = acc.ultimoMantenimiento!;
-
-    if (mant.proximaFecha != null) {
-      final proxima = DateTime.tryParse(mant.proximaFecha!);
-      if (proxima != null && proxima.difference(DateTime.now()).inDays <= 15) {
-        return Colors.red.withOpacity(0.15);
-      }
+    final proxima = DateTime.tryParse(
+        acc.ultimoMantenimiento!.proximaFecha ?? '');
+    if (proxima != null &&
+        proxima.difference(DateTime.now()).inDays <= 15) {
+      return Colors.red.withOpacity(0.15);
     }
-
     return Colors.transparent;
   }
 
+  // ── Loading dialog ────────────────────────────────────────────────────────
+  void _showLoadingDialog(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: const Color(0xFF303366),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: Colors.white),
+            const SizedBox(height: 20),
+            Text(
+              message,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Agregar accesorio ─────────────────────────────────────────────────────
   void _openAddAccessoryModal() {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AddAccessoryModal(
+      builder: (_) => AddAccessoryModal(
         onAccessoryAdded: () {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Accesorio agregado exitosamente'),
-              backgroundColor: const Color(0xFF303366),
-              duration: const Duration(seconds: 5),
+            const SnackBar(
+              content: Text('Accesorio agregado exitosamente'),
+              backgroundColor: Color(0xFF303366),
+              duration: Duration(seconds: 5),
             ),
           );
-          // Recargar accesorios si hay un vehículo seleccionado
           if (_selectedVehicle != null) {
             context.read<AccessoryBloc>().add(
-              OnFetchAccesoriosByVehiculo(_selectedVehicle!.id),
-            );
+                OnFetchAccesoriosByVehiculo(_selectedVehicle!.id));
           }
         },
+      ),
+    );
+  }
+
+  // ── Editar accesorio: abre modal pasando marca desde API26 ────────────────
+  void _openEditAccessoryModal(AccesorioDetalleModel detalle) {
+    if (_selectedVehicle == null) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => BlocProvider.value(
+        value: context.read<AccessoryBloc>(),
+        child: EditAccessoryModal(
+          detalle: detalle,
+          vehiculoIdActual: _selectedVehicle!.id,
+          vehiculosList: _vehiclesList,
+          marcaFromLista: _marcaAccesorioSeleccionado, // ← marca de API26
+        ),
       ),
     );
   }
@@ -102,115 +151,100 @@ class _AccessoryPageState extends State<AccessoryPage> {
     );
   }
 
-  // Método para obtener los accesorios de la página actual
-  List<AccesorioModel> _getCurrentPageItems(List<AccesorioModel> allItems) {
-    final startIndex = (_currentPage - 1) * _itemsPerPage;
-    final endIndex = startIndex + _itemsPerPage;
-    return allItems.sublist(
-      startIndex,
-      endIndex > allItems.length ? allItems.length : endIndex,
-    );
+  List<AccesorioModel> _getCurrentPageItems(List<AccesorioModel> all) {
+    final start = (_currentPage - 1) * _itemsPerPage;
+    final end = start + _itemsPerPage;
+    return all.sublist(start, end > all.length ? all.length : end);
   }
 
-  // Método para calcular el total de páginas
-  int _getTotalPages(int totalItems) {
-    return (totalItems / _itemsPerPage).ceil();
-  }
+  int _getTotalPages(int total) => (total / _itemsPerPage).ceil();
 
-  // Método para mostrar diálogo de carga con mensaje personalizado
-  void _showLoadingDialog(String message) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        backgroundColor: const Color(0xFF303366),
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(color: Colors.white),
-            const SizedBox(height: 20),
-            Text(
-              message,
-              style: const TextStyle(
-                color: Colors.white, 
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
+  // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 768;
 
     return BlocListener<AccessoryBloc, AccessoryState>(
       listener: (context, state) {
-        // Mostrar loading cuando se cargan vehículos
+        // Vehículos
         if (state is VehiculosLoading) {
           _showLoadingDialog('Cargando lista de vehículos...');
         } else if (state is VehiculosLoaded) {
-          // Cerrar diálogo de loading si está abierto
-          if (Navigator.canPop(context)) {
-            Navigator.pop(context);
-          }
-          setState(() {
-            _vehiclesList = state.vehiculos;
-          });
-        } 
-        
-        // Mostrar loading cuando se cargan accesorios por vehículo
-        else if (state is AccesoriosByVehiculoLoading) {
-          if (_selectedVehicle != null) {
-            _showLoadingDialog('Cargando accesorios del vehículo ${_selectedVehicle!.placa}...');
-          } else {
-            _showLoadingDialog('Cargando accesorios...');
-          }
-        } else if (state is AccesoriosByVehiculoLoaded) {
-          // Cerrar diálogo de loading si está abierto
-          if (Navigator.canPop(context)) {
-            Navigator.pop(context);
-          }
-        }
-        
-        else if (state is AccessoryError) {
-          // Cerrar diálogo de loading si está abierto
-          if (Navigator.canPop(context)) {
-            Navigator.pop(context);
-          }
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.red,
-            ),
+          if (Navigator.canPop(context)) Navigator.pop(context);
+          setState(() => _vehiclesList = state.vehiculos);
+
+        // Accesorios por vehículo
+        } else if (state is AccesoriosByVehiculoLoading) {
+          _showLoadingDialog(
+            _selectedVehicle != null
+                ? 'Cargando accesorios del vehículo ${_selectedVehicle!.placa}...'
+                : 'Cargando accesorios...',
           );
+        } else if (state is AccesoriosByVehiculoLoaded) {
+          if (Navigator.canPop(context)) Navigator.pop(context);
+
+        // Error general
+        } else if (state is AccessoryError) {
+          if (Navigator.canPop(context)) Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(state.message),
+            backgroundColor: Colors.red,
+          ));
         }
 
-        // Loading cuando se consulta el detalle del accesorio
+        // Detalle cargando
         if (state is DetalleAccesorioLoading) {
           _showLoadingDialog('Cargando información detallada del accesorio...');
         }
 
-        // Cuando llega el detalle
+        // Detalle listo → decide qué modal abrir
         if (state is DetalleAccesorioLoaded) {
-          // Cerrar diálogo de loading si está abierto
-          if (Navigator.canPop(context)) {
-            Navigator.pop(context);
+          if (Navigator.canPop(context)) Navigator.pop(context);
+          if (_pendingAction == _PendingAction.verDetalle) {
+            _pendingAction = _PendingAction.none;
+            showDetalleAccesorioModal(context, state.detalle, 0.0);
+          } else if (_pendingAction == _PendingAction.editar) {
+            _pendingAction = _PendingAction.none;
+            _openEditAccessoryModal(state.detalle);
           }
+        }
 
-          showDetalleAccesorioModal(
-            context,
-            state.detalle,
-            0.0,
-          );
+        // Actualizando
+        if (state is ActualizandoAccesorio) {
+          _showLoadingDialog('Guardando cambios...');
+        }
+
+        // Actualizado OK
+        if (state is AccesorioActualizado) {
+          if (Navigator.canPop(context)) Navigator.pop(context);
+          context.read<AccessoryBloc>().add(
+              OnFetchAccesoriosByVehiculo(state.vehiculoId));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: const Color(0xFF0D8ABC),
+            content: Row(children: const [
+              Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
+              SizedBox(width: 10),
+              Text('Accesorio actualizado correctamente',
+                  style: TextStyle(color: Colors.white)),
+            ]),
+          ));
+        }
+
+        // Error de actualización
+        if (state is ActualizacionError) {
+          if (Navigator.canPop(context)) Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade700,
+            content: Row(children: [
+              const Icon(Icons.error_outline, color: Colors.white, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                  child: Text(state.message,
+                      style: const TextStyle(color: Colors.white))),
+            ]),
+          ));
         }
       },
       child: Scaffold(
@@ -236,14 +270,12 @@ class _AccessoryPageState extends State<AccessoryPage> {
                     title: const Text(
                       'JHT TRANSPORT',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF303366),
-                      ),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF303366)),
                     ),
                     actions: [_buildMenuButton()],
                   ),
-
                   SliverList(
                     delegate: SliverChildListDelegate([
                       Padding(
@@ -252,7 +284,6 @@ class _AccessoryPageState extends State<AccessoryPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildHeaderWithAddButton(isMobile),
-                            const SizedBox(height: 16),
                             const SizedBox(height: 16),
                             _buildResponsiveTable(isMobile),
                             const SizedBox(height: 16),
@@ -272,146 +303,10 @@ class _AccessoryPageState extends State<AccessoryPage> {
     );
   }
 
-  // MÉTODO PARA DROPDOWN MÓVIL
-  Widget _buildMobileDropdown({
-    required String label,
-    required VehiculoModel? value,
-    required List<VehiculoModel> items,
-    required Function(VehiculoModel?) onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF303366),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          height: 50,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[400]!),
-            borderRadius: BorderRadius.circular(8),
-            color: Colors.white,
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<VehiculoModel>(
-              value: value,
-              isExpanded: true,
-              icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF303366)),
-              hint: _vehiclesList.isEmpty
-                  ? const Row(
-                      children: [
-                        SizedBox(width: 4),
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          'Cargando vehículos...',
-                          style: TextStyle(fontSize: 14, color: Colors.grey),
-                        ),
-                      ],
-                    )
-                  : const Text('Seleccione vehículo'),
-              items: items.map((VehiculoModel vehicle) {
-                return DropdownMenuItem<VehiculoModel>(
-                  value: vehicle,
-                  child: Text(
-                    vehicle.placa,
-                    style: const TextStyle(fontSize: 14),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                );
-              }).toList(),
-              onChanged: onChanged,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // MÉTODO PARA DROPDOWN DESKTOP
-  Widget _buildDesktopDropdown({
-    required String label,
-    required VehiculoModel? value,
-    required List<VehiculoModel> items,
-    required Function(VehiculoModel?) onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF303366),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          height: 50,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[400]!),
-            borderRadius: BorderRadius.circular(8),
-            color: Colors.white,
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<VehiculoModel>(
-              value: value,
-              isExpanded: true,
-              icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF303366)),
-              hint: _vehiclesList.isEmpty
-                  ? const Row(
-                      children: [
-                        SizedBox(width: 4),
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          'Cargando vehículos...',
-                          style: TextStyle(fontSize: 14, color: Colors.grey),
-                        ),
-                      ],
-                    )
-                  : const Text('Seleccione vehículo'),
-              items: items.map((VehiculoModel vehicle) {
-                return DropdownMenuItem<VehiculoModel>(
-                  value: vehicle,
-                  child: Text(
-                    vehicle.placa,
-                    style: const TextStyle(fontSize: 14),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                );
-              }).toList(),
-              onChanged: onChanged,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
+  // ── Menú ──────────────────────────────────────────────────────────────────
   Widget _buildMenuButton() {
     return InkWell(
-      onTap: () {
-        _scaffoldKey.currentState?.openEndDrawer();
-      },
+      onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
       borderRadius: BorderRadius.circular(20),
       child: Container(
         width: 40,
@@ -419,37 +314,20 @@ class _AccessoryPageState extends State<AccessoryPage> {
         padding: const EdgeInsets.all(12),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-            ),
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-            ),
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ],
+          children: [_dot(), _dot(), _dot()],
         ),
       ),
     );
   }
 
+  Widget _dot() => Container(
+        width: 4,
+        height: 4,
+        decoration: const BoxDecoration(
+            color: Colors.black87, shape: BoxShape.circle),
+      );
+
+  // ── Header con botón agregar + dropdown vehículo ──────────────────────────
   Widget _buildHeaderWithAddButton(bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -457,11 +335,10 @@ class _AccessoryPageState extends State<AccessoryPage> {
         const Text(
           'ACCESORIO',
           style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF303366),
-            letterSpacing: 1.0,
-          ),
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF303366),
+              letterSpacing: 1.0),
         ),
         const SizedBox(height: 20),
         isMobile ? _buildMobileHeaderLayout() : _buildDesktopHeaderLayout(),
@@ -472,217 +349,166 @@ class _AccessoryPageState extends State<AccessoryPage> {
   Widget _buildMobileHeaderLayout() {
     return Column(
       children: [
-        // Botón AGREGAR - Toma todo el ancho
-        InkWell(
-          onTap: _openAddAccessoryModal,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF303366),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.add, color: Colors.white, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'AGREGAR ACCESORIO',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        _botonAgregar(double.infinity, 16),
         const SizedBox(height: 12),
-        
-        // ComboBox Seleccionar Vehículo (Móvil)
-        _buildMobileDropdown(
-          label: 'Seleccionar Vehículo',
-          value: _selectedVehicle,
-          items: _vehiclesList,
-          onChanged: (value) {
-            setState(() => _selectedVehicle = value);
-            if (value != null) {
-              // Reiniciar a página 1 cuando se selecciona nuevo vehículo
-              _currentPage = 1;
-              context.read<AccessoryBloc>().add(
-                OnFetchAccesoriosByVehiculo(value.id),
-              );
-            }
-          },
-        ),
+        _buildVehiculoDropdown(isMobile: true),
       ],
     );
   }
 
   Widget _buildDesktopHeaderLayout() {
+    return Row(
+      children: [
+        _botonAgregar(220, 14),
+        const SizedBox(width: 16),
+        Expanded(child: _buildVehiculoDropdown(isMobile: false)),
+      ],
+    );
+  }
+
+  Widget _botonAgregar(double width, double fontSize) {
+    return InkWell(
+      onTap: _openAddAccessoryModal,
+      child: Container(
+        width: width,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            color: const Color(0xFF303366),
+            borderRadius: BorderRadius.circular(8)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.add, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text('AGREGAR ACCESORIO',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVehiculoDropdown({required bool isMobile}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Fila 1: Botón AGREGAR
-        Row(
-          children: [
-            // Botón AGREGAR - tamaño fijo
-            InkWell(
-              onTap: _openAddAccessoryModal,
-              child: Container(
-                width: 220,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF303366),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.add, color: Colors.white, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'AGREGAR ACCESORIO',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        const Text('Seleccionar Vehículo',
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF303366))),
+        const SizedBox(height: 8),
+        Container(
+          width: isMobile ? double.infinity : null,
+          height: 50,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[400]!),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<VehiculoModel>(
+              value: _selectedVehicle,
+              isExpanded: true,
+              icon: const Icon(Icons.arrow_drop_down,
+                  color: Color(0xFF303366)),
+              hint: _vehiclesList.isEmpty
+                  ? const Row(children: [
+                      SizedBox(width: 4),
+                      SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2)),
+                      SizedBox(width: 12),
+                      Text('Cargando vehículos...',
+                          style:
+                              TextStyle(fontSize: 14, color: Colors.grey)),
+                    ])
+                  : const Text('Seleccione vehículo'),
+              items: _vehiclesList
+                  .map((v) => DropdownMenuItem<VehiculoModel>(
+                        value: v,
+                        child: Text(v.placa,
+                            style: const TextStyle(fontSize: 14),
+                            overflow: TextOverflow.ellipsis),
+                      ))
+                  .toList(),
+              onChanged: (v) {
+                setState(() {
+                  _selectedVehicle = v;
+                  _currentPage = 1;
+                });
+                if (v != null) {
+                  context.read<AccessoryBloc>().add(
+                      OnFetchAccesoriosByVehiculo(v.id));
+                }
+              },
             ),
-            const SizedBox(width: 16),
-            // ComboBox Seleccionar Vehículo - ocupa el espacio restante
-            Expanded(
-              child: _buildDesktopDropdown(
-                label: 'Seleccionar Vehículo',
-                value: _selectedVehicle,
-                items: _vehiclesList,
-                onChanged: (value) {
-                  setState(() => _selectedVehicle = value);
-                  if (value != null) {
-                    // Reiniciar a página 1 cuando se selecciona nuevo vehículo
-                    _currentPage = 1;
-                    context.read<AccessoryBloc>().add(
-                      OnFetchAccesoriosByVehiculo(value.id),
-                    );
-                  }
-                },
-              ),
-            ),
-          ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildFilterChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF303366),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 12,
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-
-
+  // ── Tabla responsive ──────────────────────────────────────────────────────
   Widget _buildResponsiveTable(bool isMobile) {
     return BlocBuilder<AccessoryBloc, AccessoryState>(
-      buildWhen: (previous, current) => 
-          current is AccesoriosByVehiculoLoaded || 
+      buildWhen: (_, current) =>
+          current is AccesoriosByVehiculoLoaded ||
           current is AccesoriosByVehiculoLoading,
       builder: (context, state) {
         if (state is AccesoriosByVehiculoLoading) {
-          return Container(
-            height: 200,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  Text(
-                    _selectedVehicle != null
-                        ? 'Cargando accesorios del vehículo ${_selectedVehicle!.placa}...'
-                        : 'Cargando accesorios...',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF303366),
-                    ),
-                  ),
-                ],
-              ),
+          return _emptyBox(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  _selectedVehicle != null
+                      ? 'Cargando accesorios del vehículo ${_selectedVehicle!.placa}...'
+                      : 'Cargando accesorios...',
+                  style: const TextStyle(
+                      fontSize: 14, color: Color(0xFF303366)),
+                ),
+              ],
             ),
           );
         }
 
-        List<AccesorioModel> accesorios = [];
-        if (state is AccesoriosByVehiculoLoaded) {
-          accesorios = state.accesorios;
-        }
+        final accesorios = state is AccesoriosByVehiculoLoaded
+            ? state.accesorios
+            : <AccesorioModel>[];
 
-        // Verificar si hay datos
         if (accesorios.isEmpty) {
-          return Container(
-            height: 200,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.inventory_2_outlined,
-                    size: 60,
-                    color: Colors.grey,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'No hay accesorios registrados',
+          return _emptyBox(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.inventory_2_outlined,
+                    size: 60, color: Colors.grey),
+                const SizedBox(height: 16),
+                const Text('No hay accesorios registrados',
                     style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  if (_selectedVehicle != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'para el vehículo ${_selectedVehicle!.placa}',
-                      style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         color: Colors.grey,
-                      ),
-                    ),
-                  ],
+                        fontWeight: FontWeight.w500)),
+                if (_selectedVehicle != null) ...[
+                  const SizedBox(height: 8),
+                  Text('para el vehículo ${_selectedVehicle!.placa}',
+                      style: const TextStyle(
+                          fontSize: 14, color: Colors.grey)),
                 ],
-              ),
+              ],
             ),
           );
         }
 
-        // Obtener solo los accesorios de la página actual
-        final currentPageAccesorios = _getCurrentPageItems(accesorios);
+        final pageItems = _getCurrentPageItems(accesorios);
 
         return Container(
           decoration: BoxDecoration(
@@ -697,128 +523,35 @@ class _AccessoryPageState extends State<AccessoryPage> {
               controller: _horizontalScrollController,
               scrollDirection: Axis.horizontal,
               child: Container(
-                width: isMobile ? 700 : 1000,
+                width: isMobile ? 740 : 1040,
                 padding: const EdgeInsets.all(8),
                 child: DataTable(
                   headingRowHeight: 50,
                   dataRowHeight: 50,
                   horizontalMargin: isMobile ? 12 : 16,
                   columnSpacing: isMobile ? 8 : 24,
-                  headingRowColor: WidgetStateProperty.all(const Color(0xFF303366)),
-                  columns: isMobile 
-                      ? const [
-                          DataColumn(
-                            label: SizedBox(
-                              width: 130,
-                              child: Text(
-                                'Tipo / Nombre', 
-                                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 90,
-                              child: Text(
-                                'Marca', 
-                                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 100,
-                              child: Text(
-                                'Instalación', 
-                                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 120,
-                              child: Text(
-                                'Próx. Mantenimiento', 
-                                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 80,
-                              child: Text(
-                                'Estado', 
-                                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 70,
-                              child: Text(
-                                'Acción', 
-                                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
+                  headingRowColor: WidgetStateProperty.all(
+                      const Color(0xFF303366)),
+                  columns: isMobile
+                      ? [
+                          _col('Tipo / Nombre', 130, isMobile),
+                          _col('Marca', 90, isMobile),
+                          _col('Instalación', 100, isMobile),
+                          _col('Próx. Mantenimiento', 120, isMobile),
+                          _col('Estado', 80, isMobile),
+                          _col('Acción', 110, isMobile),
                         ]
-                      : const [
-                          DataColumn(
-                            label: SizedBox(
-                              width: 180,
-                              child: Text(
-                                'Tipo / Nombre', 
-                                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 120,
-                              child: Text(
-                                'Marca', 
-                                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 140,
-                              child: Text(
-                                'Instalación', 
-                                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 160,
-                              child: Text(
-                                'Próximo Mantenimiento', 
-                                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 100,
-                              child: Text(
-                                'Estado', 
-                                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 100,
-                              child: Text(
-                                'Acción', 
-                                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)
-                              ),
-                            ),
-                          ),
+                      : [
+                          _col('Tipo / Nombre', 180, isMobile),
+                          _col('Marca', 120, isMobile),
+                          _col('Instalación', 140, isMobile),
+                          _col('Próximo Mantenimiento', 160, isMobile),
+                          _col('Estado', 100, isMobile),
+                          _col('Acción', 130, isMobile),
                         ],
-                  rows: currentPageAccesorios.map((acc) => _buildDataRow(acc, isMobile)).toList(),
+                  rows: pageItems
+                      .map((acc) => _buildDataRow(acc, isMobile))
+                      .toList(),
                 ),
               ),
             ),
@@ -828,132 +561,169 @@ class _AccessoryPageState extends State<AccessoryPage> {
     );
   }
 
+  Widget _emptyBox({required Widget child}) {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey[300]!)),
+      child: Center(child: child),
+    );
+  }
+
+  DataColumn _col(String label, double width, bool isMobile) {
+    return DataColumn(
+      label: SizedBox(
+        width: width,
+        child: Text(label,
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: isMobile ? 11 : 13,
+                fontWeight: FontWeight.w600)),
+      ),
+    );
+  }
+
   DataRow _buildDataRow(AccesorioModel acc, bool isMobile) {
     return DataRow(
       color: WidgetStateProperty.all(_getRowColor(acc)),
       cells: [
-        DataCell(Container(
-          child: Text(
-            acc.tipoNombre,
+        DataCell(Text(acc.tipoNombre,
             style: const TextStyle(fontSize: 12),
-            overflow: TextOverflow.ellipsis,
-          ),
-        )),
-        DataCell(Container(
-          child: Text(
-            acc.marca ?? '-',
+            overflow: TextOverflow.ellipsis)),
+        DataCell(Text(acc.marca ?? '-',
             style: const TextStyle(fontSize: 12),
-            overflow: TextOverflow.ellipsis,
-          ),
-        )),
-        DataCell(Container(
-          child: Text(
+            overflow: TextOverflow.ellipsis)),
+        DataCell(Text(
             DateFormat('dd/MM/yyyy').format(acc.fechaInstalacion),
-            style: const TextStyle(fontSize: 12),
-          ),
-        )),
-        DataCell(Container(
-          child: Text(
+            style: const TextStyle(fontSize: 12))),
+        DataCell(Text(
             acc.ultimoMantenimiento?.proximaFecha ?? 'No programada',
-            style: const TextStyle(fontSize: 12),
-          ),
-        )),
-        DataCell(Container(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: acc.ultimoMantenimiento?.estado == 'Pendiente' 
-                  ? Colors.orange 
-                  : Colors.green,
-              borderRadius: BorderRadius.circular(4),
+            style: const TextStyle(fontSize: 12))),
+        DataCell(_buildEstadoChip(acc.ultimoMantenimiento?.estado)),
+        // Ojito + Lápiz
+        DataCell(Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Tooltip(
+              message: 'Ver detalle',
+              child: InkWell(
+                onTap: () {
+                  _pendingAction = _PendingAction.verDetalle;
+                  context
+                      .read<AccessoryBloc>()
+                      .add(OnFetchDetalleAccesorio(acc.accesorioId));
+                },
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Icon(Icons.remove_red_eye,
+                      color: const Color(0xFF303366),
+                      size: isMobile ? 17 : 18),
+                ),
+              ),
             ),
-            child: Text(
-              acc.ultimoMantenimiento?.estado ?? 'Activo',
-              style: const TextStyle(color: Colors.white, fontSize: 10),
+            const SizedBox(width: 4),
+            Tooltip(
+              message: 'Editar accesorio',
+              child: InkWell(
+                onTap: () {
+                  // Guarda marca ANTES de llamar API27 (que no la devuelve)
+                  _marcaAccesorioSeleccionado = acc.marca ?? '';
+                  _pendingAction = _PendingAction.editar;
+                  context
+                      .read<AccessoryBloc>()
+                      .add(OnFetchDetalleAccesorio(acc.accesorioId));
+                },
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Icon(Icons.edit_outlined,
+                      color: Colors.orange.shade700,
+                      size: isMobile ? 17 : 18),
+                ),
+              ),
             ),
-          ),
-        )),
-        DataCell(Container(
-          child: InkWell(
-            onTap: () {
-              context.read<AccessoryBloc>().add(
-                OnFetchDetalleAccesorio(acc.accesorioId),
-              );
-            },
-            child: const Padding(
-              padding: EdgeInsets.all(4.0),
-              child: Icon(Icons.remove_red_eye, color: Color(0xFF303366), size: 18),
-            ),
-          ),
+          ],
         )),
       ],
     );
   }
 
+  // ── Chip de estado con colores semánticos ─────────────────────────────────
+  Widget _buildEstadoChip(String? estado) {
+    Color bg;
+    switch (estado?.toLowerCase().trim()) {
+      case 'activo':
+        bg = const Color(0xFF1E8A4A); // verde
+        break;
+      case 'completado':
+        bg = const Color(0xFF0D8ABC); // azulino
+        break;
+      case 'inactivo':
+        bg = const Color(0xFF8E99AA); // gris
+        break;
+      default:
+        bg = const Color(0xFF1E8A4A); // verde por defecto
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+          color: bg, borderRadius: BorderRadius.circular(4)),
+      child: Text(
+        estado ?? 'Activo',
+        style: const TextStyle(color: Colors.white, fontSize: 10),
+      ),
+    );
+  }
+
+  // ── Paginación ────────────────────────────────────────────────────────────
   Widget _buildPagination() {
     return BlocBuilder<AccessoryBloc, AccessoryState>(
       builder: (context, state) {
-        List<AccesorioModel> accesorios = [];
-        if (state is AccesoriosByVehiculoLoaded) {
-          accesorios = state.accesorios;
-        }
+        final accesorios = state is AccesoriosByVehiculoLoaded
+            ? state.accesorios
+            : <AccesorioModel>[];
 
-        final totalAccesorios = accesorios.length;
-        final totalPages = _getTotalPages(totalAccesorios);
+        final total = accesorios.length;
+        if (total == 0) return const SizedBox.shrink();
+
+        final totalPages = _getTotalPages(total);
         final startItem = ((_currentPage - 1) * _itemsPerPage) + 1;
-        final endItem = (_currentPage * _itemsPerPage) > totalAccesorios 
-            ? totalAccesorios 
+        final endItem = (_currentPage * _itemsPerPage) > total
+            ? total
             : (_currentPage * _itemsPerPage);
-
-        // Generar números de página
-        List<int> pageNumbers = [];
-        for (int i = 1; i <= totalPages; i++) {
-          pageNumbers.add(i);
-        }
-
-        // Si no hay datos, no mostrar paginación
-        if (totalAccesorios == 0) {
-          return const SizedBox.shrink();
-        }
 
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
-            borderRadius: BorderRadius.circular(8),
-          ),
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(8)),
           child: Column(
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Mostrando $startItem al $endItem de $totalAccesorios accesorios',
+                    'Mostrando $startItem al $endItem de $total accesorios',
                     style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
-                  Row(
-                    children: [
-                      Text(
-                        'Por página:',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
+                  Row(children: [
+                    Text('Por página:',
+                        style: TextStyle(
+                            color: Colors.grey[600], fontSize: 12)),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey[400]!),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '$_itemsPerPage',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ),
+                          borderRadius: BorderRadius.circular(4)),
+                      child: Text('$_itemsPerPage',
+                          style: TextStyle(
+                              color: Colors.grey[600], fontSize: 12)),
+                    ),
+                  ]),
                 ],
               ),
               const SizedBox(height: 12),
@@ -962,49 +732,27 @@ class _AccessoryPageState extends State<AccessoryPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Botón Anterior
                     InkWell(
                       onTap: _currentPage > 1
-                          ? () {
-                              setState(() {
-                                _currentPage--;
-                              });
-                            }
+                          ? () => setState(() => _currentPage--)
                           : null,
-                      child: _buildPaginationButton(
-                        'Anterior', 
-                        isActive: _currentPage > 1,
-                      ),
+                      child: _pageBtn('Anterior',
+                          isActive: _currentPage > 1),
                     ),
-                    
-                    // Números de página
-                    ...pageNumbers.map((pageNumber) {
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            _currentPage = pageNumber;
-                          });
-                        },
-                        child: _buildPaginationButton(
-                          pageNumber.toString(),
-                          isActive: _currentPage == pageNumber,
-                        ),
-                      );
-                    }).toList(),
-                    
-                    // Botón Siguiente
+                    ...[
+                      for (int i = 1; i <= totalPages; i++)
+                        InkWell(
+                          onTap: () => setState(() => _currentPage = i),
+                          child: _pageBtn(i.toString(),
+                              isActive: _currentPage == i),
+                        )
+                    ],
                     InkWell(
                       onTap: _currentPage < totalPages
-                          ? () {
-                              setState(() {
-                                _currentPage++;
-                              });
-                            }
+                          ? () => setState(() => _currentPage++)
                           : null,
-                      child: _buildPaginationButton(
-                        'Siguiente', 
-                        isActive: _currentPage < totalPages,
-                      ),
+                      child: _pageBtn('Siguiente',
+                          isActive: _currentPage < totalPages),
                     ),
                   ],
                 ),
@@ -1016,23 +764,19 @@ class _AccessoryPageState extends State<AccessoryPage> {
     );
   }
 
-  Widget _buildPaginationButton(String text, {bool isActive = false, bool isEnabled = true}) {
+  Widget _pageBtn(String text, {bool isActive = false}) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: isActive ? const Color(0xFF303366) : Colors.white,
-        border: Border.all(
-          color: isEnabled ? Colors.grey[400]! : Colors.grey[200]!,
-        ),
+        border: Border.all(color: Colors.grey[400]!),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         text,
         style: TextStyle(
-          color: isActive 
-              ? Colors.white 
-              : (isEnabled ? Colors.grey[600] : Colors.grey[300]),
+          color: isActive ? Colors.white : Colors.grey[600],
           fontSize: 12,
           fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
         ),
@@ -1040,21 +784,24 @@ class _AccessoryPageState extends State<AccessoryPage> {
     );
   }
 
+  // ── Copyright ─────────────────────────────────────────────────────────────
   Widget _buildCopyright() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        color: Colors.white,
-      ),
+          border: Border.all(color: Colors.grey[300]!),
+          color: Colors.white),
       child: Center(
         child: Text(
           '© 2025 JHT Transport Company\nTodos los derechos reservados.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey[600], fontSize: 12, height: 1.4),
+          style:
+              TextStyle(color: Colors.grey[600], fontSize: 12, height: 1.4),
         ),
       ),
     );
   }
 }
+
+enum _PendingAction { none, verDetalle, editar }

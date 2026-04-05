@@ -203,7 +203,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
       if (token == null || token.isEmpty) {
         throw Exception('No hay token de autenticación.');
       }
-
+      print('📤 JSON enviado supplier_remote_data_source.dart:  ${json.encode(dto.toJson())}');
       final response = await http.put(
         Uri.parse('${EnvironmentConfig.baseUrl}/api/general/actualizar-proveedor'),
         headers: {
