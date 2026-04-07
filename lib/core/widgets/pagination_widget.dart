@@ -8,6 +8,8 @@ class PaginationWidget extends StatelessWidget {
   final int itemsPerPage;
   final Function(int) onPageChanged;
   final Function(int) onItemsPerPageChanged;
+  /// Texto que aparece en "Mostrando X al Y de Z [label]"
+  final String itemLabel;
 
   const PaginationWidget({
     super.key,
@@ -17,88 +19,85 @@ class PaginationWidget extends StatelessWidget {
     required this.itemsPerPage,
     required this.onPageChanged,
     required this.onItemsPerPageChanged,
+    this.itemLabel = 'registros',
   });
 
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 768;
-    final bool isTablet = MediaQuery.of(context).size.width >= 768 && MediaQuery.of(context).size.width < 1024;
+    final bool isTablet =
+        MediaQuery.of(context).size.width >= 768 &&
+        MediaQuery.of(context).size.width < 1024;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          // Fila superior: información y selector de items por página
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Información de registros
-              Expanded(
-                child: Text(
-                  'Mostrando ${_getStartItem()} al ${_getEndItem()} de $totalItems proveedores',
-                  style: TextStyle(color: Colors.grey[600], fontSize: isMobile ? 11 : 12),
-                  overflow: TextOverflow.ellipsis,
+    return Column(
+      children: [
+        // Fila superior: info + selector por página
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                totalItems == 0
+                    ? 'Sin $itemLabel'
+                    : 'Mostrando ${_startItem()} – ${_endItem()} de $totalItems $itemLabel',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: isMobile ? 11 : 12,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
-              
-              // Selector de items por página
-              if (!isMobile) ...[
-                const SizedBox(width: 16),
-                _buildItemsPerPageSelector(),
-              ],
-            ],
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Paginación responsiva
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: _buildPaginationButtons(isMobile || isTablet),
             ),
+            if (!isMobile) ...[
+              const SizedBox(width: 16),
+              _buildItemsPerPageSelector(),
+            ],
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        // Botones de página
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: _buildButtons(isMobile || isTablet),
           ),
+        ),
+
+        // Selector por página en móvil (debajo)
+        if (isMobile) ...[
+          const SizedBox(height: 12),
+          _buildItemsPerPageSelector(),
         ],
-      ),
+      ],
     );
   }
 
   Widget _buildItemsPerPageSelector() {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'Por página:',
-          style: TextStyle(color: Colors.grey[600], fontSize: 12),
-        ),
+        Text('Por página:', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[400]!),
-            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(6),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               value: itemsPerPage,
-              items: [5, 10, 20, 50].map((value) {
-                return DropdownMenuItem<int>(
-                  value: value,
-                  child: Text(
-                    value.toString(),
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                  ),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  onItemsPerPageChanged(value);
-                }
-              },
+              isDense: true,
+              items: [5, 10, 20, 50].map((v) => DropdownMenuItem(
+                value: v,
+                child: Text(
+                  v.toString(),
+                  style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                ),
+              )).toList(),
+              onChanged: (v) { if (v != null) onItemsPerPageChanged(v); },
             ),
           ),
         ),
@@ -106,96 +105,145 @@ class PaginationWidget extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildPaginationButtons(bool isCompact) {
-    List<Widget> buttons = [];
-    
-    // Botón Anterior
-    buttons.add(_buildPaginationButton(
-      'Anterior',
+  List<Widget> _buildButtons(bool compact) {
+    final buttons = <Widget>[];
+
+    // ── Anterior ──────────────────────────────────────────────────────────
+    buttons.add(_pageBtn(
+      icon: Icons.chevron_left_rounded,
+      label: 'Anterior',
       isActive: false,
-      isEnabled: currentPage > 1,
+      enabled: currentPage > 1,
       onTap: currentPage > 1 ? () => onPageChanged(currentPage - 1) : null,
+      showLabel: !compact,
     ));
 
-    if (isCompact) {
-      // Versión compacta para móvil/tablet
-      buttons.add(_buildPaginationButton(
-        currentPage.toString(),
-        isActive: true,
-        isEnabled: true,
-        onTap: null,
-      ));
-      buttons.add(_buildPaginationButton(
-        'de $totalPages',
-        isActive: false,
-        isEnabled: false,
-        onTap: null,
-      ));
+    // ── Números ───────────────────────────────────────────────────────────
+    if (compact) {
+      // Compacto: solo "página actual / total"
+      buttons.add(_numberBtn(currentPage, isActive: true));
+      buttons.add(_labelBtn('/ $totalPages'));
     } else {
-      // Versión completa para desktop
-      final int startPage = (currentPage - 2).clamp(1, totalPages - 4);
-      final int endPage = (startPage + 4).clamp(5, totalPages);
-
-      for (int i = startPage; i <= endPage; i++) {
-        buttons.add(_buildPaginationButton(
-          i.toString(),
-          isActive: i == currentPage,
-          isEnabled: true,
-          onTap: i == currentPage ? null : () => onPageChanged(i),
-        ));
+      // Desktop: ventana deslizante de hasta 5 páginas
+      final pages = _visiblePages();
+      if (pages.first > 1) {
+        buttons.add(_numberBtn(1));
+        if (pages.first > 2) buttons.add(_labelBtn('…'));
+      }
+      for (final p in pages) {
+        buttons.add(_numberBtn(p, isActive: p == currentPage));
+      }
+      if (pages.last < totalPages) {
+        if (pages.last < totalPages - 1) buttons.add(_labelBtn('…'));
+        buttons.add(_numberBtn(totalPages));
       }
     }
 
-    // Botón Siguiente
-    buttons.add(_buildPaginationButton(
-      'Siguiente',
+    // ── Siguiente ─────────────────────────────────────────────────────────
+    buttons.add(_pageBtn(
+      icon: Icons.chevron_right_rounded,
+      label: 'Siguiente',
       isActive: false,
-      isEnabled: currentPage < totalPages,
+      enabled: currentPage < totalPages,
       onTap: currentPage < totalPages ? () => onPageChanged(currentPage + 1) : null,
+      showLabel: !compact,
     ));
 
     return buttons;
   }
 
-  Widget _buildPaginationButton(
-    String text, {
+  List<int> _visiblePages() {
+    const window = 5;
+    int start = (currentPage - 2).clamp(1, (totalPages - window + 1).clamp(1, totalPages));
+    int end = (start + window - 1).clamp(1, totalPages);
+    return List.generate(end - start + 1, (i) => start + i);
+  }
+
+  Widget _numberBtn(int page, {bool isActive = false}) {
+    return _btn(
+      child: Text(
+        page.toString(),
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: isActive ? FontWeight.w700 : FontWeight.normal,
+          color: isActive ? Colors.white : Colors.grey[700],
+        ),
+      ),
+      isActive: isActive,
+      enabled: !isActive,
+      onTap: isActive ? null : () => onPageChanged(page),
+    );
+  }
+
+  Widget _labelBtn(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Text(text, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+    );
+  }
+
+  Widget _pageBtn({
+    required IconData icon,
+    required String label,
     required bool isActive,
-    required bool isEnabled,
+    required bool enabled,
+    VoidCallback? onTap,
+    bool showLabel = true,
+  }) {
+    return _btn(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon == Icons.chevron_left_rounded) Icon(icon, size: 16, color: enabled ? Colors.grey[700] : Colors.grey[400]),
+          if (showLabel) ...[
+            if (icon == Icons.chevron_left_rounded) const SizedBox(width: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: enabled ? Colors.grey[700] : Colors.grey[400],
+              ),
+            ),
+            if (icon == Icons.chevron_right_rounded) const SizedBox(width: 2),
+          ],
+          if (icon == Icons.chevron_right_rounded) Icon(icon, size: 16, color: enabled ? Colors.grey[700] : Colors.grey[400]),
+        ],
+      ),
+      isActive: isActive,
+      enabled: enabled,
+      onTap: onTap,
+    );
+  }
+
+  Widget _btn({
+    required Widget child,
+    required bool isActive,
+    required bool enabled,
     VoidCallback? onTap,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 3),
       child: Material(
         color: isActive ? const Color(0xFF303366) : Colors.transparent,
         borderRadius: BorderRadius.circular(6),
         child: InkWell(
-          onTap: isEnabled ? onTap : null,
+          onTap: enabled ? onTap : null,
           borderRadius: BorderRadius.circular(6),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
-              border: !isActive ? Border.all(color: Colors.grey[400]!) : null,
+              border: !isActive
+                  ? Border.all(color: enabled ? Colors.grey[300]! : Colors.grey[200]!)
+                  : null,
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Text(
-              text,
-              style: TextStyle(
-                color: isActive ? Colors.white : (isEnabled ? Colors.grey[700] : Colors.grey[400]),
-                fontSize: 12,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
+            child: child,
           ),
         ),
       ),
     );
   }
 
-  int _getStartItem() {
-    return ((currentPage - 1) * itemsPerPage) + 1;
-  }
-
-  int _getEndItem() {
-    return (currentPage * itemsPerPage).clamp(0, totalItems);
-  }
+  int _startItem() => ((currentPage - 1) * itemsPerPage) + 1;
+  int _endItem() => (currentPage * itemsPerPage).clamp(0, totalItems);
 }
