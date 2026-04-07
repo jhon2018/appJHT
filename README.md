@@ -5,7 +5,7 @@ flutter run -d chrome
 flutter run -d web-server
 flutter run -d chrome --web-browser-flag "--ignore-certificate-errors" --web-browser-flag "--disable-web-security"
 flutter run -d web-server --web-port=5000
-flutter run -d web-server --web-port=5000 --dart-define=USE_LOCAL=true
+flutter run -d web-server --web-port=5000 --dart-define=USE_LOCAL=false
 
 ## 2. Inicia el método de trabajo y crea las ramas
 git flow init
@@ -43,3 +43,14 @@ Tools • Dart 3.8.1 • DevTools 2.45.1
 ## ELIMINAR CARPETAS ANDROI Y MACOS
 git rm -r --cached macos
 git rm -r --cached android
+
+## users Administrador
+admin
+Admin123*
+
+## user Conductor
+david
+123
+
+22222222
+22222222
