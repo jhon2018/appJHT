@@ -1,11 +1,12 @@
 // lib/features/mantenimiento/presentation/widgets/add_mantenimiento_modal.dart
-//
-// Modal de registro de mantenimiento — REQF04
-// Paneles progresivos: Base → Ítems → Gasto
-// Responsive: desktop (Dialog 900px) / móvil (fullscreen bottom sheet)
+// REQF04 — Registrar Mantenimiento
+// Flujo: API12 (datos base) → API13 (accesorios por vehículo) → API15 (conceptos por tipoId)
+// Módulo Cambio si tipo.contains('cambio') sino Módulo Mantenimiento
 
 import 'dart:convert';
+import 'dart:io';
 import 'package:app_jht_front/features/mantenimiento/data/models/accesorio_vehiculo_model.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,33 +16,66 @@ import 'package:app_jht_front/core/utils/role_constants.dart';
 import '../../data/datasources/registro_mantenimiento_datasource.dart';
 import '../../data/models/datos_iniciales_model.dart';
 import '../../data/models/accesorio_models.dart';
-import '../../data/models/item_mantenimiento_form_model.dart';
 import '../bloc/registro_mantenimiento_bloc.dart';
 import '../bloc/registro_mantenimiento_event.dart';
 import '../bloc/registro_mantenimiento_state.dart';
+import '../../data/services/photo_upload_service.dart';
+import '../../data/services/photo_file_helper.dart';
+import '../../data/datasources/registro_mantenimiento_datasource.dart'
+    show HistoricoItem, GastoRegistro;
 
-// ─── Tokens de color ────────────────────────────────────────────────────────
+// ─── Color tokens ─────────────────────────────────────────────────────────────
 const _primary = Color(0xFF303366);
 const _primaryLight = Color(0xFFEEEFF6);
-const _surface = Colors.white;
 const _border = Color(0xFFE0E0E8);
 const _textPrimary = Color(0xFF1A1A2E);
 const _textSecondary = Color(0xFF6B7280);
+const _bgPage = Color(0xFFF7F8FC);
 
-// Feedback semántico
-const _colorSuccess = Color(0xFF16A34A);
-const _colorSuccessBg = Color(0xFFDCFCE7);
-const _colorWarning = Color(0xFFD97706);
-const _colorWarningBg = Color(0xFFFEF3C7);
-const _colorError = Color(0xFFDC2626);
-const _colorErrorBg = Color(0xFFFEE2E2);
-const _colorInfo = Color(0xFF2563EB);
-const _colorInfoBg = Color(0xFFDBEAFE);
+const _green = Color(0xFF16A34A);
+const _greenBg = Color(0xFFDCFCE7);
+const _yellow = Color(0xFFD97706);
+const _yellowBg = Color(0xFFFEF3C7);
+const _red = Color(0xFFDC2626);
+const _blue = Color(0xFF2563EB);
+const _blueBg = Color(0xFFDBEAFE);
 
-// ─── Widget público ──────────────────────────────────────────────────────────
+// ─── Modelo interno de un ítem accesorio en el formulario ────────────────────
+class _AccesorioItem {
+  AccesorioVehiculoModel? accesorio;
+  String codigoFabrica = '';
+  String marca = '';
+  String fechaInstalacion = '';
+  ConceptoMantenimientoModel? concepto;
+  String tipoMantenimiento = '';
+  // Módulo Mantenimiento
+  String proxKmMant = '';
+  String proxFechaMant = '';
+  String estadoMant = 'Pendiente';
+  String observMant = '';
+  SelectedPhoto? foto;
+  String? fotoName;
+  // Módulo Cambio
+  String codFabCambio = '';
+  String marcaCambio = '';
+  String cantidadCambio = '';
+  String proxFechaCambio = '';
+  String proxKmCambio = '';
+  String observCambio = '';
+  String estadoCambio = 'Pendiente';
+
+  // ── Flags de desbloqueo de campos readonly ─────────────────────────────
+  bool unlockCodigo = false;
+  bool unlockMarca = false;
+  bool unlockFechaInst = false;
+  bool unlockTipo = false;
+
+  bool get esCambio => tipoMantenimiento.toLowerCase().contains('cambio');
+}
+
+// ─── Widget público ───────────────────────────────────────────────────────────
 class AddMantenimientoModal extends StatelessWidget {
   final VoidCallback? onMantenimientoAdded;
-
   const AddMantenimientoModal({super.key, this.onMantenimientoAdded});
 
   @override
@@ -50,266 +84,429 @@ class AddMantenimientoModal extends StatelessWidget {
       create: (_) => RegistroMantenimientoBloc(
         dataSource: RegistroMantenimientoDataSourceImpl(),
       )..add(const CargarDatosInicialesEvent()),
-      child: _AddMantenimientoModalBody(
-        onMantenimientoAdded: onMantenimientoAdded,
-      ),
+      child: _ModalBody(onMantenimientoAdded: onMantenimientoAdded),
     );
   }
 }
 
-// ─── Body interno ────────────────────────────────────────────────────────────
-class _AddMantenimientoModalBody extends StatefulWidget {
+// ─── Body ─────────────────────────────────────────────────────────────────────
+class _ModalBody extends StatefulWidget {
   final VoidCallback? onMantenimientoAdded;
-  const _AddMantenimientoModalBody({this.onMantenimientoAdded});
+  const _ModalBody({this.onMantenimientoAdded});
 
   @override
-  State<_AddMantenimientoModalBody> createState() =>
-      _AddMantenimientoModalBodyState();
+  State<_ModalBody> createState() => _ModalBodyState();
 }
 
-class _AddMantenimientoModalBodyState
-    extends State<_AddMantenimientoModalBody> {
-  // ── Controladores de gasto ────────────────────────────────────────────────
-  final _numDocController = TextEditingController();
-  final _montoController = TextEditingController();
-  final _descGastoController = TextEditingController();
+class _ModalBodyState extends State<_ModalBody> {
+  // ── Información base ──────────────────────────────────────────────────────
+  int? _vehId;
+  int? _provId;
+  int? _conductorId;
+  DateTime? _fechaMantenimiento;
+  final _kmCtrl = TextEditingController();
+  int? _segmentoId;
 
-  String? _tipoGasto; // Boleta | Factura
-  String? _moneda; // Soles | Dólares
-  DateTime? _fechaGasto;
-  String? _gastoFotoPath;
-  String? _gastoFotoNombre;
+  // ── Accesorios del vehículo (API13) ───────────────────────────────────────
+  List<AccesorioVehiculoModel> _accesoriosVehiculo = [];
+  bool _loadingAccesorios = false;
 
-  // ── Per_iid del token ─────────────────────────────────────────────────────
-  int? _perIidFromToken;
+  // ── Conceptos por tipoId (API15) — cache ─────────────────────────────────
+  final Map<int, List<ConceptoMantenimientoModel>> _conceptosCache = {};
+  final Map<int, bool> _loadingConceptos = {};
+
+  // ── Lista de ítems ────────────────────────────────────────────────────────
+  final List<_AccesorioItem> _items = [_AccesorioItem()];
+
+  // ── Gasto ─────────────────────────────────────────────────────────────────
+  String? _tipoGasto;
+  String _tipoGastoGasto = 'Mantenimiento'; // gas_vtipo_gasto
+  String? _moneda;
+  final _nrFacturaCtrl = TextEditingController();
+  final _montoCtrl = TextEditingController();
+  final _observGastoCtrl = TextEditingController();
+  SelectedPhoto? _gastoFoto;
+  String? _gastoFotoName;
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  int? _perIid;
   String? _userRole;
 
-  // ── Form key ──────────────────────────────────────────────────────────────
   final _formKey = GlobalKey<FormState>();
+
+  // ── Datasource singleton (evita instancias repetidas) ─────────────────
+  late final RegistroMantenimientoDataSourceImpl _ds =
+      RegistroMantenimientoDataSourceImpl();
 
   @override
   void initState() {
     super.initState();
-    _fechaGasto = DateTime.now();
-    _loadUserData();
+    _fechaMantenimiento = DateTime.now(); // fecha hoy por defecto
+    _loadAuth();
   }
 
-  Future<void> _loadUserData() async {
+  Future<void> _loadAuth() async {
     final token = await TokenService.getToken();
     final role = await TokenService.getUserRole();
     if (token != null) {
       try {
-        // Decodificar JWT para extraer UserId
         final parts = token.split('.');
-        if (parts.length == 3) {
-          final payload = parts[1];
-          final normalized = base64.normalize(payload);
-          final decoded = utf8.decode(base64.decode(normalized));
-          final map = jsonDecode(decoded) as Map<String, dynamic>;
-          final userId = map['UserId'] ?? map['userId'];
-          if (userId != null && mounted) {
-            setState(() {
-              _perIidFromToken = int.tryParse(userId.toString());
-              _userRole = role;
-            });
-          }
-        }
+        final payload = base64.normalize(parts[1]);
+        final map =
+            jsonDecode(utf8.decode(base64.decode(payload)))
+                as Map<String, dynamic>;
+        final uid = map['UserId'] ?? map['userId'];
+        if (mounted)
+          setState(() {
+            _perIid = int.tryParse(uid.toString());
+            _userRole = role;
+          });
       } catch (_) {}
     }
-  }
-
-  @override
-  void dispose() {
-    _numDocController.dispose();
-    _montoController.dispose();
-    _descGastoController.dispose();
-    super.dispose();
   }
 
   bool get _isAdmin =>
       _userRole == UserRoles.administrador || _userRole == UserRoles.root;
 
-  // ─── Envío ────────────────────────────────────────────────────────────────
-  void _submit(RegistroMantenimientoState state) {
-    if (!_formKey.currentState!.validate()) return;
-    if (state.items.isEmpty) {
-      _showToast('Agregue al menos un ítem de mantenimiento', isError: true);
-      return;
-    }
-    if (!state.items.every((i) => i.isComplete)) {
-      _showToast('Complete todos los campos de los ítems', isError: true);
-      return;
-    }
-
-    final perIid = _isAdmin
-        ? (state.conductorIdSeleccionado ?? _perIidFromToken ?? 1)
-        : (_perIidFromToken ?? 1);
-
-    context.read<RegistroMantenimientoBloc>().add(
-          RegistrarMantenimientoEvent(
-            perIid: perIid,
-            vehIid: state.vehiculoIdSeleccionado!,
-            proIid: state.proveedorIdSeleccionado!,
-            bitKilometraje: state.kilometrajeVehiculo,
-            bitFechaRegistro: DateTime.now(),
-            gasTipo: _tipoGasto ?? 'Boleta',
-            gasMoneda: _moneda ?? 'Soles',
-            gasNumeroDocumento:
-                int.tryParse(_numDocController.text) ?? 0,
-            gasMonto:
-                double.tryParse(_montoController.text) ?? 0,
-            gasFechaGasto: _fechaGasto ?? DateTime.now(),
-            gasDescripcion: _descGastoController.text,
-            gasTipoGasto: _tipoGasto ?? 'Boleta',
-            gastoFotoPath: _gastoFotoPath,
-          ),
-        );
+  @override
+  void dispose() {
+    _kmCtrl.dispose();
+    _nrFacturaCtrl.dispose();
+    _montoCtrl.dispose();
+    _observGastoCtrl.dispose();
+    super.dispose();
   }
 
-  void _showToast(String msg, {bool isError = false, bool isSuccess = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        backgroundColor:
-            isError ? _colorError : isSuccess ? _colorSuccess : _colorInfo,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        content: Row(
+  // ── API13 ─────────────────────────────────────────────────────────────────
+  Future<void> _cargarAccesorios(int vehId) async {
+    setState(() {
+      _loadingAccesorios = true;
+      _accesoriosVehiculo = [];
+    });
+    try {
+      final res = await _ds.getAccesoriosPorVehiculo(vehId);
+      if (mounted) setState(() => _accesoriosVehiculo = res);
+    } catch (e) {
+      _showAlert('Error', 'Error al cargar accesorios: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _loadingAccesorios = false);
+    }
+  }
+
+  // ── API15 ─────────────────────────────────────────────────────────────────
+  Future<void> _cargarConceptos(int itemIdx, int tipoId) async {
+    if (_conceptosCache.containsKey(tipoId)) {
+      setState(() {});
+      return;
+    }
+    setState(() => _loadingConceptos[itemIdx] = true);
+    try {
+      final res = await _ds.getConceptosMantenimiento(tipoId);
+      if (mounted) {
+        _conceptosCache[tipoId] = res;
+        setState(() {});
+      }
+    } catch (e) {
+      _showAlert('Error', 'Error al cargar conceptos: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _loadingConceptos[itemIdx] = false);
+    }
+  }
+
+  // ── Envío ─────────────────────────────────────────────────────────────────
+  void _submit() {
+    // ✅ Validar al menos 1 accesorio
+    if (_items.isEmpty || _items.every((i) => i.accesorio == null)) {
+      _showAlert('Campo requerido', 'Debe registrar al menos 1 accesorio', isError: true);
+      return;
+    }
+
+    // ✅ Validar formulario completo
+    if (!_formKey.currentState!.validate()) {
+      _showAlert('Campos incompletos', 'Complete todos los campos obligatorios marcados con *', isError: true);
+      return;
+    }
+
+    if (_vehId == null) {
+      _showAlert('Vehículo requerido', 'Seleccione un vehículo', isError: true);
+      return;
+    }
+    if (_provId == null) {
+      _showAlert('Proveedor requerido', 'Seleccione un proveedor', isError: true);
+      return;
+    }
+
+    // ✅ Validar que todos los ítems tengan foto
+    for (int i = 0; i < _items.length; i++) {
+      final item = _items[i];
+      if (item.accesorio != null && item.foto == null) {
+        _showAlert('Foto requerida', 'El accesorio ${i + 1} debe tener una foto adjunta', isError: true);
+        return;
+      }
+    }
+
+    // ✅ Validar foto de gasto
+    if (_gastoFoto == null) {
+      _showAlert('Foto requerida', 'Debe adjuntar la foto del documento de gasto', isError: true);
+      return;
+    }
+
+    final perIid = _isAdmin ? (_conductorId ?? _perIid ?? 1) : (_perIid ?? 1);
+    final km = int.tryParse(_kmCtrl.text) ?? 0;
+    final fecha = _fechaMantenimiento ?? DateTime.now();
+    final fechaStr = _dateToStr(fecha);
+
+    // ── Construir lista de HistoricoItem ──────────────────────────────────────
+    final historicos = _items.map((item) {
+      final esCambio = item.esCambio;
+
+      // ✅ NORMALIZAR dic_vtipo:
+      final tipoNormalizado = esCambio
+          ? item.tipoMantenimiento
+          : 'Mantenimiento';
+
+      return HistoricoItem(
+        accIid: item.accesorio!.idAccesorio,
+        hisVdescripcion: esCambio
+            ? (item.observCambio.isEmpty ? 'Sin argumentos' : item.observCambio)
+            : (item.observMant.isEmpty ? 'Sin argumentos' : item.observMant),
+        hisIproxKilometraje: esCambio
+            ? (int.tryParse(item.proxKmCambio) ?? 0)
+            : (int.tryParse(item.proxKmMant) ?? 0),
+        hisDproximaFech: esCambio ? item.proxFechaCambio : item.proxFechaMant,
+        hisVestado: esCambio ? item.estadoCambio : item.estadoMant,
+        dicVtipo: tipoNormalizado,
+        dicIid: item.concepto!.id,
+        foto: item.foto,
+        accVmarca: esCambio ? item.marcaCambio : null,
+        accVcodigoFabricante: esCambio ? item.codFabCambio : null,
+        accIkilometrajeInstalacion: esCambio ? km : null,
+        vehIid: esCambio ? _vehId : null,
+        tipIid: esCambio ? item.accesorio!.tipoId : null,
+      );
+    }).toList();
+
+    // ── Construir GastoRegistro ───────────────────────────────────────────────
+    final gastoRegistro = GastoRegistro(
+      gasVtipo: _tipoGasto ?? 'Boleta',
+      gasInumeroDocumento: int.tryParse(_nrFacturaCtrl.text) ?? 0,
+      gasVtipoGasto: _tipoGastoGasto,
+      gasVmoneda: _moneda ?? 'Soles',
+      gasBmonto: double.tryParse(_montoCtrl.text) ?? 0,
+      gasDfechaGasto: fechaStr,
+      gasVdescripcion: _observGastoCtrl.text,
+      foto: _gastoFoto,
+    );
+
+    print('\n══ SUBMIT Mantenimiento ════════════════════════════');
+    print('perIid: $perIid | vehIid: ${_vehId} | proIid: ${_provId}');
+    print('km: $km | fecha: $fechaStr');
+    print('Items: ${historicos.length}');
+    for (int i = 0; i < historicos.length; i++) {
+      final h = historicos[i];
+      print(
+        '  [$i] acc=${h.accIid} tipo=${h.dicVtipo} '
+        'dic=${h.dicIid} km=${h.hisIproxKilometraje} '
+        'foto=${h.foto?.fileName ?? "ninguna"}',
+      );
+    }
+    print(
+      'Gasto: tipo=${gastoRegistro.gasVtipo} '
+      'monto=${gastoRegistro.gasBmonto} '
+      'moneda=${gastoRegistro.gasVmoneda}',
+    );
+    print('════════════════════════════════════════════════════\n');
+
+    context.read<RegistroMantenimientoBloc>().add(
+      RegistrarMantenimientoV2Event(
+        perIid: perIid,
+        vehIid: _vehId!,
+        proIid: _provId!,
+        bitKilometraje: km,
+        bitFechaRegistro: fecha,
+        historicos: historicos,
+        gasto: gastoRegistro,
+      ),
+    );
+  }
+
+  /// Convierte DateTime a "yyyy-MM-dd"
+  String _dateToStr(DateTime d) {
+    final y = d.year.toString();
+    final m = d.month.toString().padLeft(2, '0');
+    final dd = d.day.toString().padLeft(2, '0');
+    return y + '-' + m + '-' + dd;
+  }
+
+  // ✅ ALERTA FRONTAL (reemplaza SnackBar)
+  void _showAlert(String title, String message, {bool isError = false, bool isSuccess = false}) {
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Row(
           children: [
             Icon(
               isError
                   ? Icons.error_outline_rounded
                   : isSuccess
-                      ? Icons.check_circle_outline_rounded
-                      : Icons.info_outline_rounded,
-              color: Colors.white,
-              size: 18,
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.info_outline_rounded,
+              color: isError ? _red : isSuccess ? _green : _blue,
+              size: 24,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
-              child: Text(msg,
-                  style: const TextStyle(color: Colors.white, fontSize: 13)),
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: _textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ),
+        content: Text(
+          message,
+          style: const TextStyle(color: _textSecondary, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Entendido',
+              style: TextStyle(
+                color: isError ? _red : isSuccess ? _green : _primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  // ─── BUILD ────────────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+  // BUILD
+  // ══════════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 768;
 
     return BlocListener<RegistroMantenimientoBloc, RegistroMantenimientoState>(
+      listenWhen: (prev, curr) =>
+          prev.enviando != curr.enviando ||
+          prev.exitoRegistro != curr.exitoRegistro ||
+          prev.errorRegistro != curr.errorRegistro,
       listener: (ctx, state) {
-        if (state.exitoRegistro) {
+        print(
+          "BlocListener: enviando=${state.enviando} exito=${state.exitoRegistro} error=${state.errorRegistro}",
+        );
+
+        if (state.exitoRegistro && mounted) {
+          final id = state.bitacoraIdCreada?.toString() ?? 'N/A';
+
           Navigator.of(ctx).pop();
-          _showToast(
-            '✓ Mantenimiento registrado correctamente (ID: ${state.bitacoraIdCreada})',
-            isSuccess: true,
-          );
-          widget.onMantenimientoAdded?.call();
-        } else if (state.errorRegistro != null) {
-          _showToast(state.errorRegistro!, isError: true);
+
+          // ✅ Usar showAlert en lugar de SnackBar
+          if (mounted) {
+            _showAlert(
+              '¡Registro exitoso!',
+              'Mantenimiento registrado correctamente (ID: $id)',
+              isSuccess: true,
+            );
+            widget.onMantenimientoAdded?.call();
+          }
+        } else if (state.errorRegistro != null && !state.enviando && mounted) {
+          _showAlert('Error', state.errorRegistro!, isError: true);
         }
       },
       child: isMobile ? _buildMobile() : _buildDesktop(),
     );
   }
 
-  // ─── Desktop: Dialog 900px ────────────────────────────────────────────────
-  Widget _buildDesktop() {
-    return Dialog(
-      backgroundColor: _surface,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 900,
-          maxHeight: MediaQuery.of(context).size.height * 0.92,
-        ),
-        child: Column(
-          children: [
-            _buildHeader(isMobile: false),
-            Expanded(child: _buildScrollContent(isMobile: false)),
-            _buildFooter(isMobile: false),
-          ],
-        ),
+  Widget _buildDesktop() => Dialog(
+    backgroundColor: Colors.white,
+    insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    child: ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: 860,
+        maxHeight: MediaQuery.of(context).size.height * 0.92,
       ),
-    );
-  }
-
-  // ─── Móvil: fullscreen ────────────────────────────────────────────────────
-  Widget _buildMobile() {
-    return Dialog.fullscreen(
-      backgroundColor: _surface,
       child: Column(
         children: [
-          _buildHeader(isMobile: true),
-          Expanded(child: _buildScrollContent(isMobile: true)),
-          _buildFooter(isMobile: true),
+          _buildHeader(false),
+          Expanded(child: _buildContent(false)),
+          _buildFooter(false),
         ],
       ),
-    );
-  }
+    ),
+  );
 
-  // ─── Header ───────────────────────────────────────────────────────────────
-  Widget _buildHeader({required bool isMobile}) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-          horizontal: isMobile ? 16 : 24, vertical: 16),
-      decoration: const BoxDecoration(
-        color: _primary,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+  Widget _buildMobile() => Dialog.fullscreen(
+    backgroundColor: Colors.white,
+    child: Column(
+      children: [
+        _buildHeader(true),
+        Expanded(child: _buildContent(true)),
+        _buildFooter(true),
+      ],
+    ),
+  );
+
+  Widget _buildHeader(bool isMobile) => Container(
+    padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24, vertical: 14),
+    decoration: const BoxDecoration(
+      color: _primary,
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(14),
+        topRight: Radius.circular(14),
+      ),
+    ),
+    child: Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(Icons.build_rounded, color: Colors.white, size: 18),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.build_rounded, color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Registrar Mantenimiento',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: isMobile ? 15 : 17,
-                    fontWeight: FontWeight.w700,
-                  ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Registrar Mantenimiento',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isMobile ? 15 : 16,
+                  fontWeight: FontWeight.w700,
                 ),
-                const Text(
-                  'Complete los datos del servicio de mantenimiento',
-                  style: TextStyle(
-                      color: Colors.white70, fontSize: 11),
-                ),
-              ],
-            ),
+              ),
+              const Text(
+                'Complete los datos del servicio de mantenimiento',
+                style: TextStyle(color: Colors.white70, fontSize: 11),
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.close_rounded, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
-            tooltip: 'Cerrar',
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+        IconButton(
+          icon: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    ),
+  );
 
-  // ─── Scroll content ───────────────────────────────────────────────────────
-  Widget _buildScrollContent({required bool isMobile}) {
+  Widget _buildContent(bool isMobile) {
     return BlocBuilder<RegistroMantenimientoBloc, RegistroMantenimientoState>(
       builder: (ctx, state) {
         if (state.cargandoDatosIniciales) {
@@ -318,8 +515,11 @@ class _AddMantenimientoModalBodyState
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircularProgressIndicator(color: _primary),
-                SizedBox(height: 16),
-                Text('Cargando datos...', style: TextStyle(color: _textSecondary)),
+                SizedBox(height: 14),
+                Text(
+                  'Cargando datos...',
+                  style: TextStyle(color: _textSecondary),
+                ),
               ],
             ),
           );
@@ -327,30 +527,20 @@ class _AddMantenimientoModalBodyState
         if (state.errorDatosIniciales != null) {
           return _buildErrorState(state.errorDatosIniciales!);
         }
-        if (state.datosIniciales == null) {
-          return const SizedBox.shrink();
-        }
+        if (state.datosIniciales == null) return const SizedBox.shrink();
 
         return Form(
           key: _formKey,
           child: SingleChildScrollView(
-            padding: EdgeInsets.all(isMobile ? 16 : 24),
+            padding: EdgeInsets.all(isMobile ? 14 : 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // PANEL 1: Datos base
-                _buildPanelBase(state, isMobile),
-                const SizedBox(height: 24),
-
-                // PANEL 2: Ítems (aparece cuando hay segmento seleccionado)
-                if (state.vehiculoIdSeleccionado != null &&
-                    state.segmentoIdSeleccionado != null) ...[
-                  _buildPanelItems(state, isMobile),
-                  const SizedBox(height: 24),
-                ],
-
-                // PANEL 3: Gasto
-                _buildPanelGasto(state, isMobile),
+                _buildSeccionBase(state.datosIniciales!, isMobile),
+                const SizedBox(height: 16),
+                _buildSeccionAccesorios(isMobile),
+                const SizedBox(height: 16),
+                _buildSeccionGasto(isMobile),
               ],
             ),
           ),
@@ -360,1677 +550,1031 @@ class _AddMantenimientoModalBodyState
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // PANEL 1 — DATOS BASE
+  // SECCIÓN 1 — INFORMACIÓN BASE
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildPanelBase(
-      RegistroMantenimientoState state, bool isMobile) {
-    final DatosInicialesModel datos = state.datosIniciales!;
-    // typed local lists to avoid dynamic inference
-    final vehiculos = datos.vehiculos;
-    final proveedores = datos.proveedores;
-    final conductores = datos.conductores;
-    final segmentos = datos.segmentos;
-
-    return _buildSectionCard(
-      icon: Icons.directions_car_outlined,
-      title: 'Datos del Servicio',
-      subtitle: 'Seleccione el vehículo, proveedor y segmento',
+  Widget _buildSeccionBase(DatosInicialesModel datos, bool isMobile) {
+    return _card(
+      title: 'Información base *',
       child: Column(
         children: [
-          // Fila 1: Vehículo + Proveedor
-          isMobile
-              ? Column(children: [
-                  _buildVehiculoSelect(state, datos),
-                  const SizedBox(height: 12),
-                  _buildProveedorSelect(state, datos),
-                ])
-              : Row(children: [
-                  Expanded(child: _buildVehiculoSelect(state, datos)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildProveedorSelect(state, datos)),
-                ]),
+          // Fila 1: Vehículo | Fecha mantenimiento
+          _row2(
+            isMobile,
+            left: _labelRequired(
+              'Seleccionar vehículo',
+              _SearchableDropdown<int>(
+                value: _vehId,
+                hint: 'Seleccionar vehículo',
+                items: datos.vehiculos
+                    .map(
+                      (v) =>
+                          _DropItem(v.id, '${v.placa} • ${v.kilometraje} km'),
+                    )
+                    .toList(),
+                onChanged: (id) {
+                  setState(() {
+                    _vehId = id;
+                    _accesoriosVehiculo = [];
+                    for (final it in _items) {
+                      _resetItem(it);
+                    }
+                  });
+                  if (id != null) _cargarAccesorios(id);
+                },
+              ),
+              tooltip: 'Seleccione el vehículo al que se realizará el mantenimiento',
+            ),
+            right: _label(
+              'Fecha de mantenimiento',
+              _dateField(
+                value: _fechaMantenimiento,
+                onPicked: (d) => setState(() => _fechaMantenimiento = d),
+              ),
+            ),
+          ),
           const SizedBox(height: 12),
 
-          // Fila 2: Conductor (solo admin) + Kilometraje
-          if (_isAdmin) ...[
-            isMobile
-                ? Column(children: [
-                    _buildConductorSelect(state, datos),
-                    const SizedBox(height: 12),
-                    _buildKilometrajeField(state),
-                  ])
-                : Row(children: [
-                    Expanded(child: _buildConductorSelect(state, datos)),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildKilometrajeField(state)),
-                  ]),
-            const SizedBox(height: 12),
-          ] else ...[
-            _buildKilometrajeField(state),
-            const SizedBox(height: 12),
-          ],
-
-          // Segmento
-          _buildSegmentoSelect(state, datos),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVehiculoSelect(
-      RegistroMantenimientoState state, DatosInicialesModel datos) {
-    final List<VehiculoInicialModel> vehiculos = datos.vehiculos;
-    return _buildFieldLabel(
-      label: 'Vehículo *',
-      child: _buildDropdown<int>(
-        value: state.vehiculoIdSeleccionado,
-        hint: 'Seleccione vehículo',
-        items: vehiculos.map((VehiculoInicialModel v) => DropdownMenuItem<int>(
-                  value: v.id,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.directions_car_outlined,
-                          size: 14, color: _primary),
-                      const SizedBox(width: 8),
-                      Text(v.placa,
-                          style: const TextStyle(fontSize: 13)),
-                      const SizedBox(width: 4),
-                      Text('• ${v.kilometraje} km',
-                          style: const TextStyle(
-                              fontSize: 11, color: _textSecondary)),
-                    ],
-                  ),
-                )).toList(),
-        onChanged: (id) {
-          if (id == null) return;
-          final VehiculoInicialModel v =
-              vehiculos.firstWhere((v) => v.id == id);
-          context.read<RegistroMantenimientoBloc>().add(
-                VehiculoSeleccionadoEvent(
-                  vehiculoId: id,
-                  kilometraje: v.kilometraje,
-                ),
-              );
-        },
-        validator: (v) => v == null ? 'Seleccione un vehículo' : null,
-      ),
-    );
-  }
-
-  Widget _buildProveedorSelect(
-      RegistroMantenimientoState state, DatosInicialesModel datos) {
-    final List<ProveedorInicialModel> proveedores = datos.proveedores;
-    return _buildFieldLabel(
-      label: 'Proveedor *',
-      child: _buildDropdown<int>(
-        value: state.proveedorIdSeleccionado,
-        hint: 'Seleccione proveedor',
-        items: proveedores.map((ProveedorInicialModel p) => DropdownMenuItem<int>(
-                  value: p.id,
-                  child: Text(p.razonSocial,
-                      style: const TextStyle(fontSize: 13),
-                      overflow: TextOverflow.ellipsis),
-                )).toList(),
-        onChanged: (id) {
-          if (id == null) return;
-          context.read<RegistroMantenimientoBloc>().emit(
-                context
-                    .read<RegistroMantenimientoBloc>()
-                    .state
-                    .copyWith(proveedorIdSeleccionado: id),
-              );
-        },
-        validator: (v) => v == null ? 'Seleccione un proveedor' : null,
-      ),
-    );
-  }
-
-  Widget _buildConductorSelect(
-      RegistroMantenimientoState state, DatosInicialesModel datos) {
-    final List<ConductorInicialModel> conductores = datos.conductores;
-    return _buildFieldLabel(
-      label: 'Conductor *',
-      child: _buildDropdown<int>(
-        value: state.conductorIdSeleccionado,
-        hint: 'Seleccione conductor',
-        items: conductores.map((ConductorInicialModel c) => DropdownMenuItem<int>(
-                  value: c.id,
-                  child: Text(c.nombreCompleto,
-                      style: const TextStyle(fontSize: 13),
-                      overflow: TextOverflow.ellipsis),
-                )).toList(),
-        onChanged: (id) {
-          if (id == null) return;
-          context.read<RegistroMantenimientoBloc>().emit(
-                context
-                    .read<RegistroMantenimientoBloc>()
-                    .state
-                    .copyWith(conductorIdSeleccionado: id),
-              );
-        },
-        validator: (v) =>
-            _isAdmin && v == null ? 'Seleccione un conductor' : null,
-      ),
-    );
-  }
-
-  Widget _buildKilometrajeField(RegistroMantenimientoState state) {
-    return _buildFieldLabel(
-      label: 'Kilometraje del vehículo *',
-      child: TextFormField(
-        initialValue: state.kilometrajeVehiculo > 0
-            ? state.kilometrajeVehiculo.toString()
-            : '',
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        style: const TextStyle(fontSize: 13),
-        decoration: _inputDecoration(
-          hint: 'Ingrese kilometraje',
-          suffixText: 'km',
-          icon: Icons.speed_outlined,
-        ),
-        onChanged: (v) {
-          final km = int.tryParse(v) ?? 0;
-          context.read<RegistroMantenimientoBloc>().emit(
-                context
-                    .read<RegistroMantenimientoBloc>()
-                    .state
-                    .copyWith(kilometrajeVehiculo: km),
-              );
-        },
-        validator: (v) =>
-            (v == null || v.isEmpty) ? 'Ingrese el kilometraje' : null,
-      ),
-    );
-  }
-
-  Widget _buildSegmentoSelect(
-      RegistroMantenimientoState state, DatosInicialesModel datos) {
-    final List<SegmentoInicialModel> segmentos = datos.segmentos;
-    return _buildFieldLabel(
-      label: 'Segmento de mantenimiento *',
-      child: Column(
-        children: [
-          _buildDropdown<int>(
-            value: state.segmentoIdSeleccionado,
-            hint: state.vehiculoIdSeleccionado == null
-                ? 'Primero seleccione un vehículo'
-                : 'Seleccione segmento',
-            enabled: state.vehiculoIdSeleccionado != null,
-            items: segmentos.map((SegmentoInicialModel s) => DropdownMenuItem<int>(
-                      value: s.id,
-                      child: Text(s.nombre,
-                          style: const TextStyle(fontSize: 13)),
-                    )).toList(),
-            onChanged: state.vehiculoIdSeleccionado == null
-                ? null
-                : (id) {
-                    if (id == null) return;
-                    context.read<RegistroMantenimientoBloc>().add(
-                          SegmentoSeleccionadoEvent(
-                            segmentoId: id,
-                            vehiculoId: state.vehiculoIdSeleccionado!,
-                          ),
-                        );
-                  },
-            validator: (v) =>
-                v == null ? 'Seleccione un segmento' : null,
+          // Fila 2: Proveedor | Kilometraje
+          _row2(
+            isMobile,
+            left: _labelRequired(
+              'Proveedor',
+              _SearchableDropdown<int>(
+                value: _provId,
+                hint: 'Proveedor',
+                items: datos.proveedores
+                    .map((p) => _DropItem(p.id, p.razonSocial))
+                    .toList(),
+                onChanged: (id) => setState(() => _provId = id),
+              ),
+              tooltip: 'Seleccione el proveedor del servicio',
+            ),
+            right: _label(
+              'Kilometraje',
+              TextFormField(
+                controller: _kmCtrl,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                style: const TextStyle(fontSize: 13),
+                decoration: _inputDec(hint: 'Kilometraje', suffix: 'km'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Ingrese el kilometraje';
+                  }
+                  if (int.tryParse(value) == null) {
+                    return 'Ingrese un número válido';
+                  }
+                  return null;
+                },
+              ),
+            ),
           ),
-          // Loading API14
-          if (state.cargandoAccesoriosConcepto) ...[
-            const SizedBox(height: 8),
-            _buildInlineLoader('Cargando accesorios del concepto...'),
-          ],
-          // Error API14
-          if (state.errorAccesoriosConcepto != null) ...[
-            const SizedBox(height: 8),
-            _buildInlineFeedback(
-              state.errorAccesoriosConcepto!,
-              color: _colorError,
-              bg: _colorErrorBg,
-              icon: Icons.error_outline_rounded,
+          const SizedBox(height: 12),
+
+          // Fila 3: Colaborador (solo admin) | Diccionario
+          _row2(
+            isMobile,
+            left: _isAdmin
+                ? _label(
+                    'Seleccionar colaborador',
+                    _SearchableDropdown<int>(
+                      value: _conductorId,
+                      hint: 'Seleccionar colaborador',
+                      items: datos.conductores
+                          .map((c) => _DropItem(c.id, c.nombreCompleto))
+                          .toList(),
+                      onChanged: (id) => setState(() => _conductorId = id),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+            right: _label(
+              'Seleccionar diccionario',
+              _SearchableDropdown<int>(
+                value: _segmentoId,
+                hint: 'Seleccionar diccionario',
+                items: datos.segmentos
+                    .map((s) => _DropItem(s.id, s.nombre))
+                    .toList(),
+                onChanged: (id) => setState(() => _segmentoId = id),
+              ),
             ),
-          ],
-          // Info: N accesorios encontrados
-          if (!state.cargandoAccesoriosConcepto &&
-              state.accesoriosConcepto.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _buildInlineFeedback(
-              '${state.accesoriosConcepto.length} accesorio(s) disponible(s) para este segmento',
-              color: _colorSuccess,
-              bg: _colorSuccessBg,
-              icon: Icons.check_circle_outline_rounded,
-            ),
-          ],
-          if (!state.cargandoAccesoriosConcepto &&
-              state.segmentoIdSeleccionado != null &&
-              state.accesoriosConcepto.isEmpty &&
-              state.errorAccesoriosConcepto == null) ...[
-            const SizedBox(height: 8),
-            _buildInlineFeedback(
-              'No hay accesorios para este segmento en el vehículo seleccionado',
-              color: _colorWarning,
-              bg: _colorWarningBg,
-              icon: Icons.warning_amber_rounded,
-            ),
-          ],
+          ),
         ],
       ),
     );
   }
 
+  void _resetItem(_AccesorioItem it) {
+    it.accesorio = null;
+    it.codigoFabrica = '';
+    it.marca = '';
+    it.fechaInstalacion = '';
+    it.concepto = null;
+    it.tipoMantenimiento = '';
+    it.foto = null;
+    it.fotoName = null;
+  }
+
   // ══════════════════════════════════════════════════════════════════════════
-  // PANEL 2 — ÍTEMS DE MANTENIMIENTO
+  // SECCIÓN 2 — AGREGAR ACCESORIO
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildPanelItems(
-      RegistroMantenimientoState state, bool isMobile) {
-    return _buildSectionCard(
-      icon: Icons.list_alt_rounded,
-      title: 'Ítems de Mantenimiento',
-      subtitle:
-          '${state.items.length}/20 ítems agregados • Seleccione los accesorios a mantener',
-      headerTrailing: state.items.isNotEmpty
-          ? _buildItemCountBadge(state.items.length)
-          : null,
+  Widget _buildSeccionAccesorios(bool isMobile) {
+    return _card(
+      title: 'Agregar accesorio *',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Lista de accesorios disponibles (API14)
-          if (state.accesoriosConcepto.isNotEmpty) ...[
-            _buildDisponiblesHeader(state),
-            const SizedBox(height: 8),
-            _buildAccesoriosDisponibles(state, isMobile),
-            const SizedBox(height: 20),
-          ],
-
-          // Ítems agregados
-          if (state.items.isEmpty)
-            _buildEmptyItems()
-          else ...[
-            const Divider(color: _border),
-            const SizedBox(height: 12),
-            Text(
-              'Ítems seleccionados',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: _textSecondary,
-                letterSpacing: 0.5,
+          ..._items.asMap().entries.map(
+            (e) => _buildItemAccesorio(e.key, e.value, isMobile),
+          ),
+          if (_items.length < 20) ...[
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => setState(() => _items.add(_AccesorioItem())),
+                icon: const Icon(
+                  Icons.add_circle_outline,
+                  size: 16,
+                  color: _primary,
+                ),
+                label: const Text(
+                  'Agregar otro accesorio',
+                  style: TextStyle(fontSize: 12, color: _primary),
+                ),
               ),
             ),
-            const SizedBox(height: 10),
-            ...state.items.asMap().entries.map((entry) =>
-                _buildItemCard(entry.key, entry.value, state, isMobile)),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildDisponiblesHeader(RegistroMantenimientoState state) {
-    return Row(
-      children: [
-        const Icon(Icons.touch_app_outlined, size: 14, color: _textSecondary),
-        const SizedBox(width: 6),
-        Text(
-          'Toque para agregar un accesorio',
-          style: TextStyle(
-              fontSize: 12, color: _textSecondary),
+  Widget _buildItemAccesorio(int idx, _AccesorioItem item, bool isMobile) {
+    final conceptos = item.accesorio != null
+        ? (_conceptosCache[item.accesorio!.tipoId] ??
+              <ConceptoMantenimientoModel>[])
+        : <ConceptoMantenimientoModel>[];
+    final isLoadingConc = _loadingConceptos[idx] ?? false;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _bgPage,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header ítem
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: _primaryLight,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  'Accesorio ${idx + 1} *',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: _primary,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              if (_items.length > 1)
+                InkWell(
+                  onTap: () => setState(() => _items.removeAt(idx)),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 16,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Fila 1: Seleccionar accesorio | Código fabrica
+          _row2(
+            isMobile,
+            left: _labelRequired(
+              'Seleccionar accesorio',
+              _loadingAccesorios
+                  ? _loadingWidget('Cargando accesorios...')
+                  : _vehId == null
+                  ? _disabledField('Primero seleccione un vehículo')
+                  : _SearchableDropdown<int>(
+                      value: item.accesorio?.idAccesorio,
+                      hint: 'Seleccionar accesorio',
+                      items: _accesoriosVehiculo
+                          .map((a) => _DropItem(a.idAccesorio, a.tipoNombre))
+                          .toList(),
+                      onChanged: (id) {
+                        if (id == null) return;
+                        final acc = _accesoriosVehiculo.firstWhere(
+                          (a) => a.idAccesorio == id,
+                        );
+                        setState(() {
+                          item.accesorio = acc;
+                          item.codigoFabrica = acc.codigoFabricante;
+                          item.marca = acc.marca;
+                          item.fechaInstalacion = _fmtFecha(
+                            acc.fechaInstalacion,
+                          );
+                          item.concepto = null;
+                          item.tipoMantenimiento = '';
+                          item.foto = null;
+                          item.fotoName = null;
+                        });
+                        _cargarConceptos(idx, acc.tipoId);
+                      },
+                    ),
+              tooltip: 'Seleccione el accesorio del vehículo',
+            ),
+            right: _label(
+              'Código fabrica',
+              _lockableField(
+                value: item.codigoFabrica,
+                hint: 'Código fabrica',
+                unlocked: item.unlockCodigo,
+                onToggleLock: () =>
+                    setState(() => item.unlockCodigo = !item.unlockCodigo),
+                onChanged: (v) => setState(() => item.codigoFabrica = v),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Fila 2: Marca | Fecha instalación
+          _row2(
+            isMobile,
+            left: _label(
+              'Marca',
+              _lockableField(
+                value: item.marca,
+                hint: 'Marca',
+                unlocked: item.unlockMarca,
+                onToggleLock: () =>
+                    setState(() => item.unlockMarca = !item.unlockMarca),
+                onChanged: (v) => setState(() => item.marca = v),
+              ),
+            ),
+            right: _label(
+              'Fecha de instalación',
+              _lockableField(
+                value: item.fechaInstalacion,
+                hint: 'Fecha de instalación',
+                unlocked: item.unlockFechaInst,
+                onToggleLock: () => setState(
+                  () => item.unlockFechaInst = !item.unlockFechaInst,
+                ),
+                onChanged: (v) => setState(() => item.fechaInstalacion = v),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Fila 3: Seleccionar mantenimiento | Tipo mantenimiento
+          _row2(
+            isMobile,
+            left: _labelRequired(
+              'Seleccionar mantenimiento',
+              item.accesorio == null
+                  ? _disabledField('Primero seleccione accesorio')
+                  : isLoadingConc
+                  ? _loadingWidget('Cargando...')
+                  : _SearchableDropdown<int>(
+                      value: item.concepto?.id,
+                      hint: 'Seleccionar mantenimiento',
+                      items: conceptos
+                          .map((c) => _DropItem(c.id, c.nombre))
+                          .toList(),
+                      onChanged: (id) {
+                        if (id == null) return;
+                        final conc = conceptos.firstWhere(
+                          (ConceptoMantenimientoModel c) => c.id == id,
+                        );
+                        final km = int.tryParse(_kmCtrl.text) ?? 0;
+                        final proxFecha = DateTime.now().add(
+                          Duration(days: conc.frecuenciaTiempo),
+                        );
+                        setState(() {
+                          item.concepto = conc;
+                          item.tipoMantenimiento = conc.tipo;
+                          item.proxKmMant = (km + conc.frecuenciaKilometros)
+                              .toString();
+                          item.proxKmCambio = item.proxKmMant;
+                          item.proxFechaMant = _fmtFechaDate(proxFecha);
+                          item.proxFechaCambio = item.proxFechaMant;
+                        });
+                      },
+                    ),
+              tooltip: 'Seleccione el tipo de mantenimiento',
+            ),
+            right: _label(
+              'Tipo mantenimiento',
+              _readonlyField(
+                item.tipoMantenimiento,
+                'Tipo mantenimiento',
+                highlight: item.tipoMantenimiento.isNotEmpty,
+              ),
+            ),
+          ),
+
+          // ── Módulo según tipo ───────────────────────────────────────────────
+          if (item.tipoMantenimiento.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            item.esCambio
+                ? _buildModuloCambio(idx, item, isMobile)
+                : _buildModuloMantenimiento(idx, item, isMobile),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── Módulo Mantenimiento ──────────────────────────────────────────────────
+  Widget _buildModuloMantenimiento(
+    int idx,
+    _AccesorioItem item,
+    bool isMobile,
+  ) {
+    return _moduloCard(
+      title: 'Módulo de mantenimiento',
+      color: _blue,
+      colorBg: _blueBg,
+      child: Column(
+        children: [
+          _row2(
+            isMobile,
+            left: _label(
+              'Próximo kilometraje',
+              _editableField(
+                item.proxKmMant,
+                'Próximo km',
+                onChanged: (v) => setState(() => item.proxKmMant = v),
+                isNumber: true,
+              ),
+            ),
+            right: _label(
+              'Próxima fecha',
+              _editableField(
+                item.proxFechaMant,
+                'dd/mm/yyyy',
+                onChanged: (v) => setState(() => item.proxFechaMant = v),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _label(
+            'Observación',
+            _editableField(
+              item.observMant.isEmpty ? 'Sin argumentos' : item.observMant,
+              'Sin argumentos',
+              onChanged: (v) => setState(() => item.observMant = v),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _row2(
+            isMobile,
+            left: _label(
+              'Estado',
+              _simpleDropdown(
+                value: item.estadoMant,
+                items: const ['Pendiente', 'Completo'],
+                onChanged: (v) =>
+                    setState(() => item.estadoMant = v ?? 'Pendiente'),
+              ),
+            ),
+            right: _label(
+              'Adjuntar foto *',
+              _fotoPickerField(
+                nombre: item.fotoName,
+                foto: item.foto,
+                onTap: () async {
+                  final foto = await PhotoFileHelper.pickPhoto();
+                  if (foto != null)
+                    setState(() {
+                      item.foto = foto;
+                      item.fotoName = foto.fileName;
+                    });
+                },
+                onViewPhoto: item.foto != null
+                    ? () => _showPhotoDialog(item.foto!, 'Foto accesorio ${idx + 1}')
+                    : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Módulo Cambio ─────────────────────────────────────────────────────────
+  Widget _buildModuloCambio(int idx, _AccesorioItem item, bool isMobile) {
+    return _moduloCard(
+      title: 'Módulo de cambio',
+      color: _yellow,
+      colorBg: _yellowBg,
+      child: Column(
+        children: [
+          _row2(
+            isMobile,
+            left: _label(
+              'Código fabricante',
+              _editableField(
+                item.codFabCambio,
+                'Código fabricante',
+                onChanged: (v) => setState(() => item.codFabCambio = v),
+              ),
+            ),
+            right: _label(
+              'Marca',
+              _editableField(
+                item.marcaCambio,
+                'Marca',
+                onChanged: (v) => setState(() => item.marcaCambio = v),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _row2(
+            isMobile,
+            left: _label(
+              'Cantidad',
+              _editableField(
+                item.cantidadCambio,
+                'Cantidad',
+                onChanged: (v) => setState(() => item.cantidadCambio = v),
+                isNumber: true,
+              ),
+            ),
+            right: _label(
+              'Próxima fecha',
+              _editableField(
+                item.proxFechaCambio,
+                'dd/mm/yyyy',
+                onChanged: (v) => setState(() => item.proxFechaCambio = v),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _row2(
+            isMobile,
+            left: _label(
+              'Próximo kilometraje',
+              _editableField(
+                item.proxKmCambio,
+                'Próximo km',
+                onChanged: (v) => setState(() => item.proxKmCambio = v),
+                isNumber: true,
+              ),
+            ),
+            right: _label(
+              'Observación',
+              _editableField(
+                item.observCambio,
+                'Observación',
+                onChanged: (v) => setState(() => item.observCambio = v),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _row2(
+            isMobile,
+            left: _label(
+              'Estado',
+              _simpleDropdown(
+                value: item.estadoCambio,
+                items: const ['Pendiente', 'Completo'],
+                onChanged: (v) =>
+                    setState(() => item.estadoCambio = v ?? 'Pendiente'),
+              ),
+            ),
+            right: _label(
+              'Adjuntar foto *',
+              _fotoPickerField(
+                nombre: item.fotoName,
+                foto: item.foto,
+                onTap: () async {
+                  final foto = await PhotoFileHelper.pickPhoto();
+                  if (foto != null)
+                    setState(() {
+                      item.foto = foto;
+                      item.fotoName = foto.fileName;
+                    });
+                },
+                onViewPhoto: item.foto != null
+                    ? () => _showPhotoDialog(item.foto!, 'Foto accesorio ${idx + 1}')
+                    : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // SECCIÓN 3 — DOCUMENTO DE GASTO
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildSeccionGasto(bool isMobile) {
+    return _card(
+      title: 'Documento de gasto *',
+      child: Column(
+        children: [
+          _row2(
+            isMobile,
+            left: _labelRequired(
+              'Tipo de gasto',
+              _simpleDropdown(
+                value: _tipoGasto,
+                items: const ['Boleta', 'Factura'],
+                hint: 'Tipo de gasto',
+                onChanged: (v) => setState(() => _tipoGasto = v),
+              ),
+              tooltip: 'Seleccione el tipo de documento',
+            ),
+            right: _label(
+              'Tipo (gas_vtipo_gasto)',
+              _simpleDropdown(
+                value: _tipoGastoGasto,
+                items: const ['Mantenimiento', 'Compra'],
+                onChanged: (v) =>
+                    setState(() => _tipoGastoGasto = v ?? 'Mantenimiento'),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _row2(
+            isMobile,
+            left: _label(
+              'Nr. factura / DNI / RUC',
+              TextFormField(
+                controller: _nrFacturaCtrl,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                maxLength: 12,
+                style: const TextStyle(fontSize: 13),
+                decoration: _inputDec(
+                  hint: '10 o 12 dígitos',
+                  suffix: _nrFacturaCtrl.text.length > 0
+                      ? '${_nrFacturaCtrl.text.length}/12'
+                      : null,
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return null; // No es obligatorio
+                  }
+                  if (value.length != 10 && value.length != 12) {
+                    return 'Debe tener 10 dígitos (DNI) o 12 dígitos (RUC)';
+                  }
+                  return null;
+                },
+              ),
+            ),
+            right: const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 10),
+          _row2(
+            isMobile,
+            left: _labelRequired(
+              'Moneda',
+              _simpleDropdown(
+                value: _moneda,
+                items: const ['Soles', 'Dólares'],
+                hint: 'Moneda',
+                onChanged: (v) => setState(() => _moneda = v),
+              ),
+              tooltip: 'Seleccione la moneda',
+            ),
+            right: _labelRequired(
+              'Monto',
+              TextFormField(
+                controller: _montoCtrl,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                style: const TextStyle(fontSize: 13),
+                decoration: _inputDec(
+                  hint: '0.00',
+                  prefix: _moneda == 'Dólares' ? 'US\$ ' : 'S/ ',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Monto requerido';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Ingrese un número válido';
+                  }
+                  if (double.parse(value) <= 0) {
+                    return 'Monto debe ser mayor a 0';
+                  }
+                  return null;
+                },
+              ),
+              tooltip: 'Ingrese el monto del gasto',
+            ),
+          ),
+          const SizedBox(height: 10),
+          _label(
+            'Observaciones',
+            TextFormField(
+              controller: _observGastoCtrl,
+              maxLines: 2,
+              style: const TextStyle(fontSize: 13),
+              decoration: _inputDec(hint: 'Observaciones del gasto...'),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _labelRequired(
+            'Adjuntar foto del gasto',
+            _fotoPickerField(
+              nombre: _gastoFotoName,
+              foto: _gastoFoto,
+              onTap: () async {
+                final foto = await PhotoFileHelper.pickPhoto();
+                if (foto != null)
+                  setState(() {
+                    _gastoFoto = foto;
+                    _gastoFotoName = foto.fileName;
+                  });
+              },
+              onViewPhoto: _gastoFoto != null
+                  ? () => _showPhotoDialog(_gastoFoto!, 'Foto documento de gasto')
+                  : null,
+            ),
+            tooltip: 'Adjunte la foto del comprobante de gasto',
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Dialog para ver foto en grande ────────────────────────────────────────
+  void _showPhotoDialog(SelectedPhoto foto, String title) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.black87,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  const Icon(Icons.image, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: Colors.white24, height: 1),
+            // Imagen
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: kIsWeb && foto.bytes != null
+                    ? Image.memory(foto.bytes!, fit: BoxFit.contain)
+                    : (foto.filePath != null
+                        ? Image.file(File(foto.filePath!), fit: BoxFit.contain)
+                        : const Icon(Icons.image_not_supported, size: 100, color: Colors.white)),
+              ),
+            ),
+            // Info
+            Container(
+              padding: const EdgeInsets.all(12),
+              color: Colors.black54,
+              child: Column(
+                children: [
+                  Text(
+                    foto.fileName,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${(foto.sizeBytes / 1024).toStringAsFixed(1)} KB',
+                    style: const TextStyle(color: Colors.white54, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const Spacer(),
-        if (state.maxItemsAlcanzado)
-          _buildInlineBadge('Máximo alcanzado (20)',
-              color: _colorWarning, bg: _colorWarningBg),
-      ],
+      ),
     );
   }
 
-  Widget _buildAccesoriosDisponibles(
-      RegistroMantenimientoState state, bool isMobile) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: state.accesoriosConcepto.map((acc) {
-        final yaAgregado = state.items.any(
-          (i) => i.accesorioConcepto.accesorioId == acc.accesorioId,
-        );
-        return _buildAccesorioChip(acc, yaAgregado, state);
-      }).toList(),
-    );
-  }
-
-  Widget _buildAccesorioChip(
-      AccesorioConceptoModel acc, bool yaAgregado,
-      RegistroMantenimientoState state) {
-    return InkWell(
-      onTap: yaAgregado || state.maxItemsAlcanzado
-          ? null
-          : () {
-              context
-                  .read<RegistroMantenimientoBloc>()
-                  .add(AgregarItemEvent(accesorioConcepto: acc));
-            },
-      borderRadius: BorderRadius.circular(8),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: yaAgregado ? _colorSuccessBg : _primaryLight,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: yaAgregado ? _colorSuccess : _primary.withOpacity(0.3),
+  // ── Footer ────────────────────────────────────────────────────────────────
+  Widget _buildFooter(bool isMobile) {
+    return BlocBuilder<RegistroMantenimientoBloc, RegistroMantenimientoState>(
+      builder: (ctx, state) => Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 16 : 24,
+          vertical: 12,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: _border)),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(14),
+            bottomRight: Radius.circular(14),
           ),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              yaAgregado
-                  ? Icons.check_circle_rounded
-                  : acc.esCambio
-                      ? Icons.swap_horiz_rounded
-                      : Icons.build_circle_outlined,
-              size: 14,
-              color: yaAgregado ? _colorSuccess : _primary,
-            ),
-            const SizedBox(width: 6),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  acc.tipoNombre,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: yaAgregado ? _colorSuccess : _primary,
-                  ),
-                ),
-                Text(
-                  acc.conceptoNombre,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: yaAgregado
-                        ? _colorSuccess.withOpacity(0.8)
-                        : _textSecondary,
-                  ),
-                ),
-              ],
-            ),
-            if (!yaAgregado) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: acc.esCambio
-                      ? _colorWarningBg
-                      : _colorInfoBg,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  acc.esCambio ? 'CAMBIO' : 'MTTO',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: acc.esCambio ? _colorWarning : _colorInfo,
-                  ),
-                ),
+            const Spacer(),
+            TextButton(
+              onPressed: state.enviando
+                  ? null
+                  : () => Navigator.of(context).pop(),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: _textSecondary, fontSize: 13),
               ),
-            ],
+            ),
+            const SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: state.enviando ? null : _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primary,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: _primary.withOpacity(0.4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+              child: state.enviando
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check_circle_outline, size: 16),
+                        SizedBox(width: 8),
+                        Text(
+                          'Registrar',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildEmptyItems() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 24),
+  Widget _buildErrorState(String message) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(32),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.playlist_add_rounded, size: 40, color: Colors.grey[300]),
-          const SizedBox(height: 8),
-          Text(
-            'Ningún ítem seleccionado',
-            style:
-                TextStyle(fontSize: 13, color: _textSecondary),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Toque los chips de arriba para agregar ítems',
+          const Icon(Icons.error_outline_rounded, color: _red, size: 40),
+          const SizedBox(height: 12),
+          const Text(
+            'Error al cargar datos',
             style: TextStyle(
-                fontSize: 11, color: _textSecondary.withOpacity(0.7)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Card de un ítem ───────────────────────────────────────────────────────
-  Widget _buildItemCard(int index, ItemMantenimientoForm item,
-      RegistroMantenimientoState state, bool isMobile) {
-    final List<ConceptoMantenimientoModel> conceptos =
-        state.conceptosPorItem[index] ?? <ConceptoMantenimientoModel>[];
-    final bool isLoadingConceptos = state.cargandoConceptos[index] ?? false;
-    final esCambio = item.esCambio;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: item.isComplete
-              ? _colorSuccess.withOpacity(0.4)
-              : _border,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Header del ítem
-          _buildItemCardHeader(index, item, esCambio),
-          const Divider(height: 1, color: _border),
-          // Cuerpo del ítem
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              children: [
-                // Accesorios del vehículo (API13 — info visual)
-                _buildAccesorioInfo(item),
-                const SizedBox(height: 12),
-
-                // Selector de concepto (API15)
-                _buildConceptoSelector(
-                    index, item, conceptos, isLoadingConceptos, state),
-
-                // Si hay concepto seleccionado → mostrar campos
-                if (item.conceptoSeleccionado != null) ...[
-                  const SizedBox(height: 12),
-                  _buildItemFields(index, item, esCambio, isMobile, state),
-                ],
-              ],
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: _red,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildItemCardHeader(
-      int index, ItemMantenimientoForm item, bool esCambio) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: esCambio ? _colorWarningBg : _colorInfoBg,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(
-              esCambio
-                  ? Icons.swap_horiz_rounded
-                  : Icons.build_circle_outlined,
-              size: 15,
-              color: esCambio ? _colorWarning : _colorInfo,
-            ),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, color: _textSecondary),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.accesorioConcepto.tipoNombre,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: _textPrimary,
-                  ),
-                ),
-                Text(
-                  item.accesorioConcepto.conceptoNombre,
-                  style: const TextStyle(
-                      fontSize: 11, color: _textSecondary),
-                ),
-              ],
+          const SizedBox(height: 18),
+          ElevatedButton.icon(
+            onPressed: () => context.read<RegistroMantenimientoBloc>().add(
+              const CargarDatosInicialesEvent(),
             ),
-          ),
-          // Badge tipo
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: esCambio ? _colorWarningBg : _colorInfoBg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              esCambio ? 'CAMBIO' : 'MANTENIMIENTO',
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: esCambio ? _colorWarning : _colorInfo,
+            icon: const Icon(Icons.refresh_rounded, size: 16),
+            label: const Text('Reintentar'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          // Completado check
-          if (item.isComplete)
-            Container(
-              padding: const EdgeInsets.all(3),
-              decoration: const BoxDecoration(
-                color: _colorSuccessBg,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.check_rounded,
-                  size: 12, color: _colorSuccess),
-            ),
-          const SizedBox(width: 4),
-          // Eliminar
-          InkWell(
-            onTap: () => context
-                .read<RegistroMantenimientoBloc>()
-                .add(EliminarItemEvent(itemIndex: index)),
-            borderRadius: BorderRadius.circular(6),
-            child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: Icon(Icons.close_rounded,
-                  size: 16, color: Colors.grey[400]),
-            ),
-          ),
         ],
       ),
-    );
-  }
+    ),
+  );
 
-  Widget _buildAccesorioInfo(ItemMantenimientoForm item) {
-    final acc = item.accesorioConcepto;
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FC),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _border),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline_rounded,
-              size: 14, color: _textSecondary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '${acc.marca} • ${acc.codigoFabricante} • Instalado: ${_formatFecha(acc.fechaInstalacion)}',
-              style: const TextStyle(
-                  fontSize: 11, color: _textSecondary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildConceptoSelector(
-    int index,
-    ItemMantenimientoForm item,
-    List<ConceptoMantenimientoModel> conceptos,
-    bool isLoading,
-    RegistroMantenimientoState state,
-  ) {
-    // Si aún no se cargaron conceptos, mostrar botón para cargar
-    if (conceptos.isEmpty && !isLoading) {
-      return OutlinedButton.icon(
-        onPressed: () {
-          context.read<RegistroMantenimientoBloc>().add(
-                CargarConceptosPorTipoEvent(
-                  tipoId: item.accesorioConcepto.accesorioId,
-                  itemIndex: index,
-                ),
-              );
-        },
-        icon: const Icon(Icons.refresh_rounded, size: 14),
-        label: const Text('Cargar conceptos disponibles',
-            style: TextStyle(fontSize: 12)),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: _primary,
-          side: const BorderSide(color: _primary),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+  // ══════════════════════════════════════════════════════════════════════════
+  // HELPERS UI
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _card({required String title, required Widget child}) => Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: _border),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.03),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
         ),
-      );
-    }
-
-    if (isLoading) return _buildInlineLoader('Cargando conceptos...');
-
-    return _buildFieldLabel(
-      label: 'Concepto de mantenimiento *',
-      child: _buildDropdown<int>(
-        value: item.conceptoSeleccionado?.id,
-        hint: 'Seleccione concepto',
-        items: conceptos
-            .map((ConceptoMantenimientoModel c) => DropdownMenuItem<int>(
-                  value: c.id,
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 2),
-                        margin: const EdgeInsets.only(right: 8),
-                        decoration: BoxDecoration(
-                          color: c.esCambio
-                              ? _colorWarningBg
-                              : _colorInfoBg,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          c.esCambio ? 'CAMBIO' : 'MTTO',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            color: c.esCambio
-                                ? _colorWarning
-                                : _colorInfo,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(c.nombre,
-                            style: const TextStyle(fontSize: 12),
-                            overflow: TextOverflow.ellipsis),
-                      ),
-                    ],
-                  ),
-                ))
-            .toList(),
-        onChanged: (id) {
-          if (id == null) return;
-          final ConceptoMantenimientoModel concepto =
-              conceptos.firstWhere((ConceptoMantenimientoModel c) => c.id == id);
-          context.read<RegistroMantenimientoBloc>().add(
-                ConceptoSeleccionadoEvent(
-                  itemIndex: index,
-                  concepto: concepto,
-                  kilometrajeVehiculo: state.kilometrajeVehiculo,
-                ),
-              );
-        },
-      ),
-    );
-  }
-
-  Widget _buildItemFields(
-    int index,
-    ItemMantenimientoForm item,
-    bool esCambio,
-    bool isMobile,
-    RegistroMantenimientoState state,
-  ) {
-    return Column(
+      ],
+    ),
+    child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Campos comunes ─────────────────────────────────────────────────
-        isMobile
-            ? Column(children: [
-                _buildProximoKmField(index, item, state),
-                const SizedBox(height: 10),
-                _buildProximaFechaField(index, item),
-              ])
-            : Row(children: [
-                Expanded(
-                    child: _buildProximoKmField(index, item, state)),
-                const SizedBox(width: 12),
-                Expanded(child: _buildProximaFechaField(index, item)),
-              ]),
-        const SizedBox(height: 10),
-        _buildDescripcionField(index, item),
-        const SizedBox(height: 10),
-        _buildEstadoSelector(index, item),
-        const SizedBox(height: 10),
-        _buildFotoAccesorioField(index, item),
-
-        // ── Solo Cambio: nuevo accesorio ────────────────────────────────────
-        if (esCambio) ...[
-          const SizedBox(height: 16),
-          _buildNuevoAccesorioSection(index, item, isMobile, state),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildProximoKmField(
-      int index, ItemMantenimientoForm item, RegistroMantenimientoState state) {
-    return _buildFieldLabel(
-      label: 'Próximo kilometraje',
-      child: TextFormField(
-        key: ValueKey('km_$index'),
-        initialValue: item.proximoKilometraje?.toString() ?? '',
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        style: const TextStyle(fontSize: 13),
-        decoration: _inputDecoration(hint: 'Km', suffixText: 'km'),
-        onChanged: (v) => context.read<RegistroMantenimientoBloc>().add(
-              ActualizarItemEvent(
-                itemIndex: index,
-                proximoKilometraje: int.tryParse(v),
-              ),
-            ),
-      ),
-    );
-  }
-
-  Widget _buildProximaFechaField(
-      int index, ItemMantenimientoForm item) {
-    return _buildFieldLabel(
-      label: 'Próxima fecha',
-      child: InkWell(
-        onTap: () async {
-          final picked = await showDatePicker(
-            context: context,
-            initialDate: item.proximaFecha ?? DateTime.now(),
-            firstDate: DateTime.now(),
-            lastDate: DateTime(2030),
-          );
-          if (picked != null) {
-            context.read<RegistroMantenimientoBloc>().add(
-                  ActualizarItemEvent(
-                    itemIndex: index,
-                    proximaFecha: picked,
-                  ),
-                );
-          }
-        },
-        child: IgnorePointer(
-          child: TextFormField(
-            controller: TextEditingController(
-              text: item.proximaFecha != null
-                  ? _formatFechaDate(item.proximaFecha!)
-                  : '',
-            ),
-            style: const TextStyle(fontSize: 13),
-            decoration: _inputDecoration(
-              hint: 'dd/mm/yyyy',
-              icon: Icons.calendar_today_outlined,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDescripcionField(int index, ItemMantenimientoForm item) {
-    return _buildFieldLabel(
-      label: 'Descripción / Observaciones',
-      child: TextFormField(
-        key: ValueKey('desc_$index'),
-        initialValue: item.descripcion,
-        maxLines: 2,
-        style: const TextStyle(fontSize: 13),
-        decoration: _inputDecoration(hint: 'Describa el trabajo realizado...'),
-        onChanged: (v) => context.read<RegistroMantenimientoBloc>().add(
-              ActualizarItemEvent(itemIndex: index, descripcion: v),
-            ),
-      ),
-    );
-  }
-
-  Widget _buildEstadoSelector(int index, ItemMantenimientoForm item) {
-    return _buildFieldLabel(
-      label: 'Estado',
-      child: Row(
-        children: ['Pendiente', 'Completo'].map((estado) {
-          final selected = item.estado == estado;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => context.read<RegistroMantenimientoBloc>().add(
-                    ActualizarItemEvent(itemIndex: index, estado: estado),
-                  ),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                margin: EdgeInsets.only(
-                    right: estado == 'Pendiente' ? 6 : 0),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? (estado == 'Completo'
-                          ? _colorSuccessBg
-                          : _colorWarningBg)
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: selected
-                        ? (estado == 'Completo'
-                            ? _colorSuccess
-                            : _colorWarning)
-                        : _border,
-                    width: selected ? 1.5 : 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      estado == 'Completo'
-                          ? Icons.check_circle_outline_rounded
-                          : Icons.pending_outlined,
-                      size: 14,
-                      color: selected
-                          ? (estado == 'Completo'
-                              ? _colorSuccess
-                              : _colorWarning)
-                          : _textSecondary,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      estado,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: selected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                        color: selected
-                            ? (estado == 'Completo'
-                                ? _colorSuccess
-                                : _colorWarning)
-                            : _textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildFotoAccesorioField(int index, ItemMantenimientoForm item) {
-    return _buildFieldLabel(
-      label: 'Foto del accesorio (opcional)',
-      child: InkWell(
-        onTap: () async {
-          final result = await FilePicker.platform.pickFiles(
-            type: FileType.image,
-            allowMultiple: false,
-          );
-          if (result != null && result.files.isNotEmpty) {
-            context.read<RegistroMantenimientoBloc>().add(
-                  ActualizarItemEvent(
-                    itemIndex: index,
-                    fotoPath: result.files.first.path,
-                  ),
-                );
-          }
-        },
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
+        Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color:
-                  item.fotoPath != null ? _colorSuccess : _border,
-              style: BorderStyle.solid,
-            ),
-            color: item.fotoPath != null
-                ? _colorSuccessBg
-                : const Color(0xFFF8F9FC),
+          decoration: const BoxDecoration(
+            color: Color(0xFFF8F9FC),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
           ),
           child: Row(
             children: [
-              Icon(
-                item.fotoPath != null
-                    ? Icons.image_rounded
-                    : Icons.add_photo_alternate_outlined,
-                size: 16,
-                color: item.fotoPath != null
-                    ? _colorSuccess
-                    : _textSecondary,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  item.fotoPath != null
-                      ? item.fotoPath!.split('/').last
-                      : 'Toque para adjuntar imagen',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: item.fotoPath != null
-                        ? _colorSuccess
-                        : _textSecondary,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+              Container(
+                width: 3,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: _primary,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              if (item.fotoPath != null)
-                Icon(Icons.check_circle_rounded,
-                    size: 14, color: _colorSuccess),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Sección nuevo accesorio (solo CAMBIO) ─────────────────────────────────
-  Widget _buildNuevoAccesorioSection(
-    int index,
-    ItemMantenimientoForm item,
-    bool isMobile,
-    RegistroMantenimientoState state,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: _colorWarningBg.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _colorWarning.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.swap_horiz_rounded,
-                  size: 16, color: _colorWarning),
               const SizedBox(width: 8),
-              const Text(
-                'Datos del nuevo accesorio',
-                style: TextStyle(
+              Text(
+                title,
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: _colorWarning,
+                  color: _textPrimary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          isMobile
-              ? Column(children: [
-                  _buildNuevaMarcaField(index, item),
-                  const SizedBox(height: 10),
-                  _buildNuevoCodigoField(index, item),
-                ])
-              : Row(children: [
-                  Expanded(child: _buildNuevaMarcaField(index, item)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildNuevoCodigoField(index, item)),
-                ]),
-          const SizedBox(height: 10),
-          isMobile
-              ? Column(children: [
-                  _buildNuevaFechaField(index, item),
-                  const SizedBox(height: 10),
-                  _buildNuevoKmField(index, item, state),
-                ])
-              : Row(children: [
-                  Expanded(child: _buildNuevaFechaField(index, item)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                      child: _buildNuevoKmField(index, item, state)),
-                ]),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNuevaMarcaField(int index, ItemMantenimientoForm item) =>
-      _buildFieldLabel(
-        label: 'Marca del nuevo accesorio *',
-        child: TextFormField(
-          key: ValueKey('nmarca_$index'),
-          initialValue: item.nuevaMarca ?? '',
-          style: const TextStyle(fontSize: 13),
-          decoration: _inputDecoration(hint: 'Ej: Michelin, Bosch...'),
-          onChanged: (v) => context.read<RegistroMantenimientoBloc>().add(
-                ActualizarItemEvent(itemIndex: index, nuevaMarca: v),
-              ),
-          validator: (v) =>
-              item.esCambio && (v == null || v.isEmpty)
-                  ? 'Ingrese la marca'
-                  : null,
         ),
-      );
+        const Divider(height: 1, color: _border),
+        Padding(padding: const EdgeInsets.all(14), child: child),
+      ],
+    ),
+  );
 
-  Widget _buildNuevoCodigoField(int index, ItemMantenimientoForm item) =>
-      _buildFieldLabel(
-        label: 'Código de fabricante *',
-        child: TextFormField(
-          key: ValueKey('ncod_$index'),
-          initialValue: item.nuevoCodigoFabricante ?? '',
-          style: const TextStyle(fontSize: 13),
-          decoration: _inputDecoration(hint: 'Código del fabricante'),
-          onChanged: (v) => context.read<RegistroMantenimientoBloc>().add(
-                ActualizarItemEvent(
-                    itemIndex: index, nuevoCodigoFabricante: v),
-              ),
-          validator: (v) =>
-              item.esCambio && (v == null || v.isEmpty)
-                  ? 'Ingrese el código'
-                  : null,
-        ),
-      );
-
-  Widget _buildNuevaFechaField(int index, ItemMantenimientoForm item) =>
-      _buildFieldLabel(
-        label: 'Fecha de instalación *',
-        child: InkWell(
-          onTap: () async {
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: DateTime.now(),
-              firstDate: DateTime(2000),
-              lastDate: DateTime(2030),
-            );
-            if (picked != null) {
-              context.read<RegistroMantenimientoBloc>().add(
-                    ActualizarItemEvent(
-                      itemIndex: index,
-                      nuevaFechaInstalacion: picked,
-                    ),
-                  );
-            }
-          },
-          child: IgnorePointer(
-            child: TextFormField(
-              controller: TextEditingController(
-                text: item.nuevaFechaInstalacion != null
-                    ? _formatFechaDate(item.nuevaFechaInstalacion!)
-                    : '',
-              ),
-              style: const TextStyle(fontSize: 13),
-              decoration: _inputDecoration(
-                hint: 'dd/mm/yyyy',
-                icon: Icons.calendar_today_outlined,
-              ),
-              validator: (v) =>
-                  item.esCambio && (v == null || v.isEmpty)
-                      ? 'Seleccione fecha'
-                      : null,
-            ),
-          ),
-        ),
-      );
-
-  Widget _buildNuevoKmField(
-      int index, ItemMantenimientoForm item,
-      RegistroMantenimientoState state) =>
-      _buildFieldLabel(
-        label: 'Km de instalación',
-        child: TextFormField(
-          key: ValueKey('nkm_$index'),
-          initialValue: state.kilometrajeVehiculo > 0
-              ? state.kilometrajeVehiculo.toString()
-              : '',
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          style: const TextStyle(fontSize: 13),
-          decoration:
-              _inputDecoration(hint: 'Kilometraje', suffixText: 'km'),
-          onChanged: (v) => context.read<RegistroMantenimientoBloc>().add(
-                ActualizarItemEvent(
-                  itemIndex: index,
-                  nuevoKilometrajeInstalacion: int.tryParse(v),
-                ),
-              ),
-        ),
-      );
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // PANEL 3 — GASTO / DOCUMENTO
-  // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildPanelGasto(
-      RegistroMantenimientoState state, bool isMobile) {
-    return _buildSectionCard(
-      icon: Icons.receipt_long_outlined,
-      title: 'Documento de Gasto',
-      subtitle: 'Ingrese los datos de la boleta o factura',
-      child: Column(
-        children: [
-          // Tipo cobro + Moneda
-          isMobile
-              ? Column(children: [
-                  _buildTipoGastoSelector(),
-                  const SizedBox(height: 12),
-                  _buildMonedaSelector(),
-                ])
-              : Row(children: [
-                  Expanded(child: _buildTipoGastoSelector()),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildMonedaSelector()),
-                ]),
-          const SizedBox(height: 12),
-
-          // N° documento + Monto
-          isMobile
-              ? Column(children: [
-                  _buildNumDocField(),
-                  const SizedBox(height: 12),
-                  _buildMontoField(),
-                ])
-              : Row(children: [
-                  Expanded(child: _buildNumDocField()),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildMontoField()),
-                ]),
-          const SizedBox(height: 12),
-
-          // Fecha gasto
-          _buildFechaGastoField(),
-          const SizedBox(height: 12),
-
-          // Descripción
-          _buildFieldLabel(
-            label: 'Descripción del gasto',
-            child: TextFormField(
-              controller: _descGastoController,
-              maxLines: 2,
-              style: const TextStyle(fontSize: 13),
-              decoration:
-                  _inputDecoration(hint: 'Descripción del gasto...'),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Foto factura
-          _buildFotoGastoField(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTipoGastoSelector() {
-    return _buildFieldLabel(
-      label: 'Tipo de comprobante',
-      child: Row(
-        children: ['Boleta', 'Factura'].map((tipo) {
-          final selected = _tipoGasto == tipo;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _tipoGasto = tipo),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                margin:
-                    EdgeInsets.only(right: tipo == 'Boleta' ? 6 : 0),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: selected ? _primaryLight : Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: selected ? _primary : _border,
-                    width: selected ? 1.5 : 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      tipo == 'Boleta'
-                          ? Icons.receipt_outlined
-                          : Icons.description_outlined,
-                      size: 14,
-                      color: selected ? _primary : _textSecondary,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      tipo,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: selected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                        color:
-                            selected ? _primary : _textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildMonedaSelector() {
-    return _buildFieldLabel(
-      label: 'Moneda',
-      child: Row(
-        children: [
-          ('Soles', 'S/'),
-          ('Dólares', 'US\$')
-        ].map((entry) {
-          final tipo = entry.$1;
-          final simbolo = entry.$2;
-          final selected = _moneda == tipo;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _moneda = tipo),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                margin: EdgeInsets.only(
-                    right: tipo == 'Soles' ? 6 : 0),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: selected ? _primaryLight : Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: selected ? _primary : _border,
-                    width: selected ? 1.5 : 1,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    '$simbolo  $tipo',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: selected
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                      color:
-                          selected ? _primary : _textSecondary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildNumDocField() => _buildFieldLabel(
-        label: 'N° de documento',
-        child: TextFormField(
-          controller: _numDocController,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          style: const TextStyle(fontSize: 13),
-          decoration: _inputDecoration(
-              hint: 'Número de documento',
-              icon: Icons.tag_rounded),
-        ),
-      );
-
-  Widget _buildMontoField() => _buildFieldLabel(
-        label: 'Monto',
-        child: TextFormField(
-          controller: _montoController,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
-          style: const TextStyle(fontSize: 13),
-          decoration: _inputDecoration(
-            hint: '0.00',
-            prefixText:
-                _moneda == 'Dólares' ? 'US\$ ' : 'S/ ',
-          ),
-        ),
-      );
-
-  Widget _buildFechaGastoField() => _buildFieldLabel(
-        label: 'Fecha del gasto',
-        child: InkWell(
-          onTap: () async {
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: _fechaGasto ?? DateTime.now(),
-              firstDate: DateTime(2020),
-              lastDate: DateTime(2030),
-            );
-            if (picked != null) setState(() => _fechaGasto = picked);
-          },
-          child: IgnorePointer(
-            child: TextFormField(
-              controller: TextEditingController(
-                text: _fechaGasto != null
-                    ? _formatFechaDate(_fechaGasto!)
-                    : '',
-              ),
-              style: const TextStyle(fontSize: 13),
-              decoration: _inputDecoration(
-                hint: 'dd/mm/yyyy',
-                icon: Icons.calendar_today_outlined,
-              ),
-            ),
-          ),
-        ),
-      );
-
-  Widget _buildFotoGastoField() {
-    return _buildFieldLabel(
-      label: 'Imagen del comprobante (opcional)',
-      child: InkWell(
-        onTap: () async {
-          final result = await FilePicker.platform.pickFiles(
-            type: FileType.image,
-            allowMultiple: false,
-          );
-          if (result != null && result.files.isNotEmpty) {
-            setState(() {
-              _gastoFotoPath = result.files.first.path;
-              _gastoFotoNombre = result.files.first.name;
-            });
-          }
-        },
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: _gastoFotoPath != null ? _colorSuccess : _border,
-            ),
-            color: _gastoFotoPath != null
-                ? _colorSuccessBg
-                : const Color(0xFFF8F9FC),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                _gastoFotoPath != null
-                    ? Icons.image_rounded
-                    : Icons.upload_file_outlined,
-                size: 18,
-                color: _gastoFotoPath != null
-                    ? _colorSuccess
-                    : _textSecondary,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  _gastoFotoNombre ??
-                      'Adjuntar imagen de boleta/factura',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: _gastoFotoPath != null
-                        ? _colorSuccess
-                        : _textSecondary,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (_gastoFotoPath != null) ...[
-                const SizedBox(width: 8),
-                const Icon(Icons.check_circle_rounded,
-                    size: 16, color: _colorSuccess),
-                const SizedBox(width: 4),
-                GestureDetector(
-                  onTap: () =>
-                      setState(() {
-                        _gastoFotoPath = null;
-                        _gastoFotoNombre = null;
-                      }),
-                  child: const Icon(Icons.close_rounded,
-                      size: 14, color: _textSecondary),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ─── Footer ───────────────────────────────────────────────────────────────
-  Widget _buildFooter({required bool isMobile}) {
-    return BlocBuilder<RegistroMantenimientoBloc, RegistroMantenimientoState>(
-      builder: (ctx, state) {
-        return Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 16 : 24,
-            vertical: 14,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: const Border(top: BorderSide(color: _border)),
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(16),
-              bottomRight: Radius.circular(16),
-            ),
-          ),
-          child: Row(
-            children: [
-              // Resumen ítems
-              if (state.items.isNotEmpty)
-                Expanded(
-                  child: Row(
-                    children: [
-                      _buildItemCountBadge(state.items.length),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${state.items.where((i) => i.isComplete).length} completo(s)',
-                        style: const TextStyle(
-                            fontSize: 11, color: _textSecondary),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                const Expanded(child: SizedBox.shrink()),
-
-              // Botones
-              TextButton(
-                onPressed: state.enviando
-                    ? null
-                    : () => Navigator.of(ctx).pop(),
-                child: Text(
-                  'Cancelar',
-                  style: TextStyle(
-                      color: state.enviando
-                          ? _textSecondary
-                          : _textSecondary,
-                      fontSize: 13),
-                ),
-              ),
-              const SizedBox(width: 10),
-              ElevatedButton(
-                onPressed: state.enviando ||
-                        !state.datosListos
-                    ? null
-                    : () => _submit(state),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _primary,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: _primary.withOpacity(0.4),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  elevation: 0,
-                ),
-                child: state.enviando
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text(
-                        'Registrar Mantenimiento',
-                        style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w600),
-                      ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // ─── Helpers UI ───────────────────────────────────────────────────────────
-
-  Widget _buildSectionCard({
-    required IconData icon,
+  Widget _moduloCard({
     required String title,
-    required String subtitle,
+    required Color color,
+    required Color colorBg,
     required Widget child,
-    Widget? headerTrailing,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Card header
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF8F9FC),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: _primaryLight,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(icon, size: 14, color: _primary),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: _textPrimary,
-                        ),
-                      ),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(
-                            fontSize: 10, color: _textSecondary),
-                      ),
-                    ],
-                  ),
-                ),
-                if (headerTrailing != null) headerTrailing,
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: _border),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: child,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFieldLabel(
-      {required String label, required Widget child}) {
-    return Column(
+  }) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: colorBg.withOpacity(0.45),
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: color.withOpacity(0.35)),
+    ),
+    child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: _textPrimary,
-          ),
+        Row(
+          children: [
+            Icon(
+              color == _blue
+                  ? Icons.build_circle_outlined
+                  : Icons.swap_horiz_rounded,
+              size: 14,
+              color: color,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 10),
         child,
+      ],
+    ),
+  );
+
+  Widget _row2(bool isMobile, {required Widget left, required Widget right}) {
+    if (isMobile) {
+      return Column(children: [left, const SizedBox(height: 10), right]);
+    }
+    return Row(
+      children: [
+        Expanded(child: left),
+        const SizedBox(width: 14),
+        Expanded(child: right),
       ],
     );
   }
 
-  Widget _buildDropdown<T>({
-    required T? value,
-    required String hint,
-    required List<DropdownMenuItem<T>> items,
-    required void Function(T?)? onChanged,
-    String? Function(T?)? validator,
-    bool enabled = true,
-  }) {
-    return DropdownButtonFormField<T>(
-      value: value,
-      isExpanded: true,
-      decoration: InputDecoration(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: _border),
+  Widget _label(String label, Widget child) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: _textPrimary,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: _border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: _primary, width: 1.5),
-        ),
-        filled: !enabled,
-        fillColor:
-            !enabled ? const Color(0xFFF3F4F6) : null,
       ),
-      hint: Text(hint,
-          style: const TextStyle(
-              fontSize: 13, color: _textSecondary)),
-      items: items,
-      onChanged: enabled ? onChanged : null,
-      validator: validator,
-      style: const TextStyle(
-          fontSize: 13, color: _textPrimary),
-      dropdownColor: Colors.white,
-      borderRadius: BorderRadius.circular(10),
-    );
-  }
+      const SizedBox(height: 5),
+      child,
+    ],
+  );
 
-  InputDecoration _inputDecoration({
-    required String hint,
-    IconData? icon,
-    String? suffixText,
-    String? prefixText,
-  }) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(
-          fontSize: 13, color: _textSecondary),
-      prefixText: prefixText,
-      suffixText: suffixText,
-      prefixIcon: icon != null
-          ? Icon(icon, size: 16, color: _textSecondary)
-          : null,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+  Widget _labelRequired(String label, Widget child, {String? tooltip}) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: _textPrimary,
+            ),
+          ),
+          Text(
+            ' *',
+            style: const TextStyle(fontSize: 11, color: _red),
+          ),
+          if (tooltip != null) ...[
+            const SizedBox(width: 4),
+            Tooltip(
+              message: tooltip,
+              child: Icon(
+                Icons.info_outline,
+                size: 14,
+                color: _textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+      const SizedBox(height: 5),
+      child,
+    ],
+  );
+
+  Widget _simpleDropdown({
+    required String? value,
+    required List<String> items,
+    String? hint,
+    required void Function(String?) onChanged,
+  }) => DropdownButtonFormField<String>(
+    value: value,
+    isExpanded: true,
+    decoration: InputDecoration(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: _border),
@@ -2043,157 +1587,640 @@ class _AddMantenimientoModalBodyState
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: _primary, width: 1.5),
       ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: _colorError),
-      ),
-    );
-  }
-
-  Widget _buildInlineLoader(String msg) {
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: _colorInfoBg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(
-                strokeWidth: 2, color: _colorInfo),
+    ),
+    hint: hint != null
+        ? Text(
+            hint,
+            style: const TextStyle(fontSize: 13, color: _textSecondary),
+          )
+        : null,
+    items: items
+        .map(
+          (s) => DropdownMenuItem(
+            value: s,
+            child: Text(s, style: const TextStyle(fontSize: 13)),
           ),
-          const SizedBox(width: 10),
-          Text(msg,
-              style: const TextStyle(
-                  fontSize: 12, color: _colorInfo)),
-        ],
-      ),
-    );
-  }
+        )
+        .toList(),
+    onChanged: onChanged,
+    dropdownColor: Colors.white,
+    style: const TextStyle(fontSize: 13, color: _textPrimary),
+  );
 
-  Widget _buildInlineFeedback(
-    String msg, {
-    required Color color,
-    required Color bg,
-    required IconData icon,
+  /// ✅ Campo con candado - SIN ValueKey para NO perder el foco
+  Widget _lockableField({
+    required String value,
+    required String hint,
+    required bool unlocked,
+    required VoidCallback onToggleLock,
+    required void Function(String) onChanged,
+    bool highlight = false,
   }) {
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(msg,
-                style: TextStyle(fontSize: 12, color: color)),
+    return Row(
+      children: [
+        Expanded(
+          child: unlocked
+              ? TextFormField(
+                  // ✅ ELIMINADO: ValueKey que causaba pérdida de foco
+                  initialValue: value,
+                  style: const TextStyle(fontSize: 13),
+                  decoration: _inputDec(
+                    hint: hint,
+                  ).copyWith(fillColor: const Color(0xFFFFFBEB), filled: true),
+                  onChanged: onChanged,
+                  textInputAction: TextInputAction.next,
+                )
+              : Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: highlight && value.isNotEmpty
+                        ? _primaryLight
+                        : const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: highlight && value.isNotEmpty ? _primary : _border,
+                    ),
+                  ),
+                  child: Text(
+                    value.isEmpty ? hint : value,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: value.isEmpty ? _textSecondary : _textPrimary,
+                    ),
+                  ),
+                ),
+        ),
+        const SizedBox(width: 4),
+        Tooltip(
+          message: unlocked ? 'Bloquear campo' : 'Editar campo',
+          child: InkWell(
+            onTap: onToggleLock,
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: unlocked ? _yellowBg : const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: unlocked ? _yellow : _border),
+              ),
+              child: Icon(
+                unlocked ? Icons.lock_open_rounded : Icons.lock_outline_rounded,
+                size: 14,
+                color: unlocked ? _yellow : _textSecondary,
+              ),
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildInlineBadge(
-    String text, {
-    required Color color,
-    required Color bg,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(text,
+  /// Campo readonly simple sin candado (para tipo mantenimiento que viene del API)
+  Widget _readonlyField(String value, String hint, {bool highlight = false}) =>
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: highlight && value.isNotEmpty
+              ? _primaryLight
+              : const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: highlight && value.isNotEmpty ? _primary : _border,
+          ),
+        ),
+        child: Text(
+          value.isEmpty ? hint : value,
           style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: color)),
-    );
-  }
+            fontSize: 13,
+            color: value.isEmpty ? _textSecondary : _textPrimary,
+          ),
+        ),
+      );
 
-  Widget _buildItemCountBadge(int count) {
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: _primaryLight,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        '$count ítem${count != 1 ? 's' : ''}',
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: _primary,
+  Widget _editableField(
+    String initialValue,
+    String hint, {
+    required void Function(String) onChanged,
+    bool isNumber = false,
+  }) => TextFormField(
+    initialValue: initialValue,
+    keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+    inputFormatters: isNumber ? [FilteringTextInputFormatter.digitsOnly] : null,
+    style: const TextStyle(fontSize: 13),
+    decoration: _inputDec(hint: hint),
+    onChanged: onChanged,
+    textInputAction: TextInputAction.next,
+  );
+
+  Widget _dateField({
+    required DateTime? value,
+    required void Function(DateTime) onPicked,
+  }) => InkWell(
+    onTap: () async {
+      final d = await showDatePicker(
+        context: context,
+        initialDate: value ?? DateTime.now(),
+        firstDate: DateTime(2020),
+        lastDate: DateTime(2030),
+      );
+      if (d != null) onPicked(d);
+    },
+    child: IgnorePointer(
+      child: TextFormField(
+        controller: TextEditingController(
+          text: value != null ? _fmtFechaDate(value) : '',
+        ),
+        style: const TextStyle(fontSize: 13),
+        decoration: _inputDec(
+          hint: 'dd/mm/yyyy',
+          icon: Icons.calendar_today_outlined,
         ),
       ),
-    );
+    ),
+  );
+
+  Widget _disabledField(String msg) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF3F4F6),
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: _border),
+    ),
+    child: Text(
+      msg,
+      style: const TextStyle(fontSize: 12, color: _textSecondary),
+    ),
+  );
+
+  Widget _loadingWidget(String msg) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(
+      color: _blueBg,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Row(
+      children: [
+        const SizedBox(
+          width: 14,
+          height: 14,
+          child: CircularProgressIndicator(strokeWidth: 2, color: _blue),
+        ),
+        const SizedBox(width: 8),
+        Text(msg, style: const TextStyle(fontSize: 12, color: _blue)),
+      ],
+    ),
+  );
+
+  /// Campo para seleccionar foto con preview y botón "Ver foto"
+  Widget _fotoPickerField({
+    required String? nombre,
+    required VoidCallback onTap,
+    SelectedPhoto? foto,
+    VoidCallback? onViewPhoto,
+  }) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(8),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: nombre != null ? _greenBg : const Color(0xFFF8F9FC),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: nombre != null ? _green : _border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Fila superior: ícono + nombre + check
+          Row(
+            children: [
+              Icon(
+                nombre != null
+                    ? Icons.image_rounded
+                    : Icons.upload_file_outlined,
+                size: 16,
+                color: nombre != null ? _green : _textSecondary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  nombre ?? 'Adjuntar foto',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: nombre != null ? _green : _textSecondary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (nombre != null)
+                const Icon(Icons.check_circle_rounded, size: 14, color: _green),
+            ],
+          ),
+          // ✅ Preview de la foto (si está seleccionada)
+          if (foto != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                // Thumbnail
+                Container(
+                  height: 60,
+                  width: 60,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: _border),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: kIsWeb && foto.bytes != null
+                        ? Image.memory(foto.bytes!, fit: BoxFit.cover)
+                        : (foto.filePath != null
+                            ? Image.file(File(foto.filePath!), fit: BoxFit.cover)
+                            : const Icon(Icons.image_not_supported, size: 20)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Info + botón ver
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        foto.fileName,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: _textSecondary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${(foto.sizeBytes / 1024).toStringAsFixed(1)} KB',
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: _textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Botón "Ver foto"
+                if (onViewPhoto != null)
+                  InkWell(
+                    onTap: onViewPhoto,
+                    borderRadius: BorderRadius.circular(4),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _blueBg,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: _blue.withOpacity(0.3)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.visibility, size: 12, color: _blue),
+                          SizedBox(width: 4),
+                          Text(
+                            'Ver',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: _blue,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    ),
+  );
+
+  InputDecoration _inputDec({
+    required String hint,
+    IconData? icon,
+    String? suffix,
+    String? prefix,
+  }) => InputDecoration(
+    hintText: hint,
+    hintStyle: const TextStyle(fontSize: 13, color: _textSecondary),
+    suffixText: suffix,
+    prefixText: prefix,
+    prefixIcon: icon != null
+        ? Icon(icon, size: 16, color: _textSecondary)
+        : null,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: _border),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: _border),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: _primary, width: 1.5),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: _red),
+    ),
+  );
+
+  String _fmtFecha(String s) {
+    try {
+      return _fmtFechaDate(DateTime.parse(s));
+    } catch (_) {
+      return s;
+    }
   }
 
-  Widget _buildErrorState(String message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                  color: _colorErrorBg, shape: BoxShape.circle),
-              child: const Icon(Icons.error_outline_rounded,
-                  color: _colorError, size: 32),
+  String _fmtFechaDate(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/'
+      '${d.month.toString().padLeft(2, '0')}/${d.year}';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Searchable Dropdown con buscador integrado vía Overlay
+// ══════════════════════════════════════════════════════════════════════════════
+
+class _DropItem<T> {
+  final T value;
+  final String label;
+  const _DropItem(this.value, this.label);
+}
+
+class _SearchableDropdown<T> extends StatefulWidget {
+  final T? value;
+  final String hint;
+  final List<_DropItem<T>> items;
+  final void Function(T?) onChanged;
+
+  const _SearchableDropdown({
+    required this.value,
+    required this.hint,
+    required this.items,
+    required this.onChanged,
+  });
+
+  @override
+  State<_SearchableDropdown<T>> createState() => _SearchableDropdownState<T>();
+}
+
+class _SearchableDropdownState<T> extends State<_SearchableDropdown<T>> {
+  final _layerLink = LayerLink();
+  final _searchCtrl = TextEditingController();
+  OverlayEntry? _overlay;
+  bool _open = false;
+  List<_DropItem<T>> _filtered = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filtered = widget.items;
+  }
+
+  @override
+  void didUpdateWidget(_SearchableDropdown<T> old) {
+    super.didUpdateWidget(old);
+    if (old.items.length != widget.items.length) {
+      _filtered = widget.items;
+    }
+  }
+
+  void _toggle() => _open ? _close() : _openOverlay();
+
+  void _openOverlay() {
+    _searchCtrl.clear();
+    _filtered = widget.items;
+    setState(() => _open = true);
+
+    final box = context.findRenderObject() as RenderBox;
+    final size = box.size;
+
+    _overlay = OverlayEntry(
+      builder: (_) => Stack(
+        children: [
+          // Barrier invisible — cierra al tocar fuera
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: _close,
+              child: const SizedBox.expand(),
             ),
-            const SizedBox(height: 16),
-            const Text('Error al cargar datos',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: _colorError)),
-            const SizedBox(height: 6),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 13, color: _textSecondary)),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () => context
-                  .read<RegistroMantenimientoBloc>()
-                  .add(const CargarDatosInicialesEvent()),
-              icon: const Icon(Icons.refresh_rounded, size: 16),
-              label: const Text('Reintentar'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+          ),
+          Positioned(
+            width: size.width,
+            child: CompositedTransformFollower(
+              link: _layerLink,
+              showWhenUnlinked: false,
+              offset: Offset(0, size.height + 2),
+              child: Material(
+                elevation: 8,
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                child: StatefulBuilder(
+                  builder: (ctx, setS) => ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 260),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Buscador
+                        Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: TextField(
+                            controller: _searchCtrl,
+                            autofocus: true,
+                            style: const TextStyle(fontSize: 13),
+                            decoration: InputDecoration(
+                              hintText: 'Buscar...',
+                              hintStyle: const TextStyle(
+                                fontSize: 12,
+                                color: _textSecondary,
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.search,
+                                size: 16,
+                                color: _textSecondary,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: _border),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: _border),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: _primary,
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                            onChanged: (q) => setS(() {
+                              _filtered = widget.items
+                                  .where(
+                                    (i) => i.label.toLowerCase().contains(
+                                      q.toLowerCase(),
+                                    ),
+                                  )
+                                  .toList();
+                            }),
+                          ),
+                        ),
+                        const Divider(height: 1, color: _border),
+                        // Lista
+                        Flexible(
+                          child: _filtered.isEmpty
+                              ? const Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: Text(
+                                    'Sin resultados',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: _textSecondary,
+                                    ),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  shrinkWrap: true,
+                                  itemCount: _filtered.length,
+                                  itemBuilder: (_, i) {
+                                    final it = _filtered[i];
+                                    final sel = it.value == widget.value;
+                                    return InkWell(
+                                      onTap: () {
+                                        widget.onChanged(it.value);
+                                        _close();
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 10,
+                                        ),
+                                        color: sel
+                                            ? _primaryLight
+                                            : Colors.transparent,
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                it.label,
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: sel
+                                                      ? _primary
+                                                      : _textPrimary,
+                                                  fontWeight: sel
+                                                      ? FontWeight.w600
+                                                      : FontWeight.normal,
+                                                ),
+                                              ),
+                                            ),
+                                            if (sel)
+                                              const Icon(
+                                                Icons.check_rounded,
+                                                size: 14,
+                                                color: _primary,
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+    Overlay.of(context).insert(_overlay!);
+  }
+
+  void _close() {
+    _overlay?.remove();
+    _overlay = null;
+    if (mounted) setState(() => _open = false);
+  }
+
+  @override
+  void dispose() {
+    _close();
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  String get _displayLabel {
+    if (widget.value == null) return '';
+    try {
+      return widget.items.firstWhere((i) => i.value == widget.value).label;
+    } catch (_) {
+      return '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => CompositedTransformTarget(
+    link: _layerLink,
+    child: GestureDetector(
+      onTap: _toggle,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: _open ? _primary : _border,
+            width: _open ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                _displayLabel.isEmpty ? widget.hint : _displayLabel,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: _displayLabel.isEmpty ? _textSecondary : _textPrimary,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Icon(
+              _open
+                  ? Icons.keyboard_arrow_up_rounded
+                  : Icons.keyboard_arrow_down_rounded,
+              size: 18,
+              color: _textSecondary,
             ),
           ],
         ),
       ),
-    );
-  }
-
-  // ─── Formatters ───────────────────────────────────────────────────────────
-  String _formatFecha(String fecha) {
-    try {
-      final dt = DateTime.parse(fecha);
-      return _formatFechaDate(dt);
-    } catch (_) {
-      return fecha;
-    }
-  }
-
-  String _formatFechaDate(DateTime dt) =>
-      '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+    ),
+  );
 }

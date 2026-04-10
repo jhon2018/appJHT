@@ -1,9 +1,11 @@
 // lib/features/mantenimiento/presentation/bloc/registro_mantenimiento_bloc.dart
 
 import 'package:app_jht_front/features/mantenimiento/data/models/accesorio_vehiculo_model.dart';
+import 'package:app_jht_front/features/mantenimiento/data/models/item_mantenimiento_form_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/datasources/registro_mantenimiento_datasource.dart';
-import '../../data/models/item_mantenimiento_form_model.dart';
+import '../../data/datasources/registro_mantenimiento_datasource.dart'
+    show HistoricoItem, GastoRegistro;
 import 'registro_mantenimiento_event.dart';
 import 'registro_mantenimiento_state.dart';
 
@@ -21,8 +23,8 @@ class RegistroMantenimientoBloc
     on<ConceptoSeleccionadoEvent>(_onConceptoSeleccionado);
     on<ActualizarItemEvent>(_onActualizarItem);
     on<EliminarItemEvent>(_onEliminarItem);
-    on<RegistrarMantenimientoEvent>(_onRegistrarMantenimiento);
     on<ResetRegistroEvent>(_onReset);
+    on<RegistrarMantenimientoV2Event>(_onRegistrarV2);
   }
 
   // ── API12 ─────────────────────────────────────────────────────────────────
@@ -164,7 +166,7 @@ class RegistroMantenimientoBloc
     final item = newItems[event.itemIndex];
     item.conceptoSeleccionado = event.concepto;
     item.proximoKilometraje =
-        (event.kilometrajeVehiculo + event.concepto.frecuenciaKilometros) as int?;
+        event.kilometrajeVehiculo + event.concepto.frecuenciaKilometros;
     item.proximaFecha = DateTime.now()
         .add(Duration(days: event.concepto.frecuenciaTiempo));
 
@@ -213,48 +215,6 @@ class RegistroMantenimientoBloc
     emit(state.copyWith(items: newItems, conceptosPorItem: newConceptos));
   }
 
-  // ── API16 ─────────────────────────────────────────────────────────────────
-  Future<void> _onRegistrarMantenimiento(
-    RegistrarMantenimientoEvent event,
-    Emitter<RegistroMantenimientoState> emit,
-  ) async {
-    emit(state.copyWith(
-      enviando: true,
-      clearErrorRegistro: true,
-      exitoRegistro: false,
-    ));
-    try {
-      final bitacoraId = await dataSource.registrarMantenimiento(
-        perIid: event.perIid,
-        vehIid: event.vehIid,
-        proIid: event.proIid,
-        bitKilometraje: event.bitKilometraje,
-        bitCantidad: state.items.length,
-        bitFechaRegistro: event.bitFechaRegistro,
-        items: state.items,
-        gasTipo: event.gasTipo,
-        gasMoneda: event.gasMoneda,
-        gasNumeroDocumento: event.gasNumeroDocumento,
-        gasMonto: event.gasMonto,
-        gasFechaGasto: event.gasFechaGasto,
-        gasDescripcion: event.gasDescripcion,
-        gasTipoGasto: event.gasTipoGasto,
-        gastoFotoPath: event.gastoFotoPath,
-      );
-      emit(state.copyWith(
-        enviando: false,
-        exitoRegistro: true,
-        bitacoraIdCreada: bitacoraId,
-      ));
-    } catch (e) {
-      emit(state.copyWith(
-        enviando: false,
-        exitoRegistro: false,
-        errorRegistro: e.toString().replaceFirst('Exception: ', ''),
-      ));
-    }
-  }
-
   void _onReset(
     ResetRegistroEvent event,
     Emitter<RegistroMantenimientoState> emit,
@@ -263,4 +223,58 @@ class RegistroMantenimientoBloc
       datosIniciales: state.datosIniciales, // mantener datos iniciales
     ));
   }
+
+
+// ── API15: Registrar Mantenimiento (V2 con fotos) ───────────────────────────
+Future<void> _onRegistrarV2(
+  RegistrarMantenimientoV2Event event,
+  Emitter<RegistroMantenimientoState> emit,
+) async {
+  // Validar datos mínimos
+  if (event.vehIid == null || event.perIid == null) {
+    emit(state.copyWith(
+      enviando: false,
+      errorRegistro: 'Datos incompletos: vehículo o persona requeridos',
+    ));
+    return;
+  }
+
+  // Marcar como enviando
+  emit(state.copyWith(enviando: true, clearErrorRegistro: true));
+
+  try {
+    // Validar: 1 foto por histórico (requerido por tu backend)
+    final fotosCount = event.historicos.where((h) => h.foto != null).length;
+    if (fotosCount != event.historicos.length) {
+      throw Exception('Debe adjuntar una foto por cada accesorio registrado');
+    }
+
+    // ✅ Llamar al método QUE YA TIENES en el datasource
+    final bitacoraId = await dataSource.registrarMantenimiento(
+      perIid: event.perIid!,
+      vehIid: event.vehIid,
+      proIid: event.proIid,
+      bitKilometraje: event.bitKilometraje,
+      bitFechaRegistro: event.bitFechaRegistro,
+      historicos: List<HistoricoItem>.from(event.historicos),
+      gasto: event.gasto,
+    );
+
+    // Éxito
+    emit(state.copyWith(
+      enviando: false,
+      exitoRegistro: true,
+      bitacoraIdCreada: bitacoraId,
+    ));
+
+  } catch (e) {
+    // Error
+    emit(state.copyWith(
+      enviando: false,
+      errorRegistro: e.toString().replaceAll('Exception: ', ''),
+    ));
+  }
 }
+  
+}
+
