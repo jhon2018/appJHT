@@ -28,21 +28,20 @@ class MantenimientoBloc extends Bloc<MantenimientoEvent, MantenimientoState> {
     }
   }
 
-  Future<void> _onRefreshMantenimientos(
-    RefreshMantenimientosEvent event,
-    Emitter<MantenimientoState> emit,
-  ) async {
-    try {
-      final response = await repository.getMantenimientosPendientes();
-      emit(MantenimientoSuccess(response.data));
-    } catch (e) {
-      emit(MantenimientoError(e.toString()));
-      // Volver al estado anterior si hay error
-      if (state is MantenimientoSuccess) {
-        emit(state);
-      }
-    }
+Future<void> _onRefreshMantenimientos(
+  RefreshMantenimientosEvent event,
+  Emitter<MantenimientoState> emit,
+) async {
+  print('🔄 Recargando mantenimientos desde API...');
+  try {
+    final response = await repository.getMantenimientosPendientes();
+    emit(MantenimientoSuccess(response.data));
+    print('✅ Mantenimientos recargados: ${response.data.length} registros');
+  } catch (e) {
+    print('❌ Error al refrescar: $e');
+    emit(MantenimientoError(e.toString()));
   }
+}
 
   Future<void> _onLoadDetalleMantenimiento(
     LoadDetalleMantenimientoEvent event,

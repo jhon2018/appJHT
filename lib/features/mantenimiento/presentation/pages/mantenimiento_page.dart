@@ -27,7 +27,7 @@ class MantenimientoPage extends StatefulWidget {
 class _MantenimientoPageState extends State<MantenimientoPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _horizontalScrollController = ScrollController();
-
+List<MantenimientoModel>? _cachedMantenimientos;
   // ── Paginación local ──────────────────────────────────────────────────────
   int _currentPage = 1;
   int _itemsPerPage = 5;
@@ -76,21 +76,22 @@ class _MantenimientoPageState extends State<MantenimientoPage> {
 
   // ── Modales ──────────────────────────────────────────────────────────────
 
-  void _openEditMantenimientoModal(MantenimientoModel mantenimiento) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => BlocProvider.value(
-        value: context.read<MantenimientoBloc>(),
-        child: EditMantenimientoModal(
-          mantenimiento: mantenimiento,
-          onMantenimientoActualizado: () {
-            context.read<MantenimientoBloc>().add(RefreshMantenimientosEvent());
-          },
-        ),
+void _openEditMantenimientoModal(MantenimientoModel mantenimiento) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => BlocProvider.value(
+      value: context.read<MantenimientoBloc>(),
+      child: EditMantenimientoModal(
+        mantenimiento: mantenimiento,
+        onMantenimientoActualizado: () {
+          print('🔄 REFRESCANDO GRID...');
+          context.read<MantenimientoBloc>().add(RefreshMantenimientosEvent());
+        },
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _openAddMantenimientoModal() {
     showDialog(
@@ -303,70 +304,79 @@ class _MantenimientoPageState extends State<MantenimientoPage> {
 
   // ── Card contenedor de tabla + paginación ────────────────────────────────
 
-  Widget _buildTableCard(bool isMobile) {
-    return BlocBuilder<MantenimientoBloc, MantenimientoState>(
-      builder: (context, state) {
-        if (state is MantenimientoLoading) {
-          return _buildSkeletonLoader();
-        } else if (state is MantenimientoError) {
-          return _buildErrorWidget(state.message);
-        } else if (state is MantenimientoSuccess) {
-          final filtered = _applySearch(state.mantenimientos);
-          final pageItems = _getPageItems(filtered);
-          final totalPages = _totalPages(filtered.length);
+Widget _buildTableCard(bool isMobile) {
+  return BlocBuilder<MantenimientoBloc, MantenimientoState>(
+    builder: (context, state) {
 
-          // Corregir página si quedó fuera de rango tras búsqueda
-          if (_currentPage > totalPages && totalPages > 0) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              setState(() => _currentPage = 1);
-            });
-          }
+      // Actualizar cache solo cuando llega lista nueva
+      if (state is MantenimientoSuccess) {
+        _cachedMantenimientos = state.mantenimientos;
+      }
 
-          return Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Cabecera de la card con contador
-                _buildCardHeader(filtered.length, state.mantenimientos.length),
-                const Divider(height: 1),
-                // Tabla
-                filtered.isEmpty
-                    ? _buildEmptyState()
-                    : _buildResponsiveTable(pageItems, isMobile),
-                const Divider(height: 1),
-                // Paginación dinámica
-                if (filtered.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: PaginationWidget(
-                      currentPage: _currentPage,
-                      totalPages: totalPages,
-                      totalItems: filtered.length,
-                      itemsPerPage: _itemsPerPage,
-                      onPageChanged: _onPageChanged,
-                      onItemsPerPageChanged: _onItemsPerPageChanged,
-                    ),
-                  ),
-              ],
-            ),
-          );
+      // Skeleton solo si carga Y no hay datos previos
+      if (state is MantenimientoLoading && _cachedMantenimientos == null) {
+        return _buildSkeletonLoader();
+      }
+
+      // Error solo si no hay datos previos
+      if (state is MantenimientoError && _cachedMantenimientos == null) {
+        return _buildErrorWidget(state.message);
+      }
+
+      // Grid visible si hay cache — sobrevive a cualquier estado del bloc
+      if (_cachedMantenimientos != null) {
+        final filtered   = _applySearch(_cachedMantenimientos!);
+        final pageItems  = _getPageItems(filtered);
+        final totalPages = _totalPages(filtered.length);
+
+        if (_currentPage > totalPages && totalPages > 0) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            setState(() => _currentPage = 1);
+          });
         }
 
-        return const SizedBox.shrink();
-      },
-    );
-  }
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color:     Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset:    const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildCardHeader(filtered.length, _cachedMantenimientos!.length),
+              const Divider(height: 1),
+              filtered.isEmpty
+                  ? _buildEmptyState()
+                  : _buildResponsiveTable(pageItems, isMobile),
+              const Divider(height: 1),
+              if (filtered.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: PaginationWidget(
+                    currentPage:           _currentPage,
+                    totalPages:            totalPages,
+                    totalItems:            filtered.length,
+                    itemsPerPage:          _itemsPerPage,
+                    onPageChanged:         _onPageChanged,
+                    onItemsPerPageChanged: _onItemsPerPageChanged,
+                  ),
+                ),
+            ],
+          ),
+        );
+      }
+
+      return const SizedBox.shrink();
+    },
+  );
+}
 
   Widget _buildCardHeader(int filteredCount, int totalCount) {
     return Padding(
