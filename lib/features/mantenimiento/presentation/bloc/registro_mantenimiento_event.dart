@@ -2,7 +2,6 @@
 
 import 'package:app_jht_front/features/mantenimiento/data/models/accesorio_vehiculo_model.dart';
 import 'package:flutter/foundation.dart';
-import '../../data/models/item_mantenimiento_form_model.dart';
 
 @immutable
 abstract class RegistroMantenimientoEvent {
