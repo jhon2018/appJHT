@@ -43,7 +43,7 @@ const Map<MenuItemType, MenuItemConfig> menuItemVisualConfig = {
   ),
   MenuItemType.conductores: MenuItemConfig(
     icon: '👨‍💼',
-    title: 'Conductores',
+    title: 'Colaboradores',
   ),
   MenuItemType.accesorios: MenuItemConfig(
     icon: '🔩',

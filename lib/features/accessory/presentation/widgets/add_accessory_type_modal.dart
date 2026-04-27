@@ -20,6 +20,11 @@ class AddAccessoryTypeModal extends StatefulWidget {
 }
 
 class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
+  // Color Tokens UX Pattern
+  static const Color _primary = Color(0xFF303366);
+  static const Color _error = Color(0xFFDC2626);
+  static const Color _success = Color(0xFF16A34A);
+
   final _formKey = GlobalKey<FormState>();
 
   // Controladores para campos principales
@@ -47,16 +52,31 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
   // Opciones
   final List<String> _estadoOptions = ['Activo', 'Inactivo'];
   final List<String> _tipoManOptions = ['Preventivo', 'Correctivo', 'Predictivo'];
+  
+  // Autocomplete opciones
+  static const List<String> _unidadesComunes = [
+    'unidad', 'litros', 'metros', 'tiempo', 'kilo',
+    'gramos', 'centímetros', 'milímetros', 'galones', 'onzas',
+    'pulgadas', 'horas', 'minutos', 'días', 'meses'
+  ];
 
   @override
   void initState() {
     super.initState();
+    // Pre-llenar descripción accesorio por default
+    _descripcionAccesorioController.text = 'Sin argumentos accesorio...';
+
     // Agregar un mantenimiento inicial vacío
     _diccionarioNombreControllers[0].text = '';
     _diccionarioDescripcionControllers[0].text = '';
     _diccionarioTipoControllers[0].text = '';
     _frecuenciaKmControllers[0].text = '';
     _frecuenciaTiempoControllers[0].text = '';
+    
+    // Cargar segmentos automáticamente (UX Improvement)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _cargarSegmentos();
+    });
   }
 
   Future<void> _cargarSegmentos() async {
@@ -110,69 +130,11 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al cargar segmentos: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: _error,
           duration: const Duration(seconds: 3),
         ),
       );
     }
-  }
-
-  void _mostrarModalSegmentos() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Seleccionar Segmento'),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 400,
-            child: _segmentosList.isEmpty && !_cargandoSegmentos
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('No hay segmentos disponibles'),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: _cargarSegmentos,
-                          child: const Text('Cargar Segmentos'),
-                        ),
-                      ],
-                    ),
-                  )
-                : _cargandoSegmentos
-                    ? const Center(child: CircularProgressIndicator())
-                    : ListView.builder(
-                        itemCount: _segmentosList.length,
-                        itemBuilder: (context, index) {
-                          final segmento = _segmentosList[index];
-                          return ListTile(
-                            title: Text(segmento.nombre),
-                            subtitle: Text(
-                              segmento.definicion.length > 100
-                                  ? '${segmento.definicion.substring(0, 100)}...'
-                                  : segmento.definicion,
-                            ),
-                            onTap: () {
-                              setState(() {
-                                _segmentoSeleccionado = segmento;
-                                _descripcionSegController.text = segmento.definicion;
-                              });
-                              Navigator.of(context).pop();
-                            },
-                          );
-                        },
-                      ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   void _submitForm() {
@@ -193,7 +155,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF303366),
+            color: _primary,
           ),
         ),
         content: Text(
@@ -216,7 +178,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
               Expanded(
                 child: _buildDialogButton(
                   text: 'CONFIRMAR',
-                  backgroundColor: const Color(0xFF303366),
+                  backgroundColor: _primary,
                   textColor: Colors.white,
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -329,7 +291,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Colors.red,
+            color: _error,
           ),
         ),
         content: Text(
@@ -341,7 +303,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
           Center(
             child: _buildDialogButton(
               text: 'ENTENDIDO',
-              backgroundColor: Colors.red,
+              backgroundColor: _error,
               textColor: Colors.white,
               onPressed: () => Navigator.of(context).pop(),
             ),
@@ -421,7 +383,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Tipo de accesorio "${_nombreController.text}" registrado exitosamente'),
-              backgroundColor: const Color(0xFF303366),
+              backgroundColor: _success,
               duration: const Duration(seconds: 5),
             ),
           );
@@ -442,101 +404,82 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
             maxWidth: isMobile ? double.infinity : 800,
             maxHeight: MediaQuery.of(context).size.height * 0.95,
           ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Center(
-                    child: Text(
-                      'TIPO ACCESORIO',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF303366),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // --- CABECERA ---
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: const BoxDecoration(
+                  color: _primary,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.category_outlined,
+                        color: Colors.white,
+                        size: 24,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Divider(color: Colors.grey),
-                  const SizedBox(height: 24),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'TIPO DE ACCESORIO',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            'Defina las características y mantenimientos',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-                  Form(
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Sección: Tipo de accesorio con borde
-                        _buildSeccionConBorde(
-                          titulo: 'Tipo de accesorio',
-                          contenido: Column(
-                            children: [
-                              // Campo Segmento con botón Select
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Segmento',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF303366),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 12,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            border: Border.all(color: Colors.grey[400]!),
-                                            borderRadius: BorderRadius.circular(8),
-                                            color: _segmentoSeleccionado != null 
-                                              ? Colors.grey[50] 
-                                              : Colors.white,
-                                          ),
-                                          child: Text(
-                                            _segmentoSeleccionado?.nombre ?? 'No seleccionado',
-                                            style: TextStyle(
-                                              color: _segmentoSeleccionado != null 
-                                                ? Colors.black 
-                                                : Colors.grey,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Container(
-                                        height: 50,
-                                        width: 120,
-                                        child: ElevatedButton(
-                                          onPressed: _mostrarModalSegmentos,
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFF303366),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                          ),
-                                          child: const Text(
-                                            'Select Segmento',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                ],
-                              ),
+                        // SECCIÓN 1: Clasificación
+                        _sectionTitle('Segmento de Clasificación', Icons.category_outlined),
+                        const SizedBox(height: 12),
+                        // Campo Segmento con Dropdown en lugar de botón modal
+
+                        _buildSegmentoDropdown(),
+
+                        const SizedBox(height: 24),
+
+                        // SECCIÓN 2: Características
+                        _sectionTitle('Características Principales', Icons.settings_outlined),
+                        const SizedBox(height: 12),
 
                               // Primera fila: Nombre, Unidad de medida, Cantidad
                               if (!isMobile)
@@ -556,9 +499,10 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(
-                                      child: _buildFormField(
+                                      child: _buildAutocompleteField(
                                         'Unidad de medida', 
                                         _unidadMedidaController,
+                                        _unidadesComunes,
                                         (value) {
                                           if (value == null || value.isEmpty) {
                                             return 'Ingrese la unidad';
@@ -599,9 +543,10 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
                                         return null;
                                       },
                                     ),
-                                    _buildFormField(
+                                    _buildAutocompleteField(
                                       'Unidad de medida', 
                                       _unidadMedidaController,
+                                      _unidadesComunes,
                                       (value) {
                                         if (value == null || value.isEmpty) {
                                           return 'Ingrese la unidad';
@@ -648,7 +593,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
                                         _descripcionAccesorioController,
                                         (value) {
                                           if (value == null || value.isEmpty) {
-                                            return 'Ingrese la descripción';
+                                            return 'Se usará el valor por defecto si está vacío';
                                           }
                                           return null;
                                         },
@@ -672,7 +617,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
                                       _descripcionAccesorioController,
                                       (value) {
                                         if (value == null || value.isEmpty) {
-                                          return 'Ingrese la descripción';
+                                          return 'Se usará el valor por defecto si está vacío';
                                         }
                                         return null;
                                       },
@@ -680,10 +625,6 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
                                     ),
                                   ],
                                 ),
-                            ],
-                          ),
-                        ),
-
                         const SizedBox(height: 24),
 
                         // Botón Agregar Mantenimiento
@@ -695,14 +636,25 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
                         ..._diccionarioNombreControllers.asMap().entries.map((entry) {
                           final index = entry.key;
                           
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: _buildSeccionConBorde(
-                              titulo: 'Diccionario de mantenimiento ${index + 1}',
-                              mostrarBotonEliminar: _diccionarioNombreControllers.length > 1,
-                              onEliminar: () => _eliminarMantenimiento(index),
-                              contenido: _buildContenidoMantenimiento(index),
-                            ),
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _sectionTitle(
+                                'Mantenimiento ${index + 1}', 
+                                Icons.build_circle_outlined,
+                                trailing: _diccionarioNombreControllers.length > 1 
+                                  ? IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: _error, size: 20),
+                                      onPressed: () => _eliminarMantenimiento(index),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    )
+                                  : null,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildContenidoMantenimiento(index),
+                              const SizedBox(height: 24),
+                            ],
                           );
                         }),
 
@@ -713,17 +665,27 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
                           children: [
                             Expanded(
                               child: _buildButton(
-                                text: 'CERRAR',
+                                text: 'CANCELAR',
                                 backgroundColor: Colors.grey[300]!,
                                 textColor: Colors.grey[700]!,
-                                onPressed: () => Navigator.of(context).pop(),
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('No se registró tipo de accesorio'),
+                                      backgroundColor: Color(0xFFF59E0B),
+                                      behavior: SnackBarBehavior.floating,
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                  Navigator.of(context).pop();
+                                },
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildButton(
                                 text: 'GUARDAR',
-                                backgroundColor: const Color(0xFF303366),
+                                backgroundColor: _primary,
                                 textColor: Colors.white,
                                 onPressed: _submitForm,
                               ),
@@ -733,57 +695,36 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSeccionConBorde({
-    required String titulo,
-    required Widget contenido,
-    bool mostrarBotonEliminar = false,
-    VoidCallback? onEliminar,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: const Color(0xFF303366),
-          width: 1.5,
-        ),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                titulo,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF303366),
-                ),
-              ),
-              if (mostrarBotonEliminar)
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: onEliminar,
-                  tooltip: 'Eliminar mantenimiento',
-                ),
-            ],
+  Widget _sectionTitle(String title, IconData icon, {Widget? trailing}) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: _primary),
+        const SizedBox(width: 8),
+        Text(
+          title.toUpperCase(),
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: _primary,
+            letterSpacing: 1.1,
           ),
-          const SizedBox(height: 16),
-          contenido,
+        ),
+        const SizedBox(width: 10),
+        Expanded(child: Divider(color: const Color(0xFFD1D9E6), thickness: 1)),
+        if (trailing != null) ...[
+          const SizedBox(width: 10),
+          trailing,
         ],
-      ),
+      ],
     );
   }
 
@@ -988,7 +929,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
       child: ElevatedButton(
         onPressed: _agregarMantenimiento,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF303366),
+          backgroundColor: _primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -1012,6 +953,145 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
     );
   }
 
+  Widget _buildSegmentoDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Segmento',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: _primary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<SegmentoModel>(
+          value: _segmentoSeleccionado,
+          isExpanded: true,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: _primary),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+          hint: Text(
+            _cargandoSegmentos ? 'Cargando...' : 'Seleccione segmento',
+            style: const TextStyle(fontSize: 14),
+          ),
+          items: _segmentosList.map((segmento) {
+            return DropdownMenuItem<SegmentoModel>(
+              value: segmento,
+              child: Text(
+                segmento.nombre,
+                style: const TextStyle(fontSize: 14),
+                overflow: TextOverflow.ellipsis,
+              ),
+            );
+          }).toList(),
+          onChanged: _segmentosList.isEmpty ? null : (value) {
+            setState(() {
+              _segmentoSeleccionado = value;
+              _descripcionSegController.text = value?.definicion ?? '';
+            });
+          },
+          validator: (value) {
+            if (value == null) {
+              return 'Seleccione un segmento';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildAutocompleteField(
+    String label,
+    TextEditingController controller,
+    List<String> options,
+    String? Function(String?)? validator,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: _primary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Autocomplete<String>(
+          optionsBuilder: (TextEditingValue textEditingValue) {
+            if (textEditingValue.text.isEmpty) {
+              return options;
+            }
+            return options.where((String option) {
+              return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+            });
+          },
+          onSelected: (String selection) {
+            controller.text = selection;
+          },
+          fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+            textEditingController.addListener(() {
+              controller.text = textEditingController.text;
+            });
+            return TextFormField(
+              controller: textEditingController,
+              focusNode: focusNode,
+              validator: validator,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: _primary),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                hintText: 'Escriba o seleccione...',
+                suffixIcon: const Icon(Icons.arrow_drop_down, color: _primary),
+              ),
+            );
+          },
+          optionsViewBuilder: (context, onSelected, options) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 200, maxWidth: 250),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final option = options.elementAt(index);
+                      return InkWell(
+                        onTap: () => onSelected(option),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(option),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
   Widget _buildFormField(
     String label, 
     TextEditingController controller, 
@@ -1028,7 +1108,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF303366),
+            color: _primary,
           ),
         ),
         const SizedBox(height: 8),
@@ -1042,7 +1122,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF303366)),
+              borderSide: const BorderSide(color: _primary),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             filled: readOnly,
@@ -1069,7 +1149,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF303366),
+            color: _primary,
           ),
         ),
         const SizedBox(height: 8),
@@ -1080,7 +1160,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF303366)),
+              borderSide: const BorderSide(color: _primary),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),

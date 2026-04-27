@@ -24,9 +24,14 @@ import 'package:app_jht_front/features/vehicle/domain/usecases/listar_vehiculos_
 import 'package:app_jht_front/features/vehicle/domain/usecases/registrar_vehiculo_usecase.dart';
 import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
 import 'package:app_jht_front/features/vehicle/presentation/pages/vehicle_page.dart';
+import 'package:app_jht_front/features/accessory/presentation/bloc/accessory_bloc.dart';
+import 'package:app_jht_front/features/accessory/domain/repositories/accessory_repository_impl.dart';
+import 'package:app_jht_front/features/accessory/data/datasources/accessory_remote_data_source.dart';
 import 'package:flutter/material.dart';
+import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../widgets/side_menu.dart';
+import 'package:app_jht_front/features/shared/presentation/mixins/navigation_helper_mixin.dart';
 
 class BaseDashboard extends StatefulWidget {
   final String userName;
@@ -45,7 +50,7 @@ class BaseDashboard extends StatefulWidget {
 }
 
 class _BaseDashboardState extends State<BaseDashboard>
-    with SingleTickerProviderStateMixin, DashboardResponsiveMixin {
+    with SingleTickerProviderStateMixin, DashboardResponsiveMixin, NavigationHelperMixin<BaseDashboard> {
   bool _isMenuOpen = false;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -261,8 +266,8 @@ class _BaseDashboardState extends State<BaseDashboard>
               const Color(0xFF4CAF50),
             ),
             _buildCategoryCard(
-              'CONDUCTORES',
-              'Gestión de conductores, licencias, capacitaciones y asignaciones.',
+              'COLABORADORES',
+              'Gestión de colaboradores, licencias, capacitaciones y asignaciones.',
               const Color(0xFF2196F3),
             ),
             _buildCategoryCard(
@@ -417,7 +422,6 @@ class _BaseDashboardState extends State<BaseDashboard>
               onClose: _closeMenu,
               onItemSelected: (itemTitle) {
                 _closeMenu();
-                _showNavigationMessage(itemTitle);
                 _navigateToPage(itemTitle);
               },
             ),
@@ -439,7 +443,6 @@ class _BaseDashboardState extends State<BaseDashboard>
             onClose: _closeMenu,
             onItemSelected: (itemTitle) {
               _closeMenu();
-              _showNavigationMessage(itemTitle);
               _navigateToPage(itemTitle);
             },
           ),
@@ -455,144 +458,9 @@ class _BaseDashboardState extends State<BaseDashboard>
     );
   }
 
-  // ✅ FUNCIÓN DE NAVEGACIÓN (se mantiene igual)
+  // ✅ FUNCIÓN DE NAVEGACIÓN (Usa el mixin centralizado)
   void _navigateToPage(String pageName) {
-    switch (pageName) {
-case 'Vehículo':
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => BlocProvider(
-        create: (context) {
-          final vehicleDataSource = VehicleRemoteDataSourceImpl(
-            httpClient: HttpClient(),
-          );
-          
-          final vehicleRepository = VehicleRepositoryImpl(
-            remoteDataSource: vehicleDataSource,
-          );
-          
-          return VehicleBloc(
-            registrarVehiculoUseCase: RegistrarVehiculoUseCase(
-              vehicleRepository, // ✅ POSICIONAL
-            ),
-            listarVehiculosUseCase: ListarVehiculosUseCase(
-              vehicleRepository, // ✅ POSICIONAL
-            ),
-            actualizarVehiculoUseCase: ActualizarVehiculoUseCase(
-              vehicleRepository, // ✅ POSICIONAL
-            ),
-          );
-        },
-        child: VehiclePage(
-          userName: widget.userName,
-          userRole: widget.userRole,
-        ),
-      ),
-    ),
-  );
-  break;
-      case 'Mantenimiento':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => BlocProvider(
-              create: (context) =>
-                  MantenimientoBloc(repository: MantenimientoRepository())
-                    ..add(LoadMantenimientosEvent()),
-              child: MantenimientoPage(
-                userName: widget.userName,
-                userRole: widget.userRole,
-              ),
-            ),
-          ),
-        );
-        break;
-      case 'Proveedor':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => SupplierPage(
-              userName: widget.userName,
-              userRole: widget.userRole,
-            ),
-          ),
-        );
-        break;
-      case 'Conductores':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) {
-              final remoteDataSource = ConductorRemoteDataSourceImpl();
-              final repository = ConductorRepositoryImpl(
-                remoteDataSource: remoteDataSource,
-              );
-
-              return BlocProvider(
-                create: (context) => ConductorBloc(
-                  registrarConductorUseCase: RegistrarConductorUseCase(
-                    repository: repository,
-                  ),
-                  listarPersonasUseCase: ListarPersonasUseCase(
-                    repository: repository,
-                  ),
-                  obtenerPersonaDetalleUseCase: ObtenerPersonaDetalleUseCase(
-                    repository: repository,
-                  ),
-                  actualizarPersonaUseCase: ActualizarPersonaUseCase(
-                    repository: repository,
-                  ),
-                  conductorRepository: repository,
-                )..add(const ConductorEvent.listarPersonas()),
-                child: ConductorPage(
-                  userName: widget.userName,
-                  userRole: widget.userRole,
-                  dataSource: remoteDataSource,
-                ),
-              );
-            },
-          ),
-        );
-        break;
-      case 'Accesorios':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => AccessoryPage(
-              userName: widget.userName,
-              userRole: widget.userRole,
-            ),
-          ),
-        );
-        break;
-      case 'Ayuda':
-        _showNotImplementedMessage(pageName);
-        break;
-      default:
-        _showNotImplementedMessage(pageName);
-        print('Navegación a $pageName no implementada.');
-    }
-  }
-
-  void _showNotImplementedMessage(String pageName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$pageName - Página en desarrollo'),
-        backgroundColor: Colors.orange,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _showNavigationMessage(String pageName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Navegando a: $pageName'),
-        backgroundColor: const Color(0xFF303366),
-        duration: const Duration(seconds: 1),
-      ),
-    );
+    navigateToMenuPage(context, pageName, widget.userName, widget.userRole);
   }
 
   void _showLogoutConfirmation(BuildContext context) {
@@ -653,17 +521,19 @@ case 'Vehículo':
       Future.delayed(const Duration(milliseconds: 100), () {
         scaffoldMessenger.showSnackBar(
           const SnackBar(
-            content: Text('Sesión cerrada correctamente'),
-            backgroundColor: Color(0xFF303366),
-            duration: Duration(seconds: 4),
+            content: Text('✅ Sesión cerrada correctamente'),
+            backgroundColor: Color(0xFF2E7D32),
+            duration: Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       });
     } catch (e) {
       scaffoldMessenger.showSnackBar(
         SnackBar(
-          content: Text('Error al cerrar sesión: $e'),
-          backgroundColor: Colors.red,
+          content: Text('❌ Error al cerrar sesión: $e'),
+          backgroundColor: Color(0xFFC62828),
+          behavior: SnackBarBehavior.floating,
         ),
       );
     }

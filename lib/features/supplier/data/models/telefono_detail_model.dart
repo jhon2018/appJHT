@@ -1,4 +1,6 @@
 // lib/features/supplier/data/models/telefono_detail_model.dart
+// PARSING DEFENSIVO: acepta múltiples nombres de clave del API
+// para evitar lista vacía cuando el API cambia el casing o el nombre.
 
 class TelefonoDetailModel {
   final int telefonoId;
@@ -17,13 +19,16 @@ class TelefonoDetailModel {
 
   factory TelefonoDetailModel.fromJson(Map<String, dynamic> json) {
     return TelefonoDetailModel(
-      // ✅ BUG FIX #1: La API devuelve claves en camelCase minúscula,
-      //    no PascalCase. Se corrigen todas las claves.
-      telefonoId: json['telefonoId'] ?? 0,
-      numero:     json['numero']     ?? '',
-      tipoId:     json['tipoId']     ?? 0,
-      tipo:       json['tipo']       ?? '',
-      uso:        json['uso']        ?? '',
+      // Acepta: telefonoId | telId | tel_iid | id
+      telefonoId: (json['telefonoId'] ?? json['telId'] ?? json['tel_iid'] ?? json['id'] ?? 0) as int,
+      // Acepta: numero | tel_vnumero | number
+      numero: (json['numero'] ?? json['tel_vnumero'] ?? json['number'] ?? '').toString(),
+      // Acepta: tipoId | titId | tit_iid | tipo_id
+      tipoId: (json['tipoId'] ?? json['titId'] ?? json['tit_iid'] ?? json['tipo_id'] ?? 0) as int,
+      // Acepta: tipo | tit_vtipo | tipNombre | tipoNombre
+      tipo: (json['tipo'] ?? json['tit_vtipo'] ?? json['tipNombre'] ?? json['tipoNombre'] ?? '').toString(),
+      // Acepta: uso | tit_vuso | usoNombre
+      uso: (json['uso'] ?? json['tit_vuso'] ?? json['usoNombre'] ?? '').toString(),
     );
   }
 

@@ -1,41 +1,76 @@
-// ruta: lib/main.dart
+// Ruta: lib/main.dart
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
+// Pages
 import 'package:app_jht_front/features/welcome/presentation/pages/welcome_page.dart';
-import 'package:app_jht_front/features/login/presentation/bloc/login_bloc.dart';
 import 'package:app_jht_front/features/login/presentation/pages/login_page.dart';
 import 'package:app_jht_front/features/home/presentation/pages/home_page.dart';
-import 'package:app_jht_front/core/network/http_client.dart';
 
-// Vehicle imports
-import 'package:app_jht_front/features/vehicle/data/datasources/vehicle_remote_data_source.dart';
-import 'package:app_jht_front/features/vehicle/data/repositories/vehicle_repository_impl.dart';
-import 'package:app_jht_front/features/vehicle/domain/usecases/registrar_vehiculo_usecase.dart';
-import 'package:app_jht_front/features/vehicle/domain/usecases/listar_vehiculos_usecase.dart';
-import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
-import 'package:app_jht_front/features/vehicle/domain/usecases/actualizar_vehiculo_usecase.dart';
+// Blocs
+import 'package:app_jht_front/features/login/presentation/bloc/login_bloc.dart';
 
-// Accessory imports
-import 'package:app_jht_front/features/accessory/presentation/bloc/accessory_bloc.dart';
-import 'package:app_jht_front/features/accessory/data/datasources/accessory_remote_data_source.dart';
-import 'package:app_jht_front/features/accessory/domain/repositories/accessory_repository_impl.dart';
-
-// Conductor imports
-import 'package:app_jht_front/features/conductor/data/datasources/conductor_remote_data_source.dart';
-import 'package:app_jht_front/features/conductor/data/repositories/conductor_repository_impl.dart';
-import 'package:app_jht_front/features/conductor/domain/usecases/registrar_conductor_usecase.dart';
-import 'package:app_jht_front/features/conductor/domain/usecases/listar_personas_usecase.dart';
-import 'package:app_jht_front/features/conductor/domain/usecases/obtener_persona_detalle_usecase.dart';
-import 'package:app_jht_front/features/conductor/domain/usecases/actualizar_persona_usecase.dart';
-import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_bloc.dart';
-
-// Mantenimiento imports
-import 'package:app_jht_front/features/mantenimiento/data/repositories/mantenimiento_repository.dart';
-import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_bloc.dart';
+// Logger
+import 'core/services/remote_logger_service.dart';
 
 void main() {
-  runApp(const MyApp());
+  final logger = RemoteLoggerService.instance;
+
+  // ✅ 1. Inicialización temprana de auditoría
+  _setupGlobalErrorHandling(logger);
+
+  // ✅ 2. Ejecutar app dentro del Zone (CRÍTICO)
+  runZonedGuarded(
+    () {
+      // 📊 Log de arranque (clave para auditoría en Render)
+      logger.info(
+        '🚀 App started',
+        source: 'app_lifecycle',
+        metadata: <String, dynamic>{
+          'env': kReleaseMode ? 'release' : 'debug',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
+
+      runApp(const MyApp());
+    },
+    (error, stackTrace) {
+      try {
+        logger.error(
+          '💥 Uncaught Async Error',
+          source: 'zone_guard',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      } catch (_) {}
+    },
+  );
+}
+
+/// 🔐 Manejo global de errores (seguro)
+void _setupGlobalErrorHandling(RemoteLoggerService logger) {
+  FlutterError.onError = (FlutterErrorDetails details) {
+    try {
+      logger.error(
+        '💥 Flutter Error',
+        source: 'flutter_framework',
+        error: details.exception,
+        stackTrace: details.stack,
+        metadata: <String, dynamic>{
+          'library': details.library?.toString(),
+          'context': details.context?.toString(),
+        },
+      );
+    } catch (_) {}
+
+    // 🔁 Mantiene comportamiento original (NO romper flujo)
+    FlutterError.presentError(details);
+  };
 }
 
 class MyApp extends StatelessWidget {
@@ -43,73 +78,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final logger = RemoteLoggerService.instance;
+
+    // ✅ Usuario por defecto (auditoría)
+    logger.setUser('anonimo');
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => LoginBloc()),
-        
-        // VehicleBloc
-// VehicleBloc
-// VehicleBloc
-BlocProvider(
-  create: (context) {
-    final vehicleDataSource = VehicleRemoteDataSourceImpl(
-      httpClient: HttpClient(),
-    );
-    
-    final vehicleRepository = VehicleRepositoryImpl(
-      remoteDataSource: vehicleDataSource,
-    );
-    
-    return VehicleBloc(
-      registrarVehiculoUseCase: RegistrarVehiculoUseCase(vehicleRepository),
-      listarVehiculosUseCase: ListarVehiculosUseCase(vehicleRepository),
-       actualizarVehiculoUseCase: ActualizarVehiculoUseCase(vehicleRepository),
-    );
-  },
-),
-        
-        // AccessoryBloc
-        BlocProvider(
-          create: (context) => AccessoryBloc(
-            repository: AccessoryRepositoryImpl(
-              remoteDataSource: AccessoryRemoteDataSourceImpl(
-                httpClient: HttpClient(),
-              ),
-            ),
-          ),
-        ),
-
-        // ConductorBloc
-        BlocProvider(
-          create: (context) {
-            final repository = ConductorRepositoryImpl(
-              remoteDataSource: ConductorRemoteDataSourceImpl(),
-            );
-
-            return ConductorBloc(
-              registrarConductorUseCase: RegistrarConductorUseCase(
-                repository: repository,
-              ),
-              listarPersonasUseCase: ListarPersonasUseCase(
-                repository: repository,
-              ),
-              obtenerPersonaDetalleUseCase: ObtenerPersonaDetalleUseCase(
-                repository: repository,
-              ),
-              actualizarPersonaUseCase: ActualizarPersonaUseCase(
-                repository: repository,
-              ),
-              conductorRepository: repository,
-            );
-          },
-        ),
-        
-        // MantenimientoBloc
-        BlocProvider(
-          create: (context) => MantenimientoBloc(
-            repository: MantenimientoRepository(),
-          ),
-        ),
+        // ... tus demás blocs
       ],
       child: MaterialApp(
         title: 'JHT Transport',
@@ -120,6 +97,24 @@ BlocProvider(
           useMaterial3: true,
         ),
         debugShowCheckedModeBanner: false,
+
+        // ✅ LOCALIZACIÓN EN ESPAÑOL (DatePicker, TimePicker, etc.)
+        locale: const Locale('es', 'ES'),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('es', 'ES'),
+          Locale('en', 'US'),
+        ],
+
+        // ✅ AUDITORÍA DE NAVEGACIÓN (MUY IMPORTANTE)
+        navigatorObservers: [
+          _AppNavigatorObserver(logger),
+        ],
+
         routes: {
           '/welcome': (context) => const WelcomePage(),
           '/login': (context) => LoginPage(),
@@ -128,5 +123,37 @@ BlocProvider(
         initialRoute: '/welcome',
       ),
     );
+  }
+}
+
+//
+// 📊 OBSERVER DE NAVEGACIÓN (CLAVE PARA RENDER)
+//
+class _AppNavigatorObserver extends NavigatorObserver {
+  final RemoteLoggerService logger;
+
+  _AppNavigatorObserver(this.logger);
+
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    _logNavigation('PUSH', route, previousRoute);
+  }
+
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    _logNavigation('POP', route, previousRoute);
+  }
+
+  void _logNavigation(String action, Route route, Route? previousRoute) {
+    try {
+      logger.info(
+        '🧭 Navigation $action',
+        source: 'navigation',
+        metadata: <String, dynamic>{
+          'to': route.settings.name,
+          'from': previousRoute?.settings.name,
+        },
+      );
+    } catch (_) {}
   }
 }

@@ -129,6 +129,7 @@ class _EditMantenimientoModalState extends State<EditMantenimientoModal> {
       initialDate: initial,
       firstDate:   DateTime(2020),
       lastDate:    DateTime(2035),
+      locale: const Locale('es', 'ES'),
       builder: (c, child) => Theme(
         data: Theme.of(c).copyWith(
           colorScheme: const ColorScheme.light(
