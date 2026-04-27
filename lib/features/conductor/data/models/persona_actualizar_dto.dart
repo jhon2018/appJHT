@@ -1,4 +1,7 @@
 // Ruta: lib/features/conductor/data/models/persona_actualizar_dto.dart
+// FIX: fechaRegistroLicencia y fechaVencimientoLicencia se omiten del JSON cuando
+//      están vacías/null. El servidor usa System.DateOnly (no-nullable) → recibir
+//      null provoca un error de parse que a su vez invalida todo el DTO (400 doble).
 
 import 'package:flutter/foundation.dart';
 
@@ -15,10 +18,10 @@ class TelefonoActualizarDto {
   });
 
   Map<String, dynamic> toJson() => {
-        'telId': telId,
-        'numero': numero,
-        'titId': titId,
-      };
+    'telId': telId,
+    'numero': numero,
+    'titId': titId,
+  };
 }
 
 @immutable
@@ -38,12 +41,12 @@ class PersonaActualizarDto {
   final String? fechaSalida;
   final String? usuario;
   final String? nuevaContrasena;
-  // Campos de conductor aplanados para el API
   final String numeroLicencia;
   final String claseLicencia;
   final String categoriaLicencia;
-  final String fechaRegistroLicencia;
-  final String fechaVencimientoLicencia;
+  // Nullable: si están vacías NO se incluyen en el JSON
+  final String? fechaRegistroLicencia;
+  final String? fechaVencimientoLicencia;
   final List<TelefonoActualizarDto> telefonos;
 
   const PersonaActualizarDto({
@@ -65,35 +68,47 @@ class PersonaActualizarDto {
     required this.numeroLicencia,
     required this.claseLicencia,
     required this.categoriaLicencia,
-    required this.fechaRegistroLicencia,
-    required this.fechaVencimientoLicencia,
+    this.fechaRegistroLicencia,
+    this.fechaVencimientoLicencia,
     required this.telefonos,
   });
 
   Map<String, dynamic> toJson() {
-    final json = <String, dynamic>{
+    final map = <String, dynamic>{
       'personaId': personaId,
       'dni': dni,
       'primerNombre': primerNombre,
       'segundoNombre': segundoNombre,
       'apellidoPaterno': apellidoPaterno,
       'apellidoMaterno': apellidoMaterno,
-      'fechaNacimiento': fechaNacimiento,
+      'fechaNacimiento': fechaNacimiento.isEmpty ? null : fechaNacimiento,
       'correo': correo,
       'cargo': cargo,
       'salario': salario,
       'estado': estado,
       'fechaIngreso': fechaIngreso,
-      'fechaSalida': fechaSalida, // Ahora incluido
-      'usuario': usuario ?? "",
-      'nuevaContrasena': nuevaContrasena ?? "",
+      'fechaSalida': (fechaSalida == null || fechaSalida!.isEmpty)
+          ? null
+          : fechaSalida,
+      'usuario': usuario ?? '',
+      'nuevaContrasena': nuevaContrasena ?? '',
       'numeroLicencia': numeroLicencia,
       'claseLicencia': claseLicencia,
       'categoriaLicencia': categoriaLicencia,
-      'fechaRegistroLicencia': fechaRegistroLicencia,
-      'fechaVencimientoLicencia': fechaVencimientoLicencia,
       'telefonos': telefonos.map((t) => t.toJson()).toList(),
     };
-    return json;
+
+    // ── FIX CRÍTICO ────────────────────────────────────────────────────────
+    // System.DateOnly en .NET NO acepta null ni "". Si la fecha está vacía,
+    // omitimos la clave del JSON por completo para evitar el 400.
+    if (fechaRegistroLicencia != null && fechaRegistroLicencia!.isNotEmpty) {
+      map['fechaRegistroLicencia'] = fechaRegistroLicencia;
+    }
+    if (fechaVencimientoLicencia != null &&
+        fechaVencimientoLicencia!.isNotEmpty) {
+      map['fechaVencimientoLicencia'] = fechaVencimientoLicencia;
+    }
+
+    return map;
   }
 }

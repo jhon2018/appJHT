@@ -1725,6 +1725,7 @@ class _ModalBodyState extends State<_ModalBody> {
         initialDate: value ?? DateTime.now(),
         firstDate: DateTime(2020),
         lastDate: DateTime(2030),
+      locale: const Locale('es', 'ES'),
       );
       if (d != null) onPicked(d);
     },

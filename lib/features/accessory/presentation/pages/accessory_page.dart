@@ -5,7 +5,9 @@
 //   3. _buildEstadoChip: colores semánticos Activo=verde / Completado=azul / Inactivo=gris
 //   Todo lo demás idéntico al original.
 
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
@@ -16,6 +18,7 @@ import 'package:app_jht_front/features/accessory/presentation/bloc/accessory_blo
 import 'package:app_jht_front/features/accessory/data/models/accesorio_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_detalle_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/vehiculo_model.dart';
+import 'package:app_jht_front/features/shared/presentation/mixins/navigation_helper_mixin.dart';
 
 class AccessoryPage extends StatefulWidget {
   final String userName;
@@ -31,7 +34,7 @@ class AccessoryPage extends StatefulWidget {
   State<AccessoryPage> createState() => _AccessoryPageState();
 }
 
-class _AccessoryPageState extends State<AccessoryPage> {
+class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixin<AccessoryPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _horizontalScrollController = ScrollController();
 
@@ -48,15 +51,41 @@ class _AccessoryPageState extends State<AccessoryPage> {
   // Controla qué modal abrir cuando llega DetalleAccesorioLoaded
   _PendingAction _pendingAction = _PendingAction.none;
 
+  // ── Búsqueda con debounce ──────────────────────────────────────────────────
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  Timer? _debounceTimer;
+
   @override
   void initState() {
     super.initState();
     context.read<AccessoryBloc>().add(LoadVehiculosEvent());
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) setState(() { _searchQuery = _searchController.text; _currentPage = 1; });
+    });
+  }
+
+  List<AccesorioModel> _filterAccesorios(List<AccesorioModel> all) {
+    if (_searchQuery.isEmpty) return all;
+    final q = _searchQuery.toLowerCase();
+    return all.where((a) =>
+      a.tipoNombre.toLowerCase().contains(q) ||
+      (a.marca?.toLowerCase().contains(q) ?? false) ||
+      (a.ultimoMantenimiento?.estado?.toLowerCase().contains(q) ?? false),
+    ).toList();
   }
 
   @override
   void dispose() {
     _horizontalScrollController.dispose();
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -106,20 +135,17 @@ class _AccessoryPageState extends State<AccessoryPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AddAccessoryModal(
-        onAccessoryAdded: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Accesorio agregado exitosamente'),
-              backgroundColor: Color(0xFF303366),
-              duration: Duration(seconds: 5),
-            ),
-          );
-          if (_selectedVehicle != null) {
-            context.read<AccessoryBloc>().add(
-                OnFetchAccesoriosByVehiculo(_selectedVehicle!.id));
-          }
-        },
+      builder: (_) => BlocProvider.value(
+        value: context.read<AccessoryBloc>(),
+        child: AddAccessoryModal(
+          onAccessoryAdded: () {
+            AppNotification.success(context, 'Accesorio agregado exitosamente.');
+            if (_selectedVehicle != null) {
+              context.read<AccessoryBloc>().add(
+                  OnFetchAccesoriosByVehiculo(_selectedVehicle!.id));
+            }
+          },
+        ),
       ),
     );
   }
@@ -143,12 +169,7 @@ class _AccessoryPageState extends State<AccessoryPage> {
   }
 
   void _handleMenuSelection(String itemTitle) {
-    ScaffoldMessenger.of(_scaffoldKey.currentContext!).showSnackBar(
-      SnackBar(
-        content: Text('Navegando a: $itemTitle'),
-        backgroundColor: const Color(0xFF303366),
-      ),
-    );
+    navigateToMenuPage(context, itemTitle, widget.userName, widget.userRole);
   }
 
   List<AccesorioModel> _getCurrentPageItems(List<AccesorioModel> all) {
@@ -186,10 +207,7 @@ class _AccessoryPageState extends State<AccessoryPage> {
         // Error general
         } else if (state is AccessoryError) {
           if (Navigator.canPop(context)) Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(state.message),
-            backgroundColor: Colors.red,
-          ));
+          AppNotification.error(context, state.message);
         }
 
         // Detalle cargando
@@ -219,32 +237,13 @@ class _AccessoryPageState extends State<AccessoryPage> {
           if (Navigator.canPop(context)) Navigator.pop(context);
           context.read<AccessoryBloc>().add(
               OnFetchAccesoriosByVehiculo(state.vehiculoId));
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: const Color(0xFF0D8ABC),
-            content: Row(children: const [
-              Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
-              SizedBox(width: 10),
-              Text('Accesorio actualizado correctamente',
-                  style: TextStyle(color: Colors.white)),
-            ]),
-          ));
+          AppNotification.success(context, 'Accesorio actualizado correctamente.');
         }
 
         // Error de actualización
         if (state is ActualizacionError) {
           if (Navigator.canPop(context)) Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red.shade700,
-            content: Row(children: [
-              const Icon(Icons.error_outline, color: Colors.white, size: 18),
-              const SizedBox(width: 10),
-              Expanded(
-                  child: Text(state.message,
-                      style: const TextStyle(color: Colors.white))),
-            ]),
-          ));
+          AppNotification.error(context, state.message);
         }
       },
       child: Scaffold(
@@ -352,17 +351,59 @@ class _AccessoryPageState extends State<AccessoryPage> {
         _botonAgregar(double.infinity, 16),
         const SizedBox(height: 12),
         _buildVehiculoDropdown(isMobile: true),
+        const SizedBox(height: 12),
+        _buildSearchBox(),
       ],
     );
   }
 
   Widget _buildDesktopHeaderLayout() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _botonAgregar(220, 14),
-        const SizedBox(width: 16),
-        Expanded(child: _buildVehiculoDropdown(isMobile: false)),
+        Row(
+          children: [
+            _botonAgregar(220, 14),
+            const SizedBox(width: 16),
+            Expanded(child: _buildVehiculoDropdown(isMobile: false)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildSearchBox(),
       ],
+    );
+  }
+
+  Widget _buildSearchBox() {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[400]!),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 16),
+          const Icon(Icons.search, color: Colors.grey, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                hintText: 'Buscar por tipo/nombre, marca o estado...',
+                hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+            ),
+          ),
+          if (_searchQuery.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
+              onPressed: () => _searchController.clear(),
+            ),
+        ],
+      ),
     );
   }
 
@@ -508,24 +549,32 @@ class _AccessoryPageState extends State<AccessoryPage> {
           );
         }
 
-        final pageItems = _getCurrentPageItems(accesorios);
+        // Aplicar búsqueda local
+        final filtered = _filterAccesorios(accesorios);
+        final pageItems = _getCurrentPageItems(filtered);
 
         return Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.grey[300]!),
           ),
-          child: Scrollbar(
-            controller: _horizontalScrollController,
-            thumbVisibility: true,
-            trackVisibility: true,
-            child: SingleChildScrollView(
-              controller: _horizontalScrollController,
-              scrollDirection: Axis.horizontal,
-              child: Container(
-                width: isMobile ? 740 : 1040,
-                padding: const EdgeInsets.all(8),
-                child: DataTable(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final minW = isMobile ? 740.0 : 1040.0;
+              final tableW = constraints.maxWidth > minW ? constraints.maxWidth : minW;
+              return Scrollbar(
+                controller: _horizontalScrollController,
+                thumbVisibility: true,
+                trackVisibility: true,
+                child: SingleChildScrollView(
+                  controller: _horizontalScrollController,
+                  scrollDirection: Axis.horizontal,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                    child: Container(
+                      width: tableW,
+                      padding: const EdgeInsets.all(8),
+                      child: DataTable(
                   headingRowHeight: 50,
                   dataRowHeight: 50,
                   horizontalMargin: isMobile ? 12 : 16,
@@ -552,9 +601,12 @@ class _AccessoryPageState extends State<AccessoryPage> {
                   rows: pageItems
                       .map((acc) => _buildDataRow(acc, isMobile))
                       .toList(),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         );
       },
@@ -678,21 +730,19 @@ class _AccessoryPageState extends State<AccessoryPage> {
   }
 
   // ── Paginación ────────────────────────────────────────────────────────────
+  // Paginación ahora usa la lista filtrada
   Widget _buildPagination() {
     return BlocBuilder<AccessoryBloc, AccessoryState>(
+      buildWhen: (_, s) => s is AccesoriosByVehiculoLoaded,
       builder: (context, state) {
-        final accesorios = state is AccesoriosByVehiculoLoaded
-            ? state.accesorios
-            : <AccesorioModel>[];
-
-        final total = accesorios.length;
+        final raw = state is AccesoriosByVehiculoLoaded ? state.accesorios : <AccesorioModel>[];
+        final filtered = _filterAccesorios(raw);
+        final total = filtered.length;
         if (total == 0) return const SizedBox.shrink();
 
         final totalPages = _getTotalPages(total);
         final startItem = ((_currentPage - 1) * _itemsPerPage) + 1;
-        final endItem = (_currentPage * _itemsPerPage) > total
-            ? total
-            : (_currentPage * _itemsPerPage);
+        final endItem = (_currentPage * _itemsPerPage) > total ? total : (_currentPage * _itemsPerPage);
 
         return Container(
           padding: const EdgeInsets.all(16),
@@ -704,26 +754,22 @@ class _AccessoryPageState extends State<AccessoryPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Mostrando $startItem al $endItem de $total accesorios',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                  ),
-                  Row(children: [
-                    Text('Por página:',
-                        style: TextStyle(
-                            color: Colors.grey[600], fontSize: 12)),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey[400]!),
-                          borderRadius: BorderRadius.circular(4)),
-                      child: Text('$_itemsPerPage',
-                          style: TextStyle(
-                              color: Colors.grey[600], fontSize: 12)),
+                  Flexible(
+                    child: Text(
+                      _searchQuery.isNotEmpty
+                          ? 'Mostrando $startItem-$endItem de $total resultados'
+                          : 'Mostrando $startItem al $endItem de $total accesorios',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
                     ),
-                  ]),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey[400]!),
+                        borderRadius: BorderRadius.circular(4)),
+                    child: Text('$_itemsPerPage por pág.',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -733,26 +779,19 @@ class _AccessoryPageState extends State<AccessoryPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     InkWell(
-                      onTap: _currentPage > 1
-                          ? () => setState(() => _currentPage--)
-                          : null,
-                      child: _pageBtn('Anterior',
-                          isActive: _currentPage > 1),
+                      onTap: _currentPage > 1 ? () => setState(() => _currentPage--) : null,
+                      child: _pageBtn('Anterior', isActive: false,
+                          enabled: _currentPage > 1),
                     ),
-                    ...[
-                      for (int i = 1; i <= totalPages; i++)
-                        InkWell(
-                          onTap: () => setState(() => _currentPage = i),
-                          child: _pageBtn(i.toString(),
-                              isActive: _currentPage == i),
-                        )
-                    ],
+                    for (int i = 1; i <= totalPages; i++)
+                      InkWell(
+                        onTap: () => setState(() => _currentPage = i),
+                        child: _pageBtn(i.toString(), isActive: _currentPage == i, enabled: true),
+                      ),
                     InkWell(
-                      onTap: _currentPage < totalPages
-                          ? () => setState(() => _currentPage++)
-                          : null,
-                      child: _pageBtn('Siguiente',
-                          isActive: _currentPage < totalPages),
+                      onTap: _currentPage < totalPages ? () => setState(() => _currentPage++) : null,
+                      child: _pageBtn('Siguiente', isActive: false,
+                          enabled: _currentPage < totalPages),
                     ),
                   ],
                 ),
@@ -764,19 +803,19 @@ class _AccessoryPageState extends State<AccessoryPage> {
     );
   }
 
-  Widget _pageBtn(String text, {bool isActive = false}) {
+  Widget _pageBtn(String text, {bool isActive = false, bool enabled = true}) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF303366) : Colors.white,
+        color: isActive ? const Color(0xFF303366) : (enabled ? Colors.white : Colors.grey[100]),
         border: Border.all(color: Colors.grey[400]!),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         text,
         style: TextStyle(
-          color: isActive ? Colors.white : Colors.grey[600],
+          color: isActive ? Colors.white : (enabled ? Colors.grey[600] : Colors.grey[400]),
           fontSize: 12,
           fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
         ),

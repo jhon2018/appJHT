@@ -1,7 +1,9 @@
 // Ruta: lib/features/mantenimiento/presentation/pages/mantenimiento_page.dart
 import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_event.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_state.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/widgets/add_mantenimiento_modal.dart';
@@ -9,6 +11,7 @@ import 'package:app_jht_front/features/mantenimiento/presentation/widgets/edit_m
 import 'package:app_jht_front/features/mantenimiento/data/models/mantenimiento_model.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_bloc.dart';
 import 'package:app_jht_front/core/widgets/pagination_widget.dart';
+import 'package:app_jht_front/features/shared/presentation/mixins/navigation_helper_mixin.dart';
 
 class MantenimientoPage extends StatefulWidget {
   final String userName;
@@ -24,7 +27,7 @@ class MantenimientoPage extends StatefulWidget {
   State<MantenimientoPage> createState() => _MantenimientoPageState();
 }
 
-class _MantenimientoPageState extends State<MantenimientoPage> {
+class _MantenimientoPageState extends State<MantenimientoPage> with NavigationHelperMixin<MantenimientoPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _horizontalScrollController = ScrollController();
 List<MantenimientoModel>? _cachedMantenimientos;
@@ -35,6 +38,7 @@ List<MantenimientoModel>? _cachedMantenimientos;
   // ── Búsqueda local ───────────────────────────────────────────────────────
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  Timer? _debounceTimer;
 
   @override
   void dispose() {
@@ -71,8 +75,12 @@ List<MantenimientoModel>? _cachedMantenimientos;
   void _onItemsPerPageChanged(int value) =>
       setState(() { _itemsPerPage = value; _currentPage = 1; });
 
-  void _onSearchChanged(String value) =>
-      setState(() { _searchQuery = value; _currentPage = 1; });
+  void _onSearchChanged(String value) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) setState(() { _searchQuery = value; _currentPage = 1; });
+    });
+  }
 
   // ── Modales ──────────────────────────────────────────────────────────────
 
@@ -85,8 +93,8 @@ void _openEditMantenimientoModal(MantenimientoModel mantenimiento) {
       child: EditMantenimientoModal(
         mantenimiento: mantenimiento,
         onMantenimientoActualizado: () {
-          print('🔄 REFRESCANDO GRID...');
           context.read<MantenimientoBloc>().add(RefreshMantenimientosEvent());
+          AppNotification.success(context, 'Mantenimiento actualizado correctamente.');
         },
       ),
     ),
@@ -100,6 +108,7 @@ void _openEditMantenimientoModal(MantenimientoModel mantenimiento) {
       builder: (ctx) => AddMantenimientoModal(
         onMantenimientoAdded: () {
           context.read<MantenimientoBloc>().add(RefreshMantenimientosEvent());
+          AppNotification.success(context, 'Mantenimiento registrado correctamente.');
         },
       ),
     );
@@ -118,7 +127,9 @@ void _openEditMantenimientoModal(MantenimientoModel mantenimiento) {
           userName: widget.userName,
           userRole: widget.userRole,
           onClose: () => Navigator.pop(context),
-          onItemSelected: (_) {},
+          onItemSelected: (itemTitle) {
+            navigateToMenuPage(context, itemTitle, widget.userName, widget.userRole);
+          },
         ),
       ),
       backgroundColor: const Color(0xFFF7F8FC),
@@ -602,17 +613,21 @@ Widget _buildTableCard(bool isMobile) {
   // ── Tabla responsive ─────────────────────────────────────────────────────
 
   Widget _buildResponsiveTable(List<MantenimientoModel> items, bool isMobile) {
-    return Scrollbar(
-      controller: _horizontalScrollController,
-      thumbVisibility: true,
-      child: SingleChildScrollView(
-        controller: _horizontalScrollController,
-        scrollDirection: Axis.horizontal,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minWidth: isMobile ? 680 : 900,
-          ),
-          child: DataTable(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Scrollbar(
+          controller: _horizontalScrollController,
+          thumbVisibility: true,
+          child: SingleChildScrollView(
+            controller: _horizontalScrollController,
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: constraints.maxWidth > (isMobile ? 680 : 900)
+                    ? constraints.maxWidth
+                    : (isMobile ? 680.0 : 900.0),
+              ),
+              child: DataTable(
             headingRowHeight: 46,
             dataRowMinHeight: 52,
             dataRowMaxHeight: 56,
@@ -628,8 +643,10 @@ Widget _buildTableCard(bool isMobile) {
               return _buildDataRow(entry.value, entry.key.isEven);
             }).toList(),
           ),
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 

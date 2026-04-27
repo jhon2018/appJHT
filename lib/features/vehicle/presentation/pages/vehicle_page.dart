@@ -1,5 +1,7 @@
 // lib/features/vehicle/presentation/pages/vehicle_page.dart
 import 'package:app_jht_front/features/vehicle/data/models/vehicle_list_response.dart';
+import 'dart:async';
+import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
@@ -7,6 +9,7 @@ import 'package:app_jht_front/features/vehicle/presentation/widgets/add_vehicle_
 import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
 import 'package:app_jht_front/features/vehicle/presentation/widgets/edit_vehicle_modal.dart';
 import 'package:app_jht_front/features/vehicle/domain/entities/vehicle_entity.dart';
+import 'package:app_jht_front/features/shared/presentation/mixins/navigation_helper_mixin.dart';
 
 class VehiclePage extends StatefulWidget {
   final String userName;
@@ -22,7 +25,7 @@ class VehiclePage extends StatefulWidget {
   State<VehiclePage> createState() => _VehiclePageState();
 }
 
-class _VehiclePageState extends State<VehiclePage> {
+class _VehiclePageState extends State<VehiclePage> with NavigationHelperMixin<VehiclePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _horizontalScrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
@@ -33,6 +36,7 @@ class _VehiclePageState extends State<VehiclePage> {
   
   // Variables de filtros
   String _searchQuery = '';
+  Timer? _debounceTimer;
   String _filterEstado = 'Todos';
 
   @override
@@ -45,6 +49,7 @@ class _VehiclePageState extends State<VehiclePage> {
   void dispose() {
     _horizontalScrollController.dispose();
     _searchController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -75,18 +80,26 @@ class _VehiclePageState extends State<VehiclePage> {
   }
 
 void _openAddVehicleModal() {
+  AppNotification.info(context, 'Formulario de registro abierto');
   final vehicleBloc = context.read<VehicleBloc>();
- 
+
+  // Extraer placas existentes del estado actual del bloc
+  final existingPlates = vehicleBloc.state.maybeWhen(
+    vehiculosCargados: (vehicles) => vehicles.map((v) => v.placa).toList(),
+    orElse: () => <String>[],
+  );
+
   showDialog(
     context: context,
     barrierDismissible: false,
     builder: (context) => BlocProvider.value(
       value: vehicleBloc,
       child: AddVehicleModal(
+        existingPlates: existingPlates,
         onVehicleAdded: () {
-          // ← Se llama desde el modal cuando el registro es exitoso
           vehicleBloc.add(const VehicleEvent.cargarVehiculos());
           _resetPagination();
+          AppNotification.success(context, 'Vehículo registrado correctamente.');
         },
       ),
     ),
@@ -109,12 +122,7 @@ void _openAddVehicleModal() {
   }
 
   void _handleMenuSelection(String itemTitle) {
-    ScaffoldMessenger.of(_scaffoldKey.currentContext!).showSnackBar(
-      SnackBar(
-        content: Text('Navegando a: $itemTitle'),
-        backgroundColor: const Color(0xFF303366),
-      ),
-    );
+    navigateToMenuPage(context, itemTitle, widget.userName, widget.userRole);
   }
 void _openEditVehicleModal(VehicleListData vehicle) {
   final vehicleBloc = context.read<VehicleBloc>(); // ← capturar ANTES del showDialog
@@ -159,14 +167,11 @@ void _openEditVehicleModal(VehicleListData vehicle) {
   );
 }
 
+  /*
   void _openAccesoriosModal(VehicleListData vehicle) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Ver accesorios de: ${vehicle.placa} - Próximamente'),
-        backgroundColor: const Color(0xFF303366),
-      ),
-    );
+    AppNotification.info(context, 'Accesorios de: \${vehicle.placa}');
   }
+  */
 
 @override
 Widget build(BuildContext context) {
@@ -187,37 +192,12 @@ Widget build(BuildContext context) {
       listener: (context, state) {
         state.maybeWhen(
 actualizacionExitosa: (response) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Row(
-        children: [
-          const Icon(Icons.check_circle, color: Colors.white, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              response.message, // "Vehículo actualizado correctamente"
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-      backgroundColor: Colors.green[700],
-      duration: const Duration(seconds: 4),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    ),
-  );
+  AppNotification.success(context, response.message);
   context.read<VehicleBloc>().add(const VehicleEvent.cargarVehiculos());
   _resetPagination();
 },
           error: (message) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(message),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 5),
-              ),
-            );
+            AppNotification.error(context, message);
           },
           orElse: () {},
         );
@@ -710,6 +690,7 @@ actualizacionExitosa: (response) {
                         foregroundColor: Colors.grey[700],
                       ),
                     ),
+                    /*
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
                       onPressed: () => _openAccesoriosModal(vehicle),
@@ -720,6 +701,7 @@ actualizacionExitosa: (response) {
                         foregroundColor: Colors.white,
                       ),
                     ),
+                    */
                   ],
                 ),
               ],
@@ -761,13 +743,17 @@ actualizacionExitosa: (response) {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey[300]!),
       ),
-      child: Scrollbar(
-        controller: _horizontalScrollController,
-        thumbVisibility: true,
-        child: SingleChildScrollView(
-          controller: _horizontalScrollController,
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Scrollbar(
+            controller: _horizontalScrollController,
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              controller: _horizontalScrollController,
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: DataTable(
             headingRowHeight: 50,
             dataRowHeight: 55,
             horizontalMargin: 16,
@@ -816,18 +802,23 @@ actualizacionExitosa: (response) {
                         onPressed: () => _openEditVehicleModal(vehicle),
                         tooltip: 'Editar',
                       ),
+                      /*
                       IconButton(
                         icon: const Icon(Icons.build, size: 20, color: Color(0xFF303366)),
                         onPressed: () => _openAccesoriosModal(vehicle),
                         tooltip: 'Ver accesorios',
                       ),
+                      */
                     ],
                   ),
                 ),
               ]);
             }).toList(),
-          ),
-        ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

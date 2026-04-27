@@ -151,6 +151,7 @@ class _EditAccessoryModalState extends State<EditAccessoryModal> {
       initialDate: current ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
+      locale: const Locale('es', 'ES'),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme: const ColorScheme.light(
@@ -283,10 +284,15 @@ class _EditAccessoryModalState extends State<EditAccessoryModal> {
           constraints: const BoxConstraints(maxWidth: 680),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(14),
-            child: Scaffold(
-              backgroundColor: _kSurface,
-              appBar: _buildAppBar(),
-              body: _buildBody(isMobile),
+            child: Container(
+              color: _kSurface,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildPremiumHeader(),
+                  Flexible(child: _buildBody(isMobile)),
+                ],
+              ),
             ),
           ),
         ),
@@ -294,35 +300,57 @@ class _EditAccessoryModalState extends State<EditAccessoryModal> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: _kPrimary,
-      foregroundColor: Colors.white,
-      elevation: 0,
-      automaticallyImplyLeading: false,
-      titleSpacing: 20,
-      title: Row(children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(6),
+  Widget _buildPremiumHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: const BoxDecoration(
+        color: _kPrimary,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(14),
+          topRight: Radius.circular(14),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.edit_note_outlined,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
-          child: const Icon(Icons.edit_outlined, size: 16),
-        ),
-        const SizedBox(width: 10),
-        const Expanded(
-          child: Text('Editar Accesorio',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-        ),
-      ]),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.close),
-          tooltip: 'Cancelar',
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'EDITAR ACCESORIO',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                Text(
+                  'Actualice la información del accesorio',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

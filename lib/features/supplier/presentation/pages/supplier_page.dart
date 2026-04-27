@@ -3,6 +3,8 @@
 
 import 'package:app_jht_front/core/network/http_client.dart';
 import 'package:app_jht_front/features/supplier/domain/usecases/actualizar_supplier_usecase.dart';
+import 'dart:async';
+import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
 import 'package:app_jht_front/features/supplier/presentation/widgets/add_supplier_modal.dart';
@@ -15,6 +17,7 @@ import 'package:app_jht_front/features/supplier/domain/usecases/obtener_detalle_
 import 'package:app_jht_front/features/supplier/data/repositories/supplier_repository_impl.dart';
 import 'package:app_jht_front/features/supplier/data/datasources/supplier_remote_data_source.dart';
 import 'package:app_jht_front/features/supplier/data/models/supplier_list_model.dart';
+import 'package:app_jht_front/features/shared/presentation/mixins/navigation_helper_mixin.dart';
 
 class SupplierPage extends StatefulWidget {
   final String userName;
@@ -62,7 +65,7 @@ class _SupplierPageContent extends StatefulWidget {
   State<_SupplierPageContent> createState() => __SupplierPageContentState();
 }
 
-class __SupplierPageContentState extends State<_SupplierPageContent> {
+class __SupplierPageContentState extends State<_SupplierPageContent> with NavigationHelperMixin<_SupplierPageContent> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   List<SupplierListModel> _proveedores = [];
@@ -71,6 +74,7 @@ class __SupplierPageContentState extends State<_SupplierPageContent> {
 
   bool _isLoading = false;
   final TextEditingController _searchController = TextEditingController();
+  Timer? _debounceTimer;
 
  bool _isMobile = false; 
   // ✅ PAGINACIÓN: 5 registros por página
@@ -96,7 +100,10 @@ class __SupplierPageContentState extends State<_SupplierPageContent> {
   }
 
   void _onSearchChanged() {
-    _aplicarFiltros();
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) _aplicarFiltros();
+    });
   }
 
   void _aplicarFiltros() {
@@ -212,12 +219,7 @@ Color _getEstadoColor(String estado) {
             onSupplierAdded: () {
               _cargarProveedores();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Proveedor agregado correctamente'),
-                    backgroundColor: Color(0xFF303366),
-                  ),
-                );
+                AppNotification.success(context, 'Proveedor agregado correctamente.');
               }
             },
           ),
@@ -227,14 +229,7 @@ Color _getEstadoColor(String estado) {
   }
 
   void _handleMenuSelection(String itemTitle) {
-    if (_scaffoldKey.currentContext != null) {
-      ScaffoldMessenger.of(_scaffoldKey.currentContext!).showSnackBar(
-        SnackBar(
-          content: Text('Navegando a: $itemTitle'),
-          backgroundColor: const Color(0xFF303366),
-        ),
-      );
-    }
+    navigateToMenuPage(context, itemTitle, widget.userName, widget.userRole);
   }
 
   @override
@@ -246,7 +241,6 @@ Color _getEstadoColor(String estado) {
 @override
 Widget build(BuildContext context) {
 _isMobile = MediaQuery.of(context).size.width < 768;
-  _isMobile = MediaQuery.of(context).size.width < 768;
 
   return BlocListener<SupplierBloc, SupplierState>(
     listener: (context, state) {
@@ -286,24 +280,14 @@ detailLoaded: (response) {
         updateSuccess: (response) {
           if (mounted) {
             setState(() => _isLoading = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(response.message),
-                backgroundColor: const Color(0xFF303366),
-              ),
-            );
+            AppNotification.success(context, response.message);
             _cargarProveedores();
           }
         },
         error: (message) {
           if (mounted) {
             setState(() => _isLoading = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error: $message'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            AppNotification.error(context, 'Error: $message');
           }
         },
       );
@@ -350,7 +334,7 @@ detailLoaded: (response) {
                             _buildFilters(),
                             const SizedBox(height: 16),
                             _isLoading
-                                ? const Center(child: CircularProgressIndicator())
+                                ? _buildLoadingSupplier()
                                 : _buildResponsiveTable(),
                             const SizedBox(height: 16),
                             // ✅ PAGINACIÓN CON BOTONES
@@ -367,6 +351,47 @@ detailLoaded: (response) {
             _buildCopyright(),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── Loading spinner azul con texto contextual (I) ─────────────────────────
+  Widget _buildLoadingSupplier() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 32),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE3F2FD),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFF1565C0).withOpacity(0.2)),
+              boxShadow: [BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 8, offset: const Offset(0, 2),
+              )],
+            ),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              const SizedBox(
+                width: 36, height: 36,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1565C0)),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text('Cargando proveedores...',
+                  style: TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w600,
+                    color: Color(0xFF1565C0),
+                  )),
+              const SizedBox(height: 4),
+              Text('Por favor espere un momento',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+            ]),
+          ),
+        ]),
       ),
     );
   }
@@ -741,16 +766,19 @@ detailLoaded: (response) {
         decoration: BoxDecoration(
           border: Border.all(color: Colors.grey[300]!),
         ),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: _isMobile ? 800 : 1000,
-              ),
-              child: DataTable(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final minW = _isMobile ? 800.0 : 1000.0;
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: constraints.maxWidth > minW ? constraints.maxWidth : minW,
+                  ),
+                  child: DataTable(
                 headingRowHeight: 50,
                 dataRowHeight: 55,
                 horizontalMargin: _isMobile ? 12 : 16,
@@ -762,9 +790,11 @@ detailLoaded: (response) {
                   final proveedor = entry.value;
                   return _buildDataRow(proveedor, index);
                 }).toList(),
+                ),
               ),
             ),
-          ),
+          );
+          },
         ),
       ),
     );
