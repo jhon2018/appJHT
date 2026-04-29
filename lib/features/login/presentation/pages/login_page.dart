@@ -53,56 +53,115 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // MÉTODO DE NAVEGACIÓN COMÚN PARA WEB Y MÓVIL - ACTUALIZADO
-void _handleLoginSuccess(BuildContext context, LoginState state) {
-  print('✅ Login exitoso! Navegando...');
-  print('Estado actual: $state');
-  print('cargo: ${state.cargo}');
-  print('usuario: ${state.usuario}');
+  void _handleLoginSuccess(BuildContext context, LoginState state) {
+    print('✅ Login exitoso! Navegando...');
+    print('Estado actual: $state');
+    print('cargo: ${state.cargo}');
+    print('usuario: ${state.usuario}');
 
-  // Validar que tengamos los datos necesarios
-  if (state.cargo == null || state.usuario == null) {
-    AppNotification.error(context, 'Error: Datos de usuario incompletos. Contacte al administrador.');
-    return;
-  }
-
-  // Usar WidgetsBinding para asegurar que el contexto esté disponible
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    // Navegación por rol
-    if (state.cargo == 'Root' || state.cargo == 'Administrador') {
-      // Admin - ✅ CORREGIDO: Usamos el operador ! porque ya validamos que no es null
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => AdminDashboard(
-            userName: state.usuario!,
-            userRole: state.cargo!,
-          ),
-        ),
+    // Validar que tengamos los datos necesarios
+    if (state.cargo == null || state.usuario == null) {
+      AppNotification.error(
+        context,
+        'Error: Datos de usuario incompletos. Contacte al administrador.',
       );
-    } else if (state.cargo == 'Conductor') {
-      // Conductor - ✅ CORREGIDO: Usamos el operador ! porque ya validamos que no es null
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => ConductorDashboard(
-            userName: state.usuario!,
-            userRole: state.cargo!,
-          ),
-        ),
-      );
-    } else {
-      // Rol no reconocido
-      AppNotification.warning(context,
-        'Tu usuario no tiene un rol asignado. Comunícate con el administrador de JHT Transport.');
+      return;
     }
 
-    // Limpiar campos después del login exitoso
-    _usernameController.clear();
-    _passwordController.clear();
-  });
-}
+    // Usar WidgetsBinding para asegurar que el contexto esté disponible
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Navegación por rol
+      if (state.cargo == 'Root' || state.cargo == 'Administrador') {
+        // Admin - ✅ CORREGIDO: Usamos el operador ! porque ya validamos que no es null
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => AdminDashboard(
+              userName: state.usuario!,
+              userRole: state.cargo!,
+            ),
+          ),
+        );
+      } else if (state.cargo == 'Conductor') {
+        // Conductor - ✅ CORREGIDO: Usamos el operador ! porque ya validamos que no es null
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => ConductorDashboard(
+              userName: state.usuario!,
+              userRole: state.cargo!,
+            ),
+          ),
+        );
+      } else {
+        // Rol no reconocido
+        AppNotification.warning(
+          context,
+          'Tu usuario no tiene un rol asignado. Comunícate con el administrador de JHT Transport.',
+        );
+      }
+
+      // Limpiar campos después del login exitoso
+      _usernameController.clear();
+      _passwordController.clear();
+    });
+  }
 
   void _handleLoginError(BuildContext context, String error) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppNotification.error(context, error);
+      final errorLower = error.toLowerCase();
+
+      // Si el mensaje es sobre intentos o cuenta bloqueada, mostramos un Dialog
+      if (errorLower.contains('intento') ||
+          errorLower.contains('bloquead') ||
+          errorLower.contains('bloqueo') ||
+          errorLower.contains('bloquear')) {
+        final isBlocked = errorLower.contains('bloquead');
+        
+        String dialogContent = error;
+        if (isBlocked) {
+          dialogContent = '$error\n\nSu cuenta ha sido bloqueada. Por favor, comuníquese con el equipo TI ColdSolutions para restaurar su acceso.';
+        } else {
+          dialogContent = '$error\n\n⚠️ ¡Atención! Le advertimos que puede consultar al equipo TI ColdSolutions para la actualización de su password. De lo contrario, puede realizar un último intento, pero si falla, su cuenta será bloqueada.';
+        }
+        
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  isBlocked ? Icons.error_outline : Icons.warning_amber_rounded,
+                  color: isBlocked ? Colors.red : Colors.orange,
+                  size: 28,
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Advertencia de Seguridad',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            content: Text(dialogContent, style: const TextStyle(fontSize: 15, height: 1.4)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Entendido',
+                  style: TextStyle(
+                    color: LoginPage.primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      } else {
+        // Para errores comunes (ej. "Contraseña incorrecta", "Usuario no existe") usamos la notificación
+        AppNotification.error(context, error);
+      }
     });
   }
 
@@ -152,7 +211,9 @@ void _handleLoginSuccess(BuildContext context, LoginState state) {
               ),
             ),
             child: Container(
-              color: Colors.black.withOpacity(0.3), // Un ligero oscurecimiento para resaltar el contenido
+              color: Colors.black.withOpacity(
+                0.3,
+              ), // Un ligero oscurecimiento para resaltar el contenido
             ),
           ),
 
@@ -233,7 +294,7 @@ void _handleLoginSuccess(BuildContext context, LoginState state) {
               ),
             ),
           ),
-          
+
           // 2. CAPA PRINCIPAL (Con la imagen y gradiente overlay)
           ClipPath(
             clipper: LoginWaveClipper(),
@@ -349,10 +410,7 @@ void _handleLoginSuccess(BuildContext context, LoginState state) {
             ),
           ),
           const SizedBox(height: 40),
-          const FadeSlideAnimation(
-            delay: 0.6,
-            child: CopyrightFooter(),
-          ),
+          const FadeSlideAnimation(delay: 0.6, child: CopyrightFooter()),
         ],
       ),
     );
@@ -401,7 +459,9 @@ class _LoginFormFieldState extends State<_LoginFormField> {
         suffixIcon: widget.isPassword
             ? IconButton(
                 icon: Icon(
-                  _obscureText ? FontAwesomeIcons.eyeSlash : FontAwesomeIcons.eye,
+                  _obscureText
+                      ? FontAwesomeIcons.eyeSlash
+                      : FontAwesomeIcons.eye,
                   size: 18,
                   color: Colors.grey[600],
                 ),
@@ -424,7 +484,10 @@ class _LoginFormFieldState extends State<_LoginFormField> {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: LoginPage.accentColor, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
       ),
     );
   }
@@ -435,7 +498,7 @@ class CopyrightFooter extends StatelessWidget {
 
   const CopyrightFooter({
     super.key,
-    this.companyName = 'JHT Transport Company \n',
+    this.companyName = 'JHT Transport Company',
   });
 
   @override
@@ -445,7 +508,7 @@ class CopyrightFooter extends StatelessWidget {
       child: Text(
         '© ${DateTime.now().year} $companyName. All rights reserved.',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+        style: const TextStyle(fontSize: 12, color: Colors.grey),
       ),
     );
   }
@@ -647,7 +710,6 @@ class _WebLoginFormCard extends StatelessWidget {
     return BlocListener<LoginBloc, LoginState>(
       listener: (context, state) {
         if (state.isSuccess) {
-          
           print('Login exitoso en formulario web!');
           onLoginSuccess();
         }
@@ -706,7 +768,7 @@ class _WebLoginFormCard extends StatelessWidget {
               ),
               const SizedBox(height: 40),
               const Text(
-                '© 2025 JHT Transport Company. All rights reserved.',
+                '© 2026 JHT Transport Company. All rights reserved.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 12, color: Colors.grey),
               ),
@@ -749,9 +811,10 @@ class _FadeSlideAnimationState extends State<FadeSlideAnimation>
       duration: const Duration(milliseconds: 800),
     );
 
-    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
+    _opacity = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     Offset beginOffset;
     switch (widget.direction) {
@@ -769,9 +832,10 @@ class _FadeSlideAnimationState extends State<FadeSlideAnimation>
         break;
     }
 
-    _offset = Tween<Offset>(begin: beginOffset, end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
+    _offset = Tween<Offset>(
+      begin: beginOffset,
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     Future.delayed(Duration(milliseconds: (widget.delay * 1000).round()), () {
       if (mounted) _controller.forward();
@@ -788,10 +852,7 @@ class _FadeSlideAnimationState extends State<FadeSlideAnimation>
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _opacity,
-      child: SlideTransition(
-        position: _offset,
-        child: widget.child,
-      ),
+      child: SlideTransition(position: _offset, child: widget.child),
     );
   }
 }

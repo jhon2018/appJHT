@@ -30,7 +30,8 @@ class ConductorPage extends StatefulWidget {
   State<ConductorPage> createState() => _ConductorPageState();
 }
 
-class _ConductorPageState extends State<ConductorPage> with NavigationHelperMixin<ConductorPage> {
+class _ConductorPageState extends State<ConductorPage>
+    with NavigationHelperMixin<ConductorPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _horizontalScrollController = ScrollController();
   bool _isLoadingDetalle = false;
@@ -126,12 +127,31 @@ class _ConductorPageState extends State<ConductorPage> with NavigationHelperMixi
     navigateToMenuPage(context, itemTitle, widget.userName, widget.userRole);
   }
 
-  void _showLoadingDialog() {
+  void _showLoadingDialog([String message = 'Cargando...']) {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) =>
-          const Center(child: CircularProgressIndicator(color: Colors.white)),
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: const Color(0xFF303366),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: Colors.white),
+            const SizedBox(height: 20),
+            Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -171,14 +191,28 @@ class _ConductorPageState extends State<ConductorPage> with NavigationHelperMixi
 
     return BlocListener<ConductorBloc, ConductorState>(
       listenWhen: (previous, current) => current.maybeWhen(
+        personasCargando: () => true,
+        personasCargadas: (_) => true,
+        error: (_) => true,
         personaDetalleCargado: (_) => true,
         personaDetalleError: (_) => true,
         orElse: () => false,
       ),
       listener: (context, state) {
         state.whenOrNull(
+          personasCargando: () {
+            _showLoadingDialog('Cargando colaboradores...');
+          },
+          personasCargadas: (_) {
+            if (Navigator.canPop(context)) Navigator.of(context).pop();
+          },
+          error: (message) {
+            if (Navigator.canPop(context)) Navigator.of(context).pop();
+            AppNotification.error(context, message);
+          },
           personaDetalleCargado: (personaDetalle) {
-            Navigator.of(context).pop(); // Cierra el loading
+            if (Navigator.canPop(context))
+              Navigator.of(context).pop(); // Cierra el loading
 
             // Mezclamos el detalle de la API con el usuario/contraseña de la lista
             PersonaModel mergedPersona = personaDetalle;
@@ -274,7 +308,8 @@ class _ConductorPageState extends State<ConductorPage> with NavigationHelperMixi
             }
           },
           personaDetalleError: (mensaje) {
-            Navigator.of(context).pop(); // Cierra el loading
+            if (Navigator.canPop(context))
+              Navigator.of(context).pop(); // Cierra el loading
             AppNotification.error(context, 'Error: $mensaje');
           },
         );
@@ -1103,7 +1138,7 @@ class _ConductorPageState extends State<ConductorPage> with NavigationHelperMixi
       ),
       child: Center(
         child: Text(
-          '© 2025 JHT Transport Company\nTodos los derechos reservados.',
+          '© 2026 JHT Transport Company\nTodos los derechos reservados.',
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.grey[600], fontSize: 12, height: 1.4),
         ),

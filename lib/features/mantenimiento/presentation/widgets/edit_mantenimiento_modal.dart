@@ -12,6 +12,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:app_jht_front/features/mantenimiento/data/models/mantenimiento_model.dart';
 import 'package:app_jht_front/features/mantenimiento/data/models/detalle_mantenimiento_model.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_bloc.dart';
@@ -357,6 +358,19 @@ class _EditMantenimientoModalState extends State<EditMantenimientoModal> {
                           overflow: TextOverflow.ellipsis),
                     ),
                     IconButton(
+                      icon: const Icon(Icons.open_in_browser, color: Colors.white, size: 20),
+                      tooltip: 'Abrir/Descargar',
+                      onPressed: () async {
+                        final uri = Uri.parse(url);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 12),
+                    IconButton(
                       icon:        const Icon(Icons.close, color: Colors.white, size: 20),
                       onPressed:   () => Navigator.of(ctx).pop(),
                       padding:     EdgeInsets.zero,
@@ -460,20 +474,8 @@ class _EditMantenimientoModalState extends State<EditMantenimientoModal> {
         // ── API30 OK → feedback + refrescar + cerrar ─────────────────────────
         if (state is MantenimientoUpdated) {
           setState(() => _isSaving = false);
-          _showFeedbackDialog(
-            title:   '¡Actualización exitosa!',
-            message: state.message,
-            type:    FeedbackType.success,
-            icon:    Icons.check_circle_rounded,
-            onConfirm: () {
-              widget.onMantenimientoActualizado?.call();
-              Future.delayed(const Duration(milliseconds: 200), () {
-                if (mounted && Navigator.of(context).canPop()) {
-                  Navigator.of(context).pop();
-                }
-              });
-            },
-          );
+          Navigator.of(context).pop(); // Cierra el modal principal
+          widget.onMantenimientoActualizado?.call(); // Esto detona AppNotification y Refresh
         }
 
         // ── API30 error ──────────────────────────────────────────────────────

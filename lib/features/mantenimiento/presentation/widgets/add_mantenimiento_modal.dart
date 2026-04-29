@@ -10,10 +10,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/core/utils/role_constants.dart';
 import '../../data/datasources/registro_mantenimiento_datasource.dart';
 import '../../data/models/datos_iniciales_model.dart';
+import '../../data/models/accesorio_models.dart';
 import '../bloc/registro_mantenimiento_bloc.dart';
 import '../bloc/registro_mantenimiento_event.dart';
 import '../bloc/registro_mantenimiento_state.dart';
@@ -215,13 +217,21 @@ class _ModalBodyState extends State<_ModalBody> {
   void _submit() {
     // ✅ Validar al menos 1 accesorio
     if (_items.isEmpty || _items.every((i) => i.accesorio == null)) {
-      _showAlert('Campo requerido', 'Debe registrar al menos 1 accesorio', isError: true);
+      _showAlert(
+        'Campo requerido',
+        'Debe registrar al menos 1 accesorio',
+        isError: true,
+      );
       return;
     }
 
     // ✅ Validar formulario completo
     if (!_formKey.currentState!.validate()) {
-      _showAlert('Campos incompletos', 'Complete todos los campos obligatorios marcados con *', isError: true);
+      _showAlert(
+        'Campos incompletos',
+        'Complete todos los campos obligatorios marcados con *',
+        isError: true,
+      );
       return;
     }
 
@@ -230,7 +240,11 @@ class _ModalBodyState extends State<_ModalBody> {
       return;
     }
     if (_provId == null) {
-      _showAlert('Proveedor requerido', 'Seleccione un proveedor', isError: true);
+      _showAlert(
+        'Proveedor requerido',
+        'Seleccione un proveedor',
+        isError: true,
+      );
       return;
     }
 
@@ -238,14 +252,22 @@ class _ModalBodyState extends State<_ModalBody> {
     for (int i = 0; i < _items.length; i++) {
       final item = _items[i];
       if (item.accesorio != null && item.foto == null) {
-        _showAlert('Foto requerida', 'El accesorio ${i + 1} debe tener una foto adjunta', isError: true);
+        _showAlert(
+          'Foto requerida',
+          'El accesorio ${i + 1} debe tener una foto adjunta',
+          isError: true,
+        );
         return;
       }
     }
 
     // ✅ Validar foto de gasto
     if (_gastoFoto == null) {
-      _showAlert('Foto requerida', 'Debe adjuntar la foto del documento de gasto', isError: true);
+      _showAlert(
+        'Foto requerida',
+        'Debe adjuntar la foto del documento de gasto',
+        isError: true,
+      );
       return;
     }
 
@@ -271,7 +293,8 @@ class _ModalBodyState extends State<_ModalBody> {
         hisIproxKilometraje: esCambio
             ? (int.tryParse(item.proxKmCambio) ?? 0)
             : (int.tryParse(item.proxKmMant) ?? 0),
-        hisDproximaFech: esCambio ? item.proxFechaCambio : item.proxFechaMant,
+        hisDproximaFech: _convertirFechaParaApi(
+            esCambio ? item.proxFechaCambio : item.proxFechaMant),
         hisVestado: esCambio ? item.estadoCambio : item.estadoMant,
         dicVtipo: tipoNormalizado,
         dicIid: item.concepto!.id,
@@ -292,7 +315,9 @@ class _ModalBodyState extends State<_ModalBody> {
       gasVmoneda: _moneda ?? 'Soles',
       gasBmonto: double.tryParse(_montoCtrl.text) ?? 0,
       gasDfechaGasto: fechaStr,
-      gasVdescripcion: _observGastoCtrl.text,
+      gasVdescripcion: _observGastoCtrl.text.trim().isEmpty 
+          ? 'Sin observaciones' 
+          : _observGastoCtrl.text.trim(),
       foto: _gastoFoto,
     );
 
@@ -336,10 +361,30 @@ class _ModalBodyState extends State<_ModalBody> {
     return y + '-' + m + '-' + dd;
   }
 
+  /// Convierte fecha "dd/MM/yyyy" a "yyyy-MM-dd" para la API
+  String _convertirFechaParaApi(String fecha) {
+    if (fecha.isEmpty) return '';
+    try {
+      final partes = fecha.split('/');
+      if (partes.length == 3) {
+        final d = partes[0].padLeft(2, '0');
+        final m = partes[1].padLeft(2, '0');
+        final y = partes[2];
+        return '$y-$m-$d';
+      }
+    } catch (_) {}
+    return fecha;
+  }
+
   // ✅ ALERTA FRONTAL (reemplaza SnackBar)
-  void _showAlert(String title, String message, {bool isError = false, bool isSuccess = false}) {
+  void _showAlert(
+    String title,
+    String message, {
+    bool isError = false,
+    bool isSuccess = false,
+  }) {
     if (!mounted) return;
-    
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -353,7 +398,11 @@ class _ModalBodyState extends State<_ModalBody> {
                   : isSuccess
                   ? Icons.check_circle_outline_rounded
                   : Icons.info_outline_rounded,
-              color: isError ? _red : isSuccess ? _green : _blue,
+              color: isError
+                  ? _red
+                  : isSuccess
+                  ? _green
+                  : _blue,
               size: 24,
             ),
             const SizedBox(width: 8),
@@ -378,7 +427,11 @@ class _ModalBodyState extends State<_ModalBody> {
             child: Text(
               'Entendido',
               style: TextStyle(
-                color: isError ? _red : isSuccess ? _green : _primary,
+                color: isError
+                    ? _red
+                    : isSuccess
+                    ? _green
+                    : _primary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -580,7 +633,8 @@ class _ModalBodyState extends State<_ModalBody> {
                   if (id != null) _cargarAccesorios(id);
                 },
               ),
-              tooltip: 'Seleccione el vehículo al que se realizará el mantenimiento',
+              tooltip:
+                  'Seleccione el vehículo al que se realizará el mantenimiento',
             ),
             right: _label(
               'Fecha de mantenimiento',
@@ -968,7 +1022,10 @@ class _ModalBodyState extends State<_ModalBody> {
                     });
                 },
                 onViewPhoto: item.foto != null
-                    ? () => _showPhotoDialog(item.foto!, 'Foto accesorio ${idx + 1}')
+                    ? () => _showPhotoDialog(
+                        item.foto!,
+                        'Foto accesorio ${idx + 1}',
+                      )
                     : null,
               ),
             ),
@@ -1073,7 +1130,10 @@ class _ModalBodyState extends State<_ModalBody> {
                     });
                 },
                 onViewPhoto: item.foto != null
-                    ? () => _showPhotoDialog(item.foto!, 'Foto accesorio ${idx + 1}')
+                    ? () => _showPhotoDialog(
+                        item.foto!,
+                        'Foto accesorio ${idx + 1}',
+                      )
                     : null,
               ),
             ),
@@ -1118,26 +1178,62 @@ class _ModalBodyState extends State<_ModalBody> {
             isMobile,
             left: _label(
               'Nr. factura / DNI / RUC',
-              TextFormField(
-                controller: _nrFacturaCtrl,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                maxLength: 12,
-                style: const TextStyle(fontSize: 13),
-                decoration: _inputDec(
-                  hint: '10 o 12 dígitos',
-                  suffix: _nrFacturaCtrl.text.length > 0
-                      ? '${_nrFacturaCtrl.text.length}/12'
-                      : null,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return null; // No es obligatorio
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _nrFacturaCtrl,
+                builder: (context, value, child) {
+                  String tooltipMsg = 'Ingrese el documento';
+                  IconData icon = Icons.badge_outlined;
+                  Color iconColor = _textSecondary;
+                  final text = value.text;
+                  
+                  if (text.length == 8) {
+                    tooltipMsg = 'DNI detectado';
+                    icon = Icons.person;
+                    iconColor = _primary;
+                  } else if (text.length == 11) {
+                    if (text.startsWith('10')) {
+                      tooltipMsg = 'RUC Persona Natural (10)';
+                      icon = Icons.person_pin;
+                      iconColor = _blue;
+                    } else if (text.startsWith('20')) {
+                      tooltipMsg = 'RUC Empresa (20)';
+                      icon = Icons.domain;
+                      iconColor = _green;
+                    } else {
+                      tooltipMsg = 'RUC Inválido';
+                      icon = Icons.warning_amber_rounded;
+                      iconColor = _red;
+                    }
+                  } else if (text.isNotEmpty) {
+                    tooltipMsg = 'DNI (8) o RUC (11)';
+                    iconColor = _yellow;
                   }
-                  if (value.length != 10 && value.length != 12) {
-                    return 'Debe tener 10 dígitos (DNI) o 12 dígitos (RUC)';
-                  }
-                  return null;
+
+                  return Tooltip(
+                    message: tooltipMsg,
+                    child: TextFormField(
+                      controller: _nrFacturaCtrl,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      maxLength: 11,
+                      style: const TextStyle(fontSize: 13),
+                      decoration: _inputDec(
+                        hint: '8 u 11 dígitos',
+                        suffix: text.isNotEmpty ? '${text.length}/11' : null,
+                      ).copyWith(
+                        prefixIcon: Icon(icon, color: iconColor, size: 18),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.isEmpty) {
+                          return null; // No es obligatorio
+                        }
+                        if (val.length != 8 && val.length != 11) {
+                          return 'Debe tener 8 (DNI) u 11 (RUC) dígitos';
+                        }
+                        return null;
+                      },
+                    ),
+                  );
                 },
               ),
             ),
@@ -1209,7 +1305,8 @@ class _ModalBodyState extends State<_ModalBody> {
                   });
               },
               onViewPhoto: _gastoFoto != null
-                  ? () => _showPhotoDialog(_gastoFoto!, 'Foto documento de gasto')
+                  ? () =>
+                        _showPhotoDialog(_gastoFoto!, 'Foto documento de gasto')
                   : null,
             ),
             tooltip: 'Adjunte la foto del comprobante de gasto',
@@ -1260,8 +1357,15 @@ class _ModalBodyState extends State<_ModalBody> {
                 child: kIsWeb && foto.bytes != null
                     ? Image.memory(foto.bytes!, fit: BoxFit.contain)
                     : (foto.filePath != null
-                        ? Image.file(File(foto.filePath!), fit: BoxFit.contain)
-                        : const Icon(Icons.image_not_supported, size: 100, color: Colors.white)),
+                          ? Image.file(
+                              File(foto.filePath!),
+                              fit: BoxFit.contain,
+                            )
+                          : const Icon(
+                              Icons.image_not_supported,
+                              size: 100,
+                              color: Colors.white,
+                            )),
               ),
             ),
             // Info
@@ -1528,40 +1632,38 @@ class _ModalBodyState extends State<_ModalBody> {
     ],
   );
 
-  Widget _labelRequired(String label, Widget child, {String? tooltip}) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
+  Widget _labelRequired(String label, Widget child, {String? tooltip}) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: _textPrimary,
-            ),
-          ),
-          Text(
-            ' *',
-            style: const TextStyle(fontSize: 11, color: _red),
-          ),
-          if (tooltip != null) ...[
-            const SizedBox(width: 4),
-            Tooltip(
-              message: tooltip,
-              child: Icon(
-                Icons.info_outline,
-                size: 14,
-                color: _textSecondary,
+          Row(
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _textPrimary,
+                ),
               ),
-            ),
-          ],
+              Text(' *', style: const TextStyle(fontSize: 11, color: _red)),
+              if (tooltip != null) ...[
+                const SizedBox(width: 4),
+                Tooltip(
+                  message: tooltip,
+                  child: Icon(
+                    Icons.info_outline,
+                    size: 14,
+                    color: _textSecondary,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 5),
+          child,
         ],
-      ),
-      const SizedBox(height: 5),
-      child,
-    ],
-  );
+      );
 
   Widget _simpleDropdown({
     required String? value,
@@ -1725,7 +1827,6 @@ class _ModalBodyState extends State<_ModalBody> {
         initialDate: value ?? DateTime.now(),
         firstDate: DateTime(2020),
         lastDate: DateTime(2030),
-      locale: const Locale('es', 'ES'),
       );
       if (d != null) onPicked(d);
     },
@@ -1837,8 +1938,14 @@ class _ModalBodyState extends State<_ModalBody> {
                     child: kIsWeb && foto.bytes != null
                         ? Image.memory(foto.bytes!, fit: BoxFit.cover)
                         : (foto.filePath != null
-                            ? Image.file(File(foto.filePath!), fit: BoxFit.cover)
-                            : const Icon(Icons.image_not_supported, size: 20)),
+                              ? Image.file(
+                                  File(foto.filePath!),
+                                  fit: BoxFit.cover,
+                                )
+                              : const Icon(
+                                  Icons.image_not_supported,
+                                  size: 20,
+                                )),
                   ),
                 ),
                 const SizedBox(width: 12),

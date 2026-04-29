@@ -42,14 +42,14 @@ mixin NavigationHelperMixin<T extends StatefulWidget> on State<T> {
     switch (pageName) {
       case 'Panel':
         if (userRole == 'Root' || userRole == 'Administrador') {
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => AdminDashboard(userName: userName, userRole: userRole),
             ),
           );
         } else if (userRole == 'Conductor') {
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => ConductorDashboard(userName: userName, userRole: userRole),
@@ -58,7 +58,7 @@ mixin NavigationHelperMixin<T extends StatefulWidget> on State<T> {
         }
         break;
       case 'Vehículo':
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => BlocProvider(
@@ -77,7 +77,7 @@ mixin NavigationHelperMixin<T extends StatefulWidget> on State<T> {
         );
         break;
       case 'Mantenimiento':
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => BlocProvider(
@@ -89,7 +89,7 @@ mixin NavigationHelperMixin<T extends StatefulWidget> on State<T> {
         );
         break;
       case 'Proveedor':
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => SupplierPage(userName: userName, userRole: userRole),
@@ -97,7 +97,7 @@ mixin NavigationHelperMixin<T extends StatefulWidget> on State<T> {
         );
         break;
       case 'Colaboradores':
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) {
@@ -119,7 +119,7 @@ mixin NavigationHelperMixin<T extends StatefulWidget> on State<T> {
         );
         break;
       case 'Accesorios':
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => BlocProvider(

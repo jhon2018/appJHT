@@ -34,7 +34,8 @@ class AccessoryPage extends StatefulWidget {
   State<AccessoryPage> createState() => _AccessoryPageState();
 }
 
-class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixin<AccessoryPage> {
+class _AccessoryPageState extends State<AccessoryPage>
+    with NavigationHelperMixin<AccessoryPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _horizontalScrollController = ScrollController();
 
@@ -66,18 +67,26 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
   void _onSearchChanged() {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 350), () {
-      if (mounted) setState(() { _searchQuery = _searchController.text; _currentPage = 1; });
+      if (mounted)
+        setState(() {
+          _searchQuery = _searchController.text;
+          _currentPage = 1;
+        });
     });
   }
 
   List<AccesorioModel> _filterAccesorios(List<AccesorioModel> all) {
     if (_searchQuery.isEmpty) return all;
     final q = _searchQuery.toLowerCase();
-    return all.where((a) =>
-      a.tipoNombre.toLowerCase().contains(q) ||
-      (a.marca?.toLowerCase().contains(q) ?? false) ||
-      (a.ultimoMantenimiento?.estado?.toLowerCase().contains(q) ?? false),
-    ).toList();
+    return all
+        .where(
+          (a) =>
+              a.tipoNombre.toLowerCase().contains(q) ||
+              (a.marca?.toLowerCase().contains(q) ?? false) ||
+              (a.ultimoMantenimiento?.estado?.toLowerCase().contains(q) ??
+                  false),
+        )
+        .toList();
   }
 
   @override
@@ -93,9 +102,9 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
   Color _getRowColor(AccesorioModel acc) {
     if (acc.ultimoMantenimiento == null) return Colors.transparent;
     final proxima = DateTime.tryParse(
-        acc.ultimoMantenimiento!.proximaFecha ?? '');
-    if (proxima != null &&
-        proxima.difference(DateTime.now()).inDays <= 15) {
+      acc.ultimoMantenimiento!.proximaFecha ?? '',
+    );
+    if (proxima != null && proxima.difference(DateTime.now()).inDays <= 15) {
       return Colors.red.withOpacity(0.15);
     }
     return Colors.transparent;
@@ -107,8 +116,7 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: const Color(0xFF303366),
         contentPadding: const EdgeInsets.all(24),
         content: Column(
@@ -119,9 +127,10 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
             Text(
               message,
               style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500),
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -139,10 +148,14 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
         value: context.read<AccessoryBloc>(),
         child: AddAccessoryModal(
           onAccessoryAdded: () {
-            AppNotification.success(context, 'Accesorio agregado exitosamente.');
+            AppNotification.success(
+              context,
+              'Accesorio agregado exitosamente.',
+            );
             if (_selectedVehicle != null) {
               context.read<AccessoryBloc>().add(
-                  OnFetchAccesoriosByVehiculo(_selectedVehicle!.id));
+                OnFetchAccesoriosByVehiculo(_selectedVehicle!.id),
+              );
             }
           },
         ),
@@ -194,7 +207,7 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
           if (Navigator.canPop(context)) Navigator.pop(context);
           setState(() => _vehiclesList = state.vehiculos);
 
-        // Accesorios por vehículo
+          // Accesorios por vehículo
         } else if (state is AccesoriosByVehiculoLoading) {
           _showLoadingDialog(
             _selectedVehicle != null
@@ -204,7 +217,7 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
         } else if (state is AccesoriosByVehiculoLoaded) {
           if (Navigator.canPop(context)) Navigator.pop(context);
 
-        // Error general
+          // Error general
         } else if (state is AccessoryError) {
           if (Navigator.canPop(context)) Navigator.pop(context);
           AppNotification.error(context, state.message);
@@ -236,8 +249,12 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
         if (state is AccesorioActualizado) {
           if (Navigator.canPop(context)) Navigator.pop(context);
           context.read<AccessoryBloc>().add(
-              OnFetchAccesoriosByVehiculo(state.vehiculoId));
-          AppNotification.success(context, 'Accesorio actualizado correctamente.');
+            OnFetchAccesoriosByVehiculo(state.vehiculoId),
+          );
+          AppNotification.success(
+            context,
+            'Accesorio actualizado correctamente.',
+          );
         }
 
         // Error de actualización
@@ -269,9 +286,10 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
                     title: const Text(
                       'JHT TRANSPORT',
                       style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF303366)),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF303366),
+                      ),
                     ),
                     actions: [_buildMenuButton()],
                   ),
@@ -320,11 +338,13 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
   }
 
   Widget _dot() => Container(
-        width: 4,
-        height: 4,
-        decoration: const BoxDecoration(
-            color: Colors.black87, shape: BoxShape.circle),
-      );
+    width: 4,
+    height: 4,
+    decoration: const BoxDecoration(
+      color: Colors.black87,
+      shape: BoxShape.circle,
+    ),
+  );
 
   // ── Header con botón agregar + dropdown vehículo ──────────────────────────
   Widget _buildHeaderWithAddButton(bool isMobile) {
@@ -334,10 +354,11 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
         const Text(
           'ACCESORIO',
           style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF303366),
-              letterSpacing: 1.0),
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF303366),
+            letterSpacing: 1.0,
+          ),
         ),
         const SizedBox(height: 20),
         isMobile ? _buildMobileHeaderLayout() : _buildDesktopHeaderLayout(),
@@ -414,18 +435,22 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
         width: width,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-            color: const Color(0xFF303366),
-            borderRadius: BorderRadius.circular(8)),
+          color: const Color(0xFF303366),
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.add, color: Colors.white, size: 20),
             const SizedBox(width: 8),
-            Text('AGREGAR ACCESORIO',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: fontSize,
-                    fontWeight: FontWeight.w600)),
+            Text(
+              'AGREGAR ACCESORIO',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: fontSize,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
@@ -436,11 +461,14 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Seleccionar Vehículo',
-            style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF303366))),
+        const Text(
+          'Seleccionar Vehículo',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF303366),
+          ),
+        ),
         const SizedBox(height: 8),
         Container(
           width: isMobile ? double.infinity : null,
@@ -455,28 +483,35 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
             child: DropdownButton<VehiculoModel>(
               value: _selectedVehicle,
               isExpanded: true,
-              icon: const Icon(Icons.arrow_drop_down,
-                  color: Color(0xFF303366)),
+              icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF303366)),
               hint: _vehiclesList.isEmpty
-                  ? const Row(children: [
-                      SizedBox(width: 4),
-                      SizedBox(
+                  ? const Row(
+                      children: [
+                        SizedBox(width: 4),
+                        SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2)),
-                      SizedBox(width: 12),
-                      Text('Cargando vehículos...',
-                          style:
-                              TextStyle(fontSize: 14, color: Colors.grey)),
-                    ])
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          'Cargando vehículos...',
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                      ],
+                    )
                   : const Text('Seleccione vehículo'),
               items: _vehiclesList
-                  .map((v) => DropdownMenuItem<VehiculoModel>(
-                        value: v,
-                        child: Text(v.placa,
-                            style: const TextStyle(fontSize: 14),
-                            overflow: TextOverflow.ellipsis),
-                      ))
+                  .map(
+                    (v) => DropdownMenuItem<VehiculoModel>(
+                      value: v,
+                      child: Text(
+                        v.placa,
+                        style: const TextStyle(fontSize: 14),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  )
                   .toList(),
               onChanged: (v) {
                 setState(() {
@@ -485,7 +520,8 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
                 });
                 if (v != null) {
                   context.read<AccessoryBloc>().add(
-                      OnFetchAccesoriosByVehiculo(v.id));
+                    OnFetchAccesoriosByVehiculo(v.id),
+                  );
                 }
               },
             ),
@@ -514,7 +550,9 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
                       ? 'Cargando accesorios del vehículo ${_selectedVehicle!.placa}...'
                       : 'Cargando accesorios...',
                   style: const TextStyle(
-                      fontSize: 14, color: Color(0xFF303366)),
+                    fontSize: 14,
+                    color: Color(0xFF303366),
+                  ),
                 ),
               ],
             ),
@@ -530,19 +568,26 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.inventory_2_outlined,
-                    size: 60, color: Colors.grey),
+                const Icon(
+                  Icons.inventory_2_outlined,
+                  size: 60,
+                  color: Colors.grey,
+                ),
                 const SizedBox(height: 16),
-                const Text('No hay accesorios registrados',
-                    style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w500)),
+                const Text(
+                  'No hay accesorios registrados',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
                 if (_selectedVehicle != null) ...[
                   const SizedBox(height: 8),
-                  Text('para el vehículo ${_selectedVehicle!.placa}',
-                      style: const TextStyle(
-                          fontSize: 14, color: Colors.grey)),
+                  Text(
+                    'para el vehículo ${_selectedVehicle!.placa}',
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
                 ],
               ],
             ),
@@ -561,7 +606,9 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
           child: LayoutBuilder(
             builder: (context, constraints) {
               final minW = isMobile ? 740.0 : 1040.0;
-              final tableW = constraints.maxWidth > minW ? constraints.maxWidth : minW;
+              final tableW = constraints.maxWidth > minW
+                  ? constraints.maxWidth
+                  : minW;
               return Scrollbar(
                 controller: _horizontalScrollController,
                 thumbVisibility: true,
@@ -575,32 +622,33 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
                       width: tableW,
                       padding: const EdgeInsets.all(8),
                       child: DataTable(
-                  headingRowHeight: 50,
-                  dataRowHeight: 50,
-                  horizontalMargin: isMobile ? 12 : 16,
-                  columnSpacing: isMobile ? 8 : 24,
-                  headingRowColor: WidgetStateProperty.all(
-                      const Color(0xFF303366)),
-                  columns: isMobile
-                      ? [
-                          _col('Tipo / Nombre', 130, isMobile),
-                          _col('Marca', 90, isMobile),
-                          _col('Instalación', 100, isMobile),
-                          _col('Próx. Mantenimiento', 120, isMobile),
-                          _col('Estado', 80, isMobile),
-                          _col('Acción', 110, isMobile),
-                        ]
-                      : [
-                          _col('Tipo / Nombre', 180, isMobile),
-                          _col('Marca', 120, isMobile),
-                          _col('Instalación', 140, isMobile),
-                          _col('Próximo Mantenimiento', 160, isMobile),
-                          _col('Estado', 100, isMobile),
-                          _col('Acción', 130, isMobile),
-                        ],
-                  rows: pageItems
-                      .map((acc) => _buildDataRow(acc, isMobile))
-                      .toList(),
+                        headingRowHeight: 50,
+                        dataRowHeight: 50,
+                        horizontalMargin: isMobile ? 12 : 16,
+                        columnSpacing: isMobile ? 8 : 24,
+                        headingRowColor: WidgetStateProperty.all(
+                          const Color(0xFF303366),
+                        ),
+                        columns: isMobile
+                            ? [
+                                _col('Tipo / Nombre', 130, isMobile),
+                                _col('Marca', 90, isMobile),
+                                _col('Instalación', 100, isMobile),
+                                _col('Próx. Mantenimiento', 120, isMobile),
+                                _col('Estado', 80, isMobile),
+                                _col('Acción', 110, isMobile),
+                              ]
+                            : [
+                                _col('Tipo / Nombre', 180, isMobile),
+                                _col('Marca', 120, isMobile),
+                                _col('Instalación', 140, isMobile),
+                                _col('Próximo Mantenimiento', 160, isMobile),
+                                _col('Estado', 100, isMobile),
+                                _col('Acción', 130, isMobile),
+                              ],
+                        rows: pageItems
+                            .map((acc) => _buildDataRow(acc, isMobile))
+                            .toList(),
                       ),
                     ),
                   ),
@@ -617,8 +665,9 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
     return Container(
       height: 200,
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[300]!)),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
       child: Center(child: child),
     );
   }
@@ -627,11 +676,14 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
     return DataColumn(
       label: SizedBox(
         width: width,
-        child: Text(label,
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: isMobile ? 11 : 13,
-                fontWeight: FontWeight.w600)),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: isMobile ? 11 : 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
@@ -640,64 +692,84 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
     return DataRow(
       color: WidgetStateProperty.all(_getRowColor(acc)),
       cells: [
-        DataCell(Text(acc.tipoNombre,
+        DataCell(
+          Text(
+            acc.tipoNombre,
             style: const TextStyle(fontSize: 12),
-            overflow: TextOverflow.ellipsis)),
-        DataCell(Text(acc.marca ?? '-',
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        DataCell(
+          Text(
+            acc.marca ?? '-',
             style: const TextStyle(fontSize: 12),
-            overflow: TextOverflow.ellipsis)),
-        DataCell(Text(
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        DataCell(
+          Text(
             DateFormat('dd/MM/yyyy').format(acc.fechaInstalacion),
-            style: const TextStyle(fontSize: 12))),
-        DataCell(Text(
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+        DataCell(
+          Text(
             acc.ultimoMantenimiento?.proximaFecha ?? 'No programada',
-            style: const TextStyle(fontSize: 12))),
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
         DataCell(_buildEstadoChip(acc.ultimoMantenimiento?.estado)),
         // Ojito + Lápiz
-        DataCell(Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Tooltip(
-              message: 'Ver detalle',
-              child: InkWell(
-                onTap: () {
-                  _pendingAction = _PendingAction.verDetalle;
-                  context
-                      .read<AccessoryBloc>()
-                      .add(OnFetchDetalleAccesorio(acc.accesorioId));
-                },
-                borderRadius: BorderRadius.circular(6),
-                child: Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: Icon(Icons.remove_red_eye,
+        DataCell(
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Tooltip(
+                message: 'Ver detalle',
+                child: InkWell(
+                  onTap: () {
+                    _pendingAction = _PendingAction.verDetalle;
+                    context.read<AccessoryBloc>().add(
+                      OnFetchDetalleAccesorio(acc.accesorioId),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(
+                      Icons.remove_red_eye,
                       color: const Color(0xFF303366),
-                      size: isMobile ? 17 : 18),
+                      size: isMobile ? 17 : 18,
+                    ),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 4),
-            Tooltip(
-              message: 'Editar accesorio',
-              child: InkWell(
-                onTap: () {
-                  // Guarda marca ANTES de llamar API27 (que no la devuelve)
-                  _marcaAccesorioSeleccionado = acc.marca ?? '';
-                  _pendingAction = _PendingAction.editar;
-                  context
-                      .read<AccessoryBloc>()
-                      .add(OnFetchDetalleAccesorio(acc.accesorioId));
-                },
-                borderRadius: BorderRadius.circular(6),
-                child: Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: Icon(Icons.edit_outlined,
+              const SizedBox(width: 4),
+              Tooltip(
+                message: 'Editar accesorio',
+                child: InkWell(
+                  onTap: () {
+                    // Guarda marca ANTES de llamar API27 (que no la devuelve)
+                    _marcaAccesorioSeleccionado = acc.marca ?? '';
+                    _pendingAction = _PendingAction.editar;
+                    context.read<AccessoryBloc>().add(
+                      OnFetchDetalleAccesorio(acc.accesorioId),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(
+                      Icons.edit_outlined,
                       color: Colors.orange.shade700,
-                      size: isMobile ? 17 : 18),
+                      size: isMobile ? 17 : 18,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
-        )),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -721,7 +793,9 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-          color: bg, borderRadius: BorderRadius.circular(4)),
+        color: bg,
+        borderRadius: BorderRadius.circular(4),
+      ),
       child: Text(
         estado ?? 'Activo',
         style: const TextStyle(color: Colors.white, fontSize: 10),
@@ -735,20 +809,25 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
     return BlocBuilder<AccessoryBloc, AccessoryState>(
       buildWhen: (_, s) => s is AccesoriosByVehiculoLoaded,
       builder: (context, state) {
-        final raw = state is AccesoriosByVehiculoLoaded ? state.accesorios : <AccesorioModel>[];
+        final raw = state is AccesoriosByVehiculoLoaded
+            ? state.accesorios
+            : <AccesorioModel>[];
         final filtered = _filterAccesorios(raw);
         final total = filtered.length;
         if (total == 0) return const SizedBox.shrink();
 
         final totalPages = _getTotalPages(total);
         final startItem = ((_currentPage - 1) * _itemsPerPage) + 1;
-        final endItem = (_currentPage * _itemsPerPage) > total ? total : (_currentPage * _itemsPerPage);
+        final endItem = (_currentPage * _itemsPerPage) > total
+            ? total
+            : (_currentPage * _itemsPerPage);
 
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!),
-              borderRadius: BorderRadius.circular(8)),
+            border: Border.all(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: Column(
             children: [
               Row(
@@ -763,12 +842,18 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[400]!),
-                        borderRadius: BorderRadius.circular(4)),
-                    child: Text('$_itemsPerPage por pág.',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                      border: Border.all(color: Colors.grey[400]!),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '$_itemsPerPage por pág.',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
                   ),
                 ],
               ),
@@ -779,19 +864,33 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     InkWell(
-                      onTap: _currentPage > 1 ? () => setState(() => _currentPage--) : null,
-                      child: _pageBtn('Anterior', isActive: false,
-                          enabled: _currentPage > 1),
+                      onTap: _currentPage > 1
+                          ? () => setState(() => _currentPage--)
+                          : null,
+                      child: _pageBtn(
+                        'Anterior',
+                        isActive: false,
+                        enabled: _currentPage > 1,
+                      ),
                     ),
                     for (int i = 1; i <= totalPages; i++)
                       InkWell(
                         onTap: () => setState(() => _currentPage = i),
-                        child: _pageBtn(i.toString(), isActive: _currentPage == i, enabled: true),
+                        child: _pageBtn(
+                          i.toString(),
+                          isActive: _currentPage == i,
+                          enabled: true,
+                        ),
                       ),
                     InkWell(
-                      onTap: _currentPage < totalPages ? () => setState(() => _currentPage++) : null,
-                      child: _pageBtn('Siguiente', isActive: false,
-                          enabled: _currentPage < totalPages),
+                      onTap: _currentPage < totalPages
+                          ? () => setState(() => _currentPage++)
+                          : null,
+                      child: _pageBtn(
+                        'Siguiente',
+                        isActive: false,
+                        enabled: _currentPage < totalPages,
+                      ),
                     ),
                   ],
                 ),
@@ -808,14 +907,18 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF303366) : (enabled ? Colors.white : Colors.grey[100]),
+        color: isActive
+            ? const Color(0xFF303366)
+            : (enabled ? Colors.white : Colors.grey[100]),
         border: Border.all(color: Colors.grey[400]!),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         text,
         style: TextStyle(
-          color: isActive ? Colors.white : (enabled ? Colors.grey[600] : Colors.grey[400]),
+          color: isActive
+              ? Colors.white
+              : (enabled ? Colors.grey[600] : Colors.grey[400]),
           fontSize: 12,
           fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
         ),
@@ -829,14 +932,14 @@ class _AccessoryPageState extends State<AccessoryPage> with NavigationHelperMixi
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
-          color: Colors.white),
+        border: Border.all(color: Colors.grey[300]!),
+        color: Colors.white,
+      ),
       child: Center(
         child: Text(
-          '© 2025 JHT Transport Company\nTodos los derechos reservados.',
+          '© 2026 JHT Transport Company\nTodos los derechos reservados.',
           textAlign: TextAlign.center,
-          style:
-              TextStyle(color: Colors.grey[600], fontSize: 12, height: 1.4),
+          style: TextStyle(color: Colors.grey[600], fontSize: 12, height: 1.4),
         ),
       ),
     );
