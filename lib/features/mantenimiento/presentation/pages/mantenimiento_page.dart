@@ -27,10 +27,12 @@ class MantenimientoPage extends StatefulWidget {
   State<MantenimientoPage> createState() => _MantenimientoPageState();
 }
 
-class _MantenimientoPageState extends State<MantenimientoPage> with NavigationHelperMixin<MantenimientoPage> {
+class _MantenimientoPageState extends State<MantenimientoPage>
+    with NavigationHelperMixin<MantenimientoPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _horizontalScrollController = ScrollController();
-List<MantenimientoModel>? _cachedMantenimientos;
+  List<MantenimientoModel>? _cachedMantenimientos;
+  bool _isLoadingDialogVisible = false;
   // ── Paginación local ──────────────────────────────────────────────────────
   int _currentPage = 1;
   int _itemsPerPage = 5;
@@ -52,12 +54,15 @@ List<MantenimientoModel>? _cachedMantenimientos;
   List<MantenimientoModel> _applySearch(List<MantenimientoModel> all) {
     if (_searchQuery.isEmpty) return all;
     final q = _searchQuery.toLowerCase();
-    return all.where((m) =>
-      m.vehiculoPlaca.toLowerCase().contains(q) ||
-      m.tipoAccesorio.toLowerCase().contains(q) ||
-      m.estado.toLowerCase().contains(q) ||
-      m.diccionarioMantenimiento.toLowerCase().contains(q),
-    ).toList();
+    return all
+        .where(
+          (m) =>
+              m.vehiculoPlaca.toLowerCase().contains(q) ||
+              m.tipoAccesorio.toLowerCase().contains(q) ||
+              m.estado.toLowerCase().contains(q) ||
+              m.diccionarioMantenimiento.toLowerCase().contains(q),
+        )
+        .toList();
   }
 
   List<MantenimientoModel> _getPageItems(List<MantenimientoModel> filtered) {
@@ -72,34 +77,43 @@ List<MantenimientoModel>? _cachedMantenimientos;
 
   void _onPageChanged(int page) => setState(() => _currentPage = page);
 
-  void _onItemsPerPageChanged(int value) =>
-      setState(() { _itemsPerPage = value; _currentPage = 1; });
+  void _onItemsPerPageChanged(int value) => setState(() {
+    _itemsPerPage = value;
+    _currentPage = 1;
+  });
 
   void _onSearchChanged(String value) {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 350), () {
-      if (mounted) setState(() { _searchQuery = value; _currentPage = 1; });
+      if (mounted)
+        setState(() {
+          _searchQuery = value;
+          _currentPage = 1;
+        });
     });
   }
 
   // ── Modales ──────────────────────────────────────────────────────────────
 
-void _openEditMantenimientoModal(MantenimientoModel mantenimiento) {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (ctx) => BlocProvider.value(
-      value: context.read<MantenimientoBloc>(),
-      child: EditMantenimientoModal(
-        mantenimiento: mantenimiento,
-        onMantenimientoActualizado: () {
-          context.read<MantenimientoBloc>().add(RefreshMantenimientosEvent());
-          AppNotification.success(context, 'Mantenimiento actualizado correctamente.');
-        },
+  void _openEditMantenimientoModal(MantenimientoModel mantenimiento) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => BlocProvider.value(
+        value: context.read<MantenimientoBloc>(),
+        child: EditMantenimientoModal(
+          mantenimiento: mantenimiento,
+          onMantenimientoActualizado: () {
+            context.read<MantenimientoBloc>().add(RefreshMantenimientosEvent());
+            AppNotification.success(
+              context,
+              'Mantenimiento actualizado correctamente.',
+            );
+          },
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _openAddMantenimientoModal() {
     showDialog(
@@ -108,8 +122,40 @@ void _openEditMantenimientoModal(MantenimientoModel mantenimiento) {
       builder: (ctx) => AddMantenimientoModal(
         onMantenimientoAdded: () {
           context.read<MantenimientoBloc>().add(RefreshMantenimientosEvent());
-          AppNotification.success(context, 'Mantenimiento registrado correctamente.');
+          AppNotification.success(
+            context,
+            'Mantenimiento registrado correctamente.',
+          );
         },
+      ),
+    );
+  }
+
+  void _showLoadingDialog([String message = 'Cargando...']) {
+    _isLoadingDialogVisible = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: const Color(0xFF303366),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: Colors.white),
+            const SizedBox(height: 20),
+            Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -128,49 +174,72 @@ void _openEditMantenimientoModal(MantenimientoModel mantenimiento) {
           userRole: widget.userRole,
           onClose: () => Navigator.pop(context),
           onItemSelected: (itemTitle) {
-            navigateToMenuPage(context, itemTitle, widget.userName, widget.userRole);
+            navigateToMenuPage(
+              context,
+              itemTitle,
+              widget.userName,
+              widget.userRole,
+            );
           },
         ),
       ),
       backgroundColor: const Color(0xFFF7F8FC),
-      body: Column(
-        children: [
-          Expanded(
-            child: CustomScrollView(
-              slivers: [
-                // ── AppBar ────────────────────────────────────────────────
-                SliverAppBar(
-                  backgroundColor: Colors.white,
-                  elevation: 1,
-                  pinned: true,
-                  title: const Text(
-                    'JHT TRANSPORT',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF303366),
+      body: BlocListener<MantenimientoBloc, MantenimientoState>(
+        listener: (context, state) {
+          if (state is MantenimientoLoading && _cachedMantenimientos == null) {
+            _showLoadingDialog('Cargando mantenimientos...');
+          } else if (state is MantenimientoSuccess) {
+            if (_isLoadingDialogVisible && Navigator.canPop(context)) {
+              Navigator.pop(context);
+              _isLoadingDialogVisible = false;
+            }
+          } else if (state is MantenimientoError) {
+            if (_isLoadingDialogVisible && Navigator.canPop(context)) {
+              Navigator.pop(context);
+              _isLoadingDialogVisible = false;
+            }
+            AppNotification.error(context, state.message);
+          }
+        },
+        child: Column(
+          children: [
+            Expanded(
+              child: CustomScrollView(
+                slivers: [
+                  // ── AppBar ────────────────────────────────────────────────
+                  SliverAppBar(
+                    backgroundColor: Colors.white,
+                    elevation: 1,
+                    pinned: true,
+                    title: const Text(
+                      'JHT TRANSPORT',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF303366),
+                      ),
+                    ),
+                    actions: [_buildMenuButton()],
+                  ),
+
+                  SliverPadding(
+                    padding: EdgeInsets.all(isMobile ? 12.0 : 20.0),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        _buildHeader(isMobile),
+                        const SizedBox(height: 20),
+                        _buildSearchBar(isMobile),
+                        const SizedBox(height: 16),
+                        _buildTableCard(isMobile),
+                      ]),
                     ),
                   ),
-                  actions: [_buildMenuButton()],
-                ),
-
-                SliverPadding(
-                  padding: EdgeInsets.all(isMobile ? 12.0 : 20.0),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      _buildHeader(isMobile),
-                      const SizedBox(height: 20),
-                      _buildSearchBar(isMobile),
-                      const SizedBox(height: 16),
-                      _buildTableCard(isMobile),
-                    ]),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          _buildCopyright(),
-        ],
+            _buildCopyright(),
+          ],
+        ),
       ),
     );
   }
@@ -188,7 +257,8 @@ void _openEditMantenimientoModal(MantenimientoModel mantenimiento) {
           children: List.generate(
             3,
             (_) => Container(
-              width: 4, height: 4,
+              width: 4,
+              height: 4,
               decoration: const BoxDecoration(
                 color: Colors.black87,
                 shape: BoxShape.circle,
@@ -289,12 +359,20 @@ void _openEditMantenimientoModal(MantenimientoModel mantenimiento) {
               decoration: InputDecoration(
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 20),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: Colors.grey,
+                  size: 20,
+                ),
                 hintText: 'Buscar por vehículo, accesorio, estado...',
                 hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
+                        icon: const Icon(
+                          Icons.clear,
+                          size: 18,
+                          color: Colors.grey,
+                        ),
                         onPressed: () {
                           _searchController.clear();
                           _onSearchChanged('');
@@ -305,89 +383,88 @@ void _openEditMantenimientoModal(MantenimientoModel mantenimiento) {
             ),
           ),
         ),
-        if (isMobile) ...[
-          const SizedBox(width: 10),
-          _buildAddButton(isMobile),
-        ],
+        if (isMobile) ...[const SizedBox(width: 10), _buildAddButton(isMobile)],
       ],
     );
   }
 
   // ── Card contenedor de tabla + paginación ────────────────────────────────
 
-Widget _buildTableCard(bool isMobile) {
-  return BlocBuilder<MantenimientoBloc, MantenimientoState>(
-    builder: (context, state) {
-
-      // Actualizar cache solo cuando llega lista nueva
-      if (state is MantenimientoSuccess) {
-        _cachedMantenimientos = state.mantenimientos;
-      }
-
-      // Skeleton solo si carga Y no hay datos previos
-      if (state is MantenimientoLoading && _cachedMantenimientos == null) {
-        return _buildSkeletonLoader();
-      }
-
-      // Error solo si no hay datos previos
-      if (state is MantenimientoError && _cachedMantenimientos == null) {
-        return _buildErrorWidget(state.message);
-      }
-
-      // Grid visible si hay cache — sobrevive a cualquier estado del bloc
-      if (_cachedMantenimientos != null) {
-        final filtered   = _applySearch(_cachedMantenimientos!);
-        final pageItems  = _getPageItems(filtered);
-        final totalPages = _totalPages(filtered.length);
-
-        if (_currentPage > totalPages && totalPages > 0) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            setState(() => _currentPage = 1);
-          });
+  Widget _buildTableCard(bool isMobile) {
+    return BlocBuilder<MantenimientoBloc, MantenimientoState>(
+      builder: (context, state) {
+        // Actualizar cache solo cuando llega lista nueva
+        if (state is MantenimientoSuccess) {
+          _cachedMantenimientos = state.mantenimientos;
         }
 
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color:     Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset:    const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildCardHeader(filtered.length, _cachedMantenimientos!.length),
-              const Divider(height: 1),
-              filtered.isEmpty
-                  ? _buildEmptyState()
-                  : _buildResponsiveTable(pageItems, isMobile),
-              const Divider(height: 1),
-              if (filtered.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: PaginationWidget(
-                    currentPage:           _currentPage,
-                    totalPages:            totalPages,
-                    totalItems:            filtered.length,
-                    itemsPerPage:          _itemsPerPage,
-                    onPageChanged:         _onPageChanged,
-                    onItemsPerPageChanged: _onItemsPerPageChanged,
-                  ),
-                ),
-            ],
-          ),
-        );
-      }
+        // Skeleton loader ya no se usa, usamos el dialog
+        // if (state is MantenimientoLoading && _cachedMantenimientos == null) {
+        //   return _buildSkeletonLoader();
+        // }
 
-      return const SizedBox.shrink();
-    },
-  );
-}
+        // Error solo si no hay datos previos
+        if (state is MantenimientoError && _cachedMantenimientos == null) {
+          return _buildErrorWidget(state.message);
+        }
+
+        // Grid visible si hay cache — sobrevive a cualquier estado del bloc
+        if (_cachedMantenimientos != null) {
+          final filtered = _applySearch(_cachedMantenimientos!);
+          final pageItems = _getPageItems(filtered);
+          final totalPages = _totalPages(filtered.length);
+
+          if (_currentPage > totalPages && totalPages > 0) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              setState(() => _currentPage = 1);
+            });
+          }
+
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildCardHeader(
+                  filtered.length,
+                  _cachedMantenimientos!.length,
+                ),
+                const Divider(height: 1),
+                filtered.isEmpty
+                    ? _buildEmptyState()
+                    : _buildResponsiveTable(pageItems, isMobile),
+                const Divider(height: 1),
+                if (filtered.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: PaginationWidget(
+                      currentPage: _currentPage,
+                      totalPages: totalPages,
+                      totalItems: filtered.length,
+                      itemsPerPage: _itemsPerPage,
+                      onPageChanged: _onPageChanged,
+                      onItemsPerPageChanged: _onItemsPerPageChanged,
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
+  }
 
   Widget _buildCardHeader(int filteredCount, int totalCount) {
     return Padding(
@@ -425,12 +502,20 @@ Widget _buildTableCard(bool isMobile) {
           InkWell(
             onTap: () {
               context.read<MantenimientoBloc>().add(LoadMantenimientosEvent());
-              setState(() { _currentPage = 1; _searchQuery = ''; _searchController.clear(); });
+              setState(() {
+                _currentPage = 1;
+                _searchQuery = '';
+                _searchController.clear();
+              });
             },
             borderRadius: BorderRadius.circular(6),
             child: Padding(
               padding: const EdgeInsets.all(6),
-              child: Icon(Icons.refresh_rounded, size: 18, color: Colors.grey[500]),
+              child: Icon(
+                Icons.refresh_rounded,
+                size: 18,
+                color: Colors.grey[500],
+              ),
             ),
           ),
         ],
@@ -528,12 +613,20 @@ Widget _buildTableCard(bool isMobile) {
               color: Colors.red[50],
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.error_outline_rounded, color: Colors.red, size: 36),
+            child: const Icon(
+              Icons.error_outline_rounded,
+              color: Colors.red,
+              size: 36,
+            ),
           ),
           const SizedBox(height: 16),
           const Text(
             'Error al cargar mantenimientos',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.red),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.red,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -543,13 +636,17 @@ Widget _buildTableCard(bool isMobile) {
           ),
           const SizedBox(height: 20),
           ElevatedButton.icon(
-            onPressed: () => context.read<MantenimientoBloc>().add(LoadMantenimientosEvent()),
+            onPressed: () => context.read<MantenimientoBloc>().add(
+              LoadMantenimientosEvent(),
+            ),
             icon: const Icon(Icons.refresh),
             label: const Text('Reintentar'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF303366),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
         ],
@@ -628,21 +725,23 @@ Widget _buildTableCard(bool isMobile) {
                     : (isMobile ? 680.0 : 900.0),
               ),
               child: DataTable(
-            headingRowHeight: 46,
-            dataRowMinHeight: 52,
-            dataRowMaxHeight: 56,
-            horizontalMargin: 16,
-            columnSpacing: isMobile ? 12 : 20,
-            dividerThickness: 1,
-            headingRowColor: WidgetStateProperty.all(const Color(0xFF303366)),
-            dataRowColor: WidgetStateProperty.resolveWith((states) {
-              return Colors.transparent;
-            }),
-            columns: _buildColumns(isMobile),
-            rows: items.asMap().entries.map((entry) {
-              return _buildDataRow(entry.value, entry.key.isEven);
-            }).toList(),
-          ),
+                headingRowHeight: 46,
+                dataRowMinHeight: 52,
+                dataRowMaxHeight: 56,
+                horizontalMargin: 16,
+                columnSpacing: isMobile ? 12 : 20,
+                dividerThickness: 1,
+                headingRowColor: WidgetStateProperty.all(
+                  const Color(0xFF303366),
+                ),
+                dataRowColor: WidgetStateProperty.resolveWith((states) {
+                  return Colors.transparent;
+                }),
+                columns: _buildColumns(isMobile),
+                rows: items.asMap().entries.map((entry) {
+                  return _buildDataRow(entry.value, entry.key.isEven);
+                }).toList(),
+              ),
             ),
           ),
         );
@@ -665,51 +764,72 @@ Widget _buildTableCard(bool isMobile) {
       ('Acciones', isMobile ? 60.0 : 80.0),
     ];
 
-    return columns.map((col) => DataColumn(
-      label: SizedBox(
-        width: col.$2,
-        child: Text(col.$1, style: style),
-      ),
-    )).toList();
+    return columns
+        .map(
+          (col) => DataColumn(
+            label: SizedBox(
+              width: col.$2,
+              child: Text(col.$1, style: style),
+            ),
+          ),
+        )
+        .toList();
   }
 
   DataRow _buildDataRow(MantenimientoModel m, bool isEven) {
     return DataRow(
-      color: WidgetStateProperty.all(isEven ? const Color(0xFFF7F8FC) : Colors.white),
+      color: WidgetStateProperty.all(
+        isEven ? const Color(0xFFF7F8FC) : Colors.white,
+      ),
       cells: [
-        DataCell(Text(
-          m.tipoAccesorio,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-          overflow: TextOverflow.ellipsis,
-        )),
-        DataCell(Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF303366).withOpacity(0.08),
-                borderRadius: BorderRadius.circular(4),
+        DataCell(
+          Text(
+            m.tipoAccesorio,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        DataCell(
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF303366).withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Icon(
+                  Icons.directions_car_outlined,
+                  size: 13,
+                  color: Color(0xFF303366),
+                ),
               ),
-              child: const Icon(Icons.directions_car_outlined, size: 13, color: Color(0xFF303366)),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              m.vehiculoPlaca,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-          ],
-        )),
-        DataCell(Text(
-          m.diccionarioMantenimiento,
-          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-          overflow: TextOverflow.ellipsis,
-        )),
+              const SizedBox(width: 6),
+              Text(
+                m.vehiculoPlaca,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        DataCell(
+          Text(
+            m.diccionarioMantenimiento,
+            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
         DataCell(_buildEstadoBadge(m.estado)),
-        DataCell(Text(
-          _formatFecha(m.fechaRegistro),
-          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-        )),
+        DataCell(
+          Text(
+            _formatFecha(m.fechaRegistro),
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          ),
+        ),
         DataCell(_buildEditButton(m)),
       ],
     );
@@ -727,7 +847,8 @@ Widget _buildTableCard(bool isMobile) {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 5, height: 5,
+            width: 5,
+            height: 5,
             decoration: BoxDecoration(
               color: config['dot'] as Color,
               shape: BoxShape.circle,
@@ -821,7 +942,7 @@ Widget _buildTableCard(bool isMobile) {
       ),
       child: Center(
         child: Text(
-          '© 2025 JHT Transport Company · Todos los derechos reservados.',
+          '© 2026 JHT Transport Company · Todos los derechos reservados.',
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.grey[500], fontSize: 11),
         ),

@@ -32,6 +32,8 @@ class MantenimientoRepository {
         return MantenimientoResponse.fromJson(json.decode(response.body));
       } else if (response.statusCode == 401) {
         throw Exception('Token expirado o inválido. Por favor, inicie sesión nuevamente.');
+      } else if (response.statusCode == 403) {
+        throw Exception('Acceso denegado (403). Su rol de usuario no tiene permisos en el servidor para ver los mantenimientos.');
       } else {
         throw Exception('Error al obtener mantenimientos: ${response.statusCode}');
       }
@@ -68,6 +70,8 @@ class MantenimientoRepository {
         throw Exception('No se encontró el mantenimiento solicitado');
       } else if (response.statusCode == 401) {
         throw Exception('Token expirado o inválido.');
+      } else if (response.statusCode == 403) {
+        throw Exception('Acceso denegado (403). Su rol no tiene permisos para ver este detalle.');
       } else {
         throw Exception('Error al obtener detalle: ${response.statusCode}');
       }
@@ -113,6 +117,8 @@ class MantenimientoRepository {
         throw Exception('No se encontró el registro de mantenimiento');
       } else if (response.statusCode == 401) {
         throw Exception('Token expirado o inválido.');
+      } else if (response.statusCode == 403) {
+        throw Exception('Acceso denegado (403). Su rol no tiene permisos para actualizar mantenimientos.');
       } else {
         throw Exception('Error al actualizar: ${response.statusCode} - ${response.body}');
       }
