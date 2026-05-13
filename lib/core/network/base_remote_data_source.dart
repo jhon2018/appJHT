@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import '../utils/token_service.dart';
+import 'package:app_jht_front/core/utils/app_logger.dart';
+import 'dart:async'; // Para Stopwatch
 
 abstract class BaseRemoteDataSource {
   // Métodos protegidos que todas las clases pueden usar
@@ -12,6 +14,9 @@ abstract class BaseRemoteDataSource {
     Map<String, dynamic> body, {
     Map<String, String>? additionalHeaders,
   }) async {
+    final stopwatch = Stopwatch()..start();
+    final sourceName = runtimeType.toString();
+    
     try {
       final String? token = await TokenService.getToken();
       
@@ -20,7 +25,9 @@ abstract class BaseRemoteDataSource {
       }
 
       final url = '${EnvironmentConfig.baseUrl}$endpoint';
-      print('🌐 POST: $url');
+      
+      // ✅ Log de petición
+      AppLogger.httpRequest('POST $endpoint', source: sourceName);
       
       final headers = {
         'Content-Type': 'application/json',
@@ -38,11 +45,23 @@ abstract class BaseRemoteDataSource {
         body: json.encode(body),
       );
 
-      print('📦 Status: ${response.statusCode}');
+      // ✅ Log de respuesta
+      AppLogger.httpResponse(
+        'POST $endpoint', 
+        statusCode: response.statusCode,
+        durationMs: stopwatch.elapsedMilliseconds,
+        source: sourceName
+      );
       
       return response;
-    } catch (e) {
-      print('❌ Error en protectedPost: $e');
+    } catch (e, stack) {
+      // ✅ Log de error crítico de red o parsing
+      AppLogger.error(
+        'Fallo en protectedPost ($endpoint)', 
+        error: e, 
+        stackTrace: stack,
+        source: sourceName
+      );
       rethrow;
     }
   }
@@ -52,6 +71,9 @@ abstract class BaseRemoteDataSource {
     Map<String, String>? queryParameters,
     Map<String, String>? additionalHeaders,
   }) async {
+    final stopwatch = Stopwatch()..start();
+    final sourceName = runtimeType.toString();
+
     try {
       final String? token = await TokenService.getToken();
       
@@ -61,13 +83,13 @@ abstract class BaseRemoteDataSource {
 
       String url = '${EnvironmentConfig.baseUrl}$endpoint';
       
-      // Agregar query parameters si existen
       if (queryParameters != null && queryParameters.isNotEmpty) {
         final uri = Uri.parse(url);
         url = uri.replace(queryParameters: queryParameters).toString();
       }
 
-      print('🌐 GET: $url');
+      // ✅ Log de petición
+      AppLogger.httpRequest('GET $endpoint', source: sourceName);
       
       final headers = {
         'Authorization': 'Bearer $token',
@@ -83,11 +105,120 @@ abstract class BaseRemoteDataSource {
         headers: headers,
       );
 
-      print('📦 Status: ${response.statusCode}');
+      // ✅ Log de respuesta
+      AppLogger.httpResponse(
+        'GET $endpoint', 
+        statusCode: response.statusCode,
+        durationMs: stopwatch.elapsedMilliseconds,
+        source: sourceName
+      );
       
       return response;
-    } catch (e) {
-      print('❌ Error en protectedGet: $e');
+    } catch (e, stack) {
+      // ✅ Log de error
+      AppLogger.error(
+        'Fallo en protectedGet ($endpoint)', 
+        error: e, 
+        stackTrace: stack,
+        source: sourceName
+      );
+      rethrow;
+    }
+  }
+
+  Future<http.Response> protectedPut(
+    String endpoint,
+    Map<String, dynamic> body, {
+    Map<String, String>? additionalHeaders,
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    final sourceName = runtimeType.toString();
+
+    try {
+      final String? token = await TokenService.getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación.');
+      }
+
+      final url = '${EnvironmentConfig.baseUrl}$endpoint';
+      AppLogger.httpRequest('PUT $endpoint', source: sourceName);
+
+      final headers = {
+        'Content-Type': 'application/json',
+        'accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+      if (additionalHeaders != null) headers.addAll(additionalHeaders);
+
+      final response = await http.put(
+        Uri.parse(url),
+        headers: headers,
+        body: json.encode(body),
+      );
+
+      AppLogger.httpResponse(
+        'PUT $endpoint',
+        statusCode: response.statusCode,
+        durationMs: stopwatch.elapsedMilliseconds,
+        source: sourceName,
+      );
+
+      return response;
+    } catch (e, stack) {
+      AppLogger.error(
+        'Fallo en protectedPut ($endpoint)',
+        error: e,
+        stackTrace: stack,
+        source: sourceName,
+      );
+      rethrow;
+    }
+  }
+
+  Future<http.Response> protectedDelete(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    Map<String, String>? additionalHeaders,
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    final sourceName = runtimeType.toString();
+
+    try {
+      final String? token = await TokenService.getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación.');
+      }
+
+      final url = '${EnvironmentConfig.baseUrl}$endpoint';
+      AppLogger.httpRequest('DELETE $endpoint', source: sourceName);
+
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+      if (additionalHeaders != null) headers.addAll(additionalHeaders);
+
+      final response = await http.delete(
+        Uri.parse(url),
+        headers: headers,
+        body: body != null ? json.encode(body) : null,
+      );
+
+      AppLogger.httpResponse(
+        'DELETE $endpoint',
+        statusCode: response.statusCode,
+        durationMs: stopwatch.elapsedMilliseconds,
+        source: sourceName,
+      );
+
+      return response;
+    } catch (e, stack) {
+      AppLogger.error(
+        'Fallo en protectedDelete ($endpoint)',
+        error: e,
+        stackTrace: stack,
+        source: sourceName,
+      );
       rethrow;
     }
   }

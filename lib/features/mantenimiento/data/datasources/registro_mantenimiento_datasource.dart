@@ -4,8 +4,7 @@ import 'dart:convert';
 import 'package:app_jht_front/features/mantenimiento/data/models/accesorio_vehiculo_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:app_jht_front/core/network/base_remote_data_source.dart';
-import 'package:app_jht_front/features/config/environment_config.dart';
-import 'package:app_jht_front/core/utils/token_service.dart';
+import 'package:app_jht_front/core/utils/app_logger.dart';
 import '../models/datos_iniciales_model.dart';
 import '../models/accesorio_models.dart';
 import '../services/photo_upload_service.dart';
@@ -223,7 +222,17 @@ class RegistroMantenimientoDataSourceImpl extends BaseRemoteDataSource
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return json['data'] as int? ?? json['bitacoraId'] as int? ?? 0;
+      final id = json['data'] as int? ?? json['bitacoraId'] as int? ?? 0;
+
+      // ✅ Auditoría de negocio
+      AppLogger.audit(
+        'Mantenimiento registrado con éxito. ID: $id',
+        action: 'CREATE',
+        entity: 'Mantenimiento',
+        source: 'RegistroMantenimientoDataSource',
+      );
+
+      return id;
     }
 
     try {

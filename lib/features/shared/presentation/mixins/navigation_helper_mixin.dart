@@ -36,6 +36,7 @@ import 'package:app_jht_front/features/vehicle/domain/usecases/registrar_vehicul
 
 import 'package:app_jht_front/features/admin/presentation/pages/admin_dashboard.dart';
 import 'package:app_jht_front/features/conductor/presentation/pages/conductor_dashboard.dart';
+import 'package:app_jht_front/features/shared/presentation/pages/help_page.dart';
 
 mixin NavigationHelperMixin<T extends StatefulWidget> on State<T> {
   void navigateToMenuPage(BuildContext context, String pageName, String userName, String userRole) {
@@ -134,7 +135,12 @@ mixin NavigationHelperMixin<T extends StatefulWidget> on State<T> {
         );
         break;
       case 'Ayuda':
-        AppNotification.warning(context, '$pageName — Página en desarrollo.');
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HelpPage(userName: userName, userRole: userRole),
+          ),
+        );
         break;
       default:
         AppNotification.warning(context, '$pageName — Página en desarrollo.');

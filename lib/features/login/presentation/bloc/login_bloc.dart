@@ -1,8 +1,8 @@
-// Ruta: lib/features/login/presentation/bloc/login_bloc.dart
-// Objetivo: Implementar el BLoC de inicio de sesión para manejar eventos y estados relacionados con el login y la autenticación.
+// lib/features/login/presentation/bloc/login_bloc.dart
 
 import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/features/config/environment_config.dart';
+import 'package:app_jht_front/core/utils/app_logger.dart'; // ✅ Importar Logger
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
@@ -21,15 +21,13 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     Emitter<LoginState> emit,
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
+    final stopwatch = Stopwatch()..start();
 
     try {
-      print('🔵 Iniciando login_bloc.dart para usuario: ${event.username}');
-      
-      // ✅ USANDO LA CONFIGURACIÓN GLOBAL
-      // Esto elimina el error de SocketException en el móvil al no usar la IP local
       final url = Uri.parse('${EnvironmentConfig.baseUrl}/api/Auth/login');
       
-      print('📡 Conectando a: $url');
+      // ✅ Log de auditoría: Intento de login
+      AppLogger.httpRequest('POST /api/Auth/login', source: 'LoginBloc', extraData: {'usuario': event.username});
 
       final response = await http.post(
         url,
@@ -42,16 +40,30 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         ),
       );
 
-      print('🟡 Response status: ${response.statusCode}');
-      print('🟡 Response body: ${response.body}');
+      // ✅ Log de respuesta HTTP
+      AppLogger.httpResponse(
+        '/api/Auth/login', 
+        statusCode: response.statusCode, 
+        durationMs: stopwatch.elapsedMilliseconds, 
+        source: 'LoginBloc'
+      );
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         final String token = responseData['token']; 
+        
         await TokenService.saveToken(token); 
         await TokenService.saveUserData(
           responseData['usuario'], 
           responseData['cargo']
+        );
+
+        // ✅ IMPORTANTÍSIMO: Sincronizar el logger con el nuevo usuario
+        AppLogger.setUser(responseData['usuario']);
+        
+        AppLogger.info(
+          'Login exitoso: ${responseData['usuario']} (${responseData['cargo']})', 
+          source: 'LoginBloc'
         );
 
         emit(
@@ -63,24 +75,28 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
             usuario: responseData['usuario'],
           ),
         );
-
-        print('✅ Mensaje Api: ${responseData['mensaje']}');
-        print('✅ Cargo: ${responseData['cargo']}');  
-        print('✅ Usuario: ${responseData['usuario']}');
       } else {
         final errorData = json.decode(response.body);
         final errorMessage = _getErrorMessage(errorData);
+        
+        AppLogger.warning(
+          'Intento de login fallido para "${event.username}": $errorMessage', 
+          source: 'LoginBloc'
+        );
+        
         emit(state.copyWith(isLoading: false, error: errorMessage));
       }
-    } catch (e) {
-      print('❌ ERROR COMPLETO login_bloc.dart : $e');
-      print('❌ TIPO DE ERROR login_bloc.dart: ${e.runtimeType}');
+    } catch (e, stack) {
+      AppLogger.error(
+        'Excepción durante el login para "${event.username}"', 
+        error: e, 
+        stackTrace: stack, 
+        source: 'LoginBloc'
+      );
 
       String errorMsg = 'Error de conexión';
       if (e.toString().contains('SocketException')) {
         errorMsg = 'No hay conexión a internet o el servidor no responde';
-      } else if (e.toString().contains('Failed host lookup')) {
-        errorMsg = 'No se puede encontrar el servidor. Verifica tu conexión';
       }
 
       emit(state.copyWith(isLoading: false, error: errorMsg));
@@ -88,30 +104,17 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   }
 
   String _getErrorMessage(Map<String, dynamic> errorData) {
-    print('🔍 Error data: $errorData');
-
-    if (errorData['mensaje'] != null) {
-      return errorData['mensaje'].toString();
-    }
-
+    if (errorData['mensaje'] != null) return errorData['mensaje'].toString();
     if (errorData['errors'] != null) {
       final errors = errorData['errors'] as Map<String, dynamic>;
       if (errors.isNotEmpty) {
         final firstKey = errors.keys.first;
         final firstError = errors[firstKey];
-
-        if (firstError is List && firstError.isNotEmpty) {
-          return firstError.first.toString();
-        } else if (firstError is String) {
-          return firstError;
-        }
+        if (firstError is List && firstError.isNotEmpty) return firstError.first.toString();
+        if (firstError is String) return firstError;
       }
     }
-
-    if (errorData['title'] != null) {
-      return errorData['title'].toString();
-    }
-
+    if (errorData['title'] != null) return errorData['title'].toString();
     return 'Error en la solicitud';
   }
 }

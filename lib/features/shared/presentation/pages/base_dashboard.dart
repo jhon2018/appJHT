@@ -1,4 +1,5 @@
 // lib/features/shared/presentation/pages/base_dashboard.dart
+import 'dart:ui';
 import 'package:app_jht_front/core/network/http_client.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/features/accessory/presentation/pages/accessory_page.dart';
@@ -125,24 +126,42 @@ class _BaseDashboardState extends State<BaseDashboard>
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnimation.value,
-          child: Container(
-            color: Colors.white,
-            child: Column(
-              children: [
-                _buildHeader(isDesktopDevice),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.all(isDesktopDevice ? 24 : 16),
-                    child: widget.contentBuilder != null
-                        ? widget.contentBuilder!(context, isDesktopDevice) // ← Usa el contentBuilder si existe
-                        : _buildDefaultContent(), // ← Muestra el dashboard genérico si no hay contentBuilder
+        return Stack(
+          children: [
+            Transform.scale(
+              scale: _scaleAnimation.value,
+              child: Container(
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    _buildHeader(isDesktopDevice),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: EdgeInsets.all(isDesktopDevice ? 24 : 16),
+                        child: widget.contentBuilder != null
+                            ? widget.contentBuilder!(context, isDesktopDevice)
+                            : _buildDefaultContent(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Filtro de desenfoque cuando el menú está abierto (Móvil)
+            if (_isMenuOpen && !isDesktopDevice)
+              Positioned.fill(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: 5 * _animationController.value,
+                    sigmaY: 5 * _animationController.value,
+                  ),
+                  child: Container(
+                    color: Colors.black.withOpacity(0.1 * _animationController.value),
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+          ],
         );
       },
     );
@@ -153,25 +172,46 @@ class _BaseDashboardState extends State<BaseDashboard>
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: isDesktopDevice ? 32 : 20,
-        vertical: isDesktopDevice ? 20 : 16,
+        vertical: isDesktopDevice ? 16 : 12,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey[300]!, width: 1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border(bottom: BorderSide(color: Colors.grey[100]!, width: 1)),
       ),
       child: SafeArea(
         bottom: false,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'JHT TRANSPORT\nCOMPANY',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF303366),
-                letterSpacing: 1.0,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'JHT TRANSPORT',
+                  style: TextStyle(
+                    fontSize: isDesktopDevice ? 20 : 16,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF303366),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                Text(
+                  'COMPANY',
+                  style: TextStyle(
+                    fontSize: isDesktopDevice ? 12 : 10,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF4834D4),
+                    letterSpacing: 2.0,
+                  ),
+                ),
+              ],
             ),
             Row(
               children: [
@@ -180,46 +220,33 @@ class _BaseDashboardState extends State<BaseDashboard>
                     'Bienvenido, ${widget.userName}',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
                     ),
                   ),
                   const SizedBox(width: 20),
                 ],
-                InkWell(
-                  onTap: _toggleMenu,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 4,
-                          decoration: const BoxDecoration(
-                            color: Colors.black87,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        Container(
-                          width: 4,
-                          height: 4,
-                          decoration: const BoxDecoration(
-                            color: Colors.black87,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        Container(
-                          width: 4,
-                          height: 4,
-                          decoration: const BoxDecoration(
-                            color: Colors.black87,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
+                // Botón de Menú Estilizado
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _toggleMenu,
+                    borderRadius: BorderRadius.circular(12),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: _isMenuOpen 
+                            ? const Color(0xFF303366) 
+                            : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        _isMenuOpen ? Icons.close_rounded : Icons.menu_rounded,
+                        color: _isMenuOpen ? Colors.white : const Color(0xFF303366),
+                        size: 24,
+                      ),
                     ),
                   ),
                 ),
