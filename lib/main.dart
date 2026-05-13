@@ -1,10 +1,11 @@
 // Ruta: lib/main.dart
 
 import 'dart:async';
+import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 // Pages
@@ -15,25 +16,64 @@ import 'package:app_jht_front/features/home/presentation/pages/home_page.dart';
 // Blocs
 import 'package:app_jht_front/features/login/presentation/bloc/login_bloc.dart';
 
-// Logger
-import 'core/services/remote_logger_service.dart';
+// Auditoría
+import 'package:app_jht_front/core/utils/app_logger.dart';
 
 void main() {
-  final logger = RemoteLoggerService.instance;
-
-  // ✅ 1. Inicialización temprana de auditoría
-  _setupGlobalErrorHandling(logger);
-
-  // ✅ 2. Ejecutar app dentro del Zone (CRÍTICO)
+  // ── FIX: ensureInitialized DENTRO de runZonedGuarded ─────────────────────
+  // Si se llama FUERA, Flutter crea los bindings en el zone raíz.
+  // Luego runApp corre en el zone de runZonedGuarded → "Zone mismatch".
+  // La solución es que ambos (ensureInitialized y runApp) corran en el mismo zone.
   runZonedGuarded(
     () {
-      // 📊 Log de arranque (clave para auditoría en Render)
-      logger.info(
-        '🚀 App started',
-        source: 'app_lifecycle',
-        metadata: <String, dynamic>{
-          'env': kReleaseMode ? 'release' : 'debug',
-          'timestamp': DateTime.now().toIso8601String(),
+      // 1. Inicializar bindings dentro del zone correcto
+      WidgetsFlutterBinding.ensureInitialized();
+
+      // 2. Captura de errores del framework Flutter
+      FlutterError.onError = (FlutterErrorDetails details) {
+        // Ignorar el "Zone mismatch" que generábamos nosotros mismos
+        // para no llenar el log con falsos críticos
+        final msg = details.exceptionAsString();
+        if (msg.contains('Zone mismatch')) return;
+
+        try {
+          AppLogger.critical(
+            'Flutter Error — ${details.exceptionAsString()}',
+            source: 'FlutterError',
+            error: details.exception,
+            stackTrace: details.stack,
+            metadata: {
+              'library': details.library ?? 'desconocida',
+              'context': details.context?.toDescription() ?? '',
+              'silent':  details.silent,
+            },
+          );
+        } catch (_) {}
+
+        FlutterError.presentError(details);
+      };
+
+      // 3. Captura de errores de plataforma / isolates
+      PlatformDispatcher.instance.onError = (error, stack) {
+        try {
+          AppLogger.critical(
+            'Platform Error — $error',
+            source: 'PlatformDispatcher',
+            error: error,
+            stackTrace: stack,
+            metadata: {'type': error.runtimeType.toString()},
+          );
+        } catch (_) {}
+        return true;
+      };
+
+      // 4. Log de arranque
+      AppLogger.info(
+        'App JHT iniciada',
+        source: 'main',
+        metadata: {
+          'mode':     kReleaseMode ? 'release' : kProfileMode ? 'profile' : 'debug',
+          'platform': kIsWeb ? 'web' : 'mobile',
         },
       );
 
@@ -41,52 +81,31 @@ void main() {
     },
     (error, stackTrace) {
       try {
-        logger.error(
-          '💥 Uncaught Async Error',
-          source: 'zone_guard',
+        AppLogger.critical(
+          'Error async no controlado — $error',
+          source: 'ZoneGuard',
           error: error,
           stackTrace: stackTrace,
+          metadata: {'type': error.runtimeType.toString()},
         );
       } catch (_) {}
     },
   );
 }
 
-/// 🔐 Manejo global de errores (seguro)
-void _setupGlobalErrorHandling(RemoteLoggerService logger) {
-  FlutterError.onError = (FlutterErrorDetails details) {
-    try {
-      logger.error(
-        '💥 Flutter Error',
-        source: 'flutter_framework',
-        error: details.exception,
-        stackTrace: details.stack,
-        metadata: <String, dynamic>{
-          'library': details.library?.toString(),
-          'context': details.context?.toString(),
-        },
-      );
-    } catch (_) {}
-
-    // 🔁 Mantiene comportamiento original (NO romper flujo)
-    FlutterError.presentError(details);
-  };
-}
-
+// ─────────────────────────────────────────────────────────────────────────────
+// MyApp
+// ─────────────────────────────────────────────────────────────────────────────
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final logger = RemoteLoggerService.instance;
-
-    // ✅ Usuario por defecto (auditoría)
-    logger.setUser('anonimo');
+    AppLogger.setUser('anonimo');
 
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => LoginBloc()),
-        // ... tus demás blocs
       ],
       child: MaterialApp(
         title: 'JHT Transport',
@@ -98,7 +117,6 @@ class MyApp extends StatelessWidget {
         ),
         debugShowCheckedModeBanner: false,
 
-        // ✅ LOCALIZACIÓN EN ESPAÑOL (DatePicker, TimePicker, etc.)
         locale: const Locale('es', 'ES'),
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
@@ -110,15 +128,14 @@ class MyApp extends StatelessWidget {
           Locale('en', 'US'),
         ],
 
-        // ✅ AUDITORÍA DE NAVEGACIÓN (MUY IMPORTANTE)
         navigatorObservers: [
-          _AppNavigatorObserver(logger),
+          _JhtNavigatorObserver(),
         ],
 
         routes: {
           '/welcome': (context) => const WelcomePage(),
-          '/login': (context) => LoginPage(),
-          '/home': (context) => HomePage(),
+          '/login':   (context) => LoginPage(),
+          '/home':    (context) => HomePage(),
         },
         initialRoute: '/welcome',
       ),
@@ -126,34 +143,66 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Observer de navegación mejorado
 //
-// 📊 OBSERVER DE NAVEGACIÓN (CLAVE PARA RENDER)
-//
-class _AppNavigatorObserver extends NavigatorObserver {
-  final RemoteLoggerService logger;
+// Mejoras vs versión anterior:
+// 1. Solo registra rutas con NOMBRE — los modales y diálogos anónimos
+//    se ignoran para no saturar el log con "(sin nombre)".
+// 2. Anti-spam: no repite el mismo par from→to dentro de 500ms.
+// 3. Extrae el nombre del widget cuando la ruta no tiene nombre registrado
+//    pero el route settings tiene argumento descriptivo.
+// ─────────────────────────────────────────────────────────────────────────────
+class _JhtNavigatorObserver extends NavigatorObserver {
 
-  _AppNavigatorObserver(this.logger);
+  // Último log de navegación — evita duplicados en ráfagas
+  String _lastNav  = '';
+  DateTime _lastTs = DateTime(2000);
 
   @override
-  void didPush(Route route, Route? previousRoute) {
-    _logNavigation('PUSH', route, previousRoute);
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    _log('PUSH', to: route, from: previousRoute);
   }
 
   @override
-  void didPop(Route route, Route? previousRoute) {
-    _logNavigation('POP', route, previousRoute);
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    _log('POP', to: previousRoute, from: route);
   }
 
-  void _logNavigation(String action, Route route, Route? previousRoute) {
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    _log('REPLACE', to: newRoute, from: oldRoute);
+  }
+
+  void _log(String action, {Route<dynamic>? to, Route<dynamic>? from}) {
     try {
-      logger.info(
-        '🧭 Navigation $action',
-        source: 'navigation',
-        metadata: <String, dynamic>{
-          'to': route.settings.name,
-          'from': previousRoute?.settings.name,
-        },
-      );
+      final toName   = _routeName(to);
+      final fromName = _routeName(from);
+
+      // ── Regla 1: ignorar si ambos son anónimos (modales, diálogos)
+      if (toName == null && fromName == null) return;
+
+      // ── Regla 2: usar el nombre conocido; si uno es null, usar etiqueta
+      final toLabel   = toName   ?? '[modal/dialog]';
+      final fromLabel = fromName ?? '[modal/dialog]';
+
+      // ── Regla 3: anti-spam — ignorar si es el mismo evento en < 500ms
+      final key = '$action|$fromLabel→$toLabel';
+      final now = DateTime.now();
+      if (key == _lastNav && now.difference(_lastTs).inMilliseconds < 500) return;
+      _lastNav = key;
+      _lastTs  = now;
+
+      AppLogger.navigation(fromLabel, toLabel, usuario: action);
     } catch (_) {}
+  }
+
+  /// Devuelve el nombre de la ruta o null si es anónima.
+  String? _routeName(Route<dynamic>? route) {
+    if (route == null) return null;
+    final name = route.settings.name;
+    // Excluir rutas sin nombre y la raíz interna de Flutter
+    if (name == null || name.isEmpty || name == 'flutter') return null;
+    return name;
   }
 }

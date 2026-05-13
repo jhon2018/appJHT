@@ -111,9 +111,9 @@ class _EditAccessoryModalState extends State<EditAccessoryModal> {
     _vehiculoId       = d.vehiculoId;
     _estado           = _normalizarEstado(d.estado.isNotEmpty ? d.estado : 'Activo');
 
-    // _tipoId = null intencionalmente.
-    // Se re-asigna en el listener cuando TiposAccesorioLoaded trae los items
-    // y el tipoId original existe entre ellos.
+    // Asignar los valores iniciales para mostrar la información actual
+    _segmentoId = -1; // -1 representará "Segmento actual"
+    _tipoId     = d.tipoId;
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _cargarSegmentos());
   }
@@ -262,9 +262,11 @@ class _EditAccessoryModalState extends State<EditAccessoryModal> {
           setState(() {
             _tipos        = state.tiposAccesorio;
             _loadingTipos = false;
-            // Pre-selecciona el tipo original si existe en la lista cargada
-            final existe = _tipos.any((t) => t.id == widget.detalle.tipoId);
-            _tipoId = existe ? widget.detalle.tipoId : null;
+            // Solo intentamos preseleccionar si no estamos en el "Segmento actual"
+            if (_segmentoId != -1) {
+              final existe = _tipos.any((t) => t.id == widget.detalle.tipoId);
+              _tipoId = existe ? widget.detalle.tipoId : null;
+            }
           });
         }
         if (state is AccesorioActualizado) {
@@ -548,7 +550,20 @@ class _EditAccessoryModalState extends State<EditAccessoryModal> {
         validator: (v) => v == null ? 'Selecciona un vehículo' : null,
       );
 
-  Widget _segmentoDropdown() => DropdownButtonFormField<int>(
+  Widget _segmentoDropdown() {
+    final List<DropdownMenuItem<int>> items = [
+      // Opción ficticia para mantener el estado original
+      const DropdownMenuItem(
+        value: -1,
+        child: Text('Mantener actual (No listado)', style: TextStyle(fontSize: 13, color: _kPrimaryLight, fontWeight: FontWeight.bold)),
+      ),
+      ..._segmentos.map((s) => DropdownMenuItem(
+            value: s.id,
+            child: Text(s.nombre, style: const TextStyle(fontSize: 13)),
+          ))
+    ];
+
+    return DropdownButtonFormField<int>(
         value: _segmentoId,
         decoration: _deco('Segmento *',
             suffix: _loadingSegmentos
@@ -565,26 +580,50 @@ class _EditAccessoryModalState extends State<EditAccessoryModal> {
           _loadingSegmentos ? 'Cargando segmentos…' : 'Selecciona segmento',
           style: const TextStyle(color: _kTextDisabled, fontSize: 13),
         ),
-        items: _segmentos
-            .map((s) => DropdownMenuItem(
-                value: s.id,
-                child: Text(s.nombre,
-                    style: const TextStyle(fontSize: 13))))
-            .toList(),
+        items: items,
         onChanged: _loadingSegmentos
             ? null
             : (val) {
                 if (val != null) {
-                  setState(() => _segmentoId = val);
-                  _cargarTiposPorSegmento(val);
+                  setState(() {
+                    _segmentoId = val;
+                    if (val == -1) {
+                      // Si vuelve al segmento actual, restaura el tipo original
+                      _tipoId = widget.detalle.tipoId;
+                      _tipos = [];
+                    }
+                  });
+                  if (val != -1) {
+                    _cargarTiposPorSegmento(val);
+                  }
                 }
               },
         validator: (v) => v == null ? 'Selecciona un segmento' : null,
       );
+  }
 
   Widget _tipoDropdown() {
-    // Garantiza que value exista en items o sea null — nunca un id huérfano
-    final valorSeguro = _tipos.any((t) => t.id == _tipoId) ? _tipoId : null;
+    List<DropdownMenuItem<int>> items = [];
+    int? valorSeguro;
+
+    if (_segmentoId == -1) {
+      // Si estamos en el segmento original, mostramos el tipo original
+      items = [
+        DropdownMenuItem(
+          value: widget.detalle.tipoId,
+          child: Text(widget.detalle.tipoNombre, style: const TextStyle(fontSize: 13, color: _kPrimaryLight, fontWeight: FontWeight.bold)),
+        )
+      ];
+      valorSeguro = widget.detalle.tipoId;
+    } else {
+      // Garantiza que value exista en items o sea null — nunca un id huérfano
+      valorSeguro = _tipos.any((t) => t.id == _tipoId) ? _tipoId : null;
+      items = _tipos
+          .map((t) => DropdownMenuItem(
+              value: t.id,
+              child: Text(t.nombre, style: const TextStyle(fontSize: 13))))
+          .toList();
+    }
 
     return DropdownButtonFormField<int>(
       value: valorSeguro,
@@ -605,12 +644,8 @@ class _EditAccessoryModalState extends State<EditAccessoryModal> {
             : (_loadingTipos ? 'Cargando tipos…' : 'Selecciona tipo'),
         style: const TextStyle(color: _kTextDisabled, fontSize: 13),
       ),
-      items: _tipos
-          .map((t) => DropdownMenuItem(
-              value: t.id,
-              child: Text(t.nombre, style: const TextStyle(fontSize: 13))))
-          .toList(),
-      onChanged: (_loadingTipos || _tipos.isEmpty)
+      items: items,
+      onChanged: (_loadingTipos || items.isEmpty || _segmentoId == -1)
           ? null
           : (val) => setState(() => _tipoId = val),
       validator: (v) => v == null ? 'Selecciona el tipo' : null,

@@ -1,22 +1,19 @@
 // lib/features/accessory/data/datasources/accessory_remote_data_source.dart
-// Descripción: Implementación del datasource remoto para accesorios.
-// CAMBIOS REQF08: Se agrega actualizarAccesorio() a la interfaz e implementación.
 
 import 'package:app_jht_front/features/accessory/data/models/accesorio_detalle_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/accesorio_actualizar_dto.dart';
 import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_registro_dto.dart';
-import 'package:app_jht_front/features/config/environment_config.dart';
 import '../models/accesorio_registro_dto.dart';
 import '../models/accesorio_registro_response.dart';
 
 import 'dart:convert';
 import 'package:app_jht_front/core/network/http_client.dart';
-import 'package:app_jht_front/core/utils/token_service.dart';
+import 'package:app_jht_front/core/network/base_remote_data_source.dart';
+import 'package:app_jht_front/core/utils/app_logger.dart';
 import 'package:app_jht_front/features/accessory/data/models/segmento_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/tipo_accesorio_model.dart';
 import 'package:app_jht_front/features/accessory/data/models/vehiculo_model.dart';
-import 'package:http/http.dart' as http;
 
 // INTERFAZ ABSTRACTA
 abstract class AccessoryRemoteDataSource {
@@ -24,189 +21,80 @@ abstract class AccessoryRemoteDataSource {
   Future<List<TipoAccesorioModel>> listarTiposAccesorioPorSegmento(int segmentoId);
   Future<List<VehiculoModel>> listarVehiculos();
   Future<AccesorioRegistroResponse> insertarAccesorio(AccesorioRegistroDto dto);
-  Future registrarTipoAccesorio(TipoAccesorioRegistroDto dto) async {}
+  Future<Map<String, dynamic>> registrarTipoAccesorio(TipoAccesorioRegistroDto dto);
   Future<List<AccesorioModel>> listarAccesoriosPorVehiculo(int vehId);
   Future<AccesorioModel> obtenerDetalleAccesorio(int accId);
   Future<AccesorioDetalleModel> getAccesorioDetalle(int accId);
-  // REQF08 - API20
   Future<void> actualizarAccesorio(AccesorioActualizarDto dto);
 }
 
 // IMPLEMENTACIÓN
-class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
+class AccessoryRemoteDataSourceImpl extends BaseRemoteDataSource 
+    implements AccessoryRemoteDataSource {
+  
   final HttpClient httpClient;
-
   AccessoryRemoteDataSourceImpl({required this.httpClient});
 
   @override
   Future<AccesorioRegistroResponse> insertarAccesorio(AccesorioRegistroDto dto) async {
-    try {
-      print('🔵 Iniciando registro de accesorio');
+    final response = await protectedPost('/api/general/insertar-accesorio', dto.toJson());
 
-      final String? token = await TokenService.getToken();
-      if (token == null || token.isEmpty) {
-        throw Exception('No hay token de autenticación.');
-      }
-
-      print('📡 Enviando DTO: ${dto.toJson()}');
-
-      final response = await http.post(
-        Uri.parse('${EnvironmentConfig.baseUrl}/api/general/insertar-accesorio'),
-        headers: {
-          'Content-Type': 'application/json',
-          'accept': '*/*',
-          'Authorization': 'Bearer $token',
-        },
-        body: json.encode(dto.toJson()),
-      );
-
-      print('🟡 Response status: ${response.statusCode}');
-      print('🟡 Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        return AccesorioRegistroResponse.fromJson(responseData);
-      } else if (response.statusCode == 401) {
-        throw Exception('No autorizado. Token inválido o expirado.');
-      } else {
-        throw Exception('Error al registrar accesorio: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('❌ ERROR en insertarAccesorio: $e');
-      rethrow;
+    if (response.statusCode == 200) {
+      // dto.marca es el campo correcto en AccesorioRegistroDto
+      AppLogger.audit('Accesorio registrado: ${dto.marca}', action: 'CREATE', entity: 'Accesorio', source: 'AccessoryRemoteDataSource');
+      return AccesorioRegistroResponse.fromJson(json.decode(response.body));
+    } else {
+      throw Exception(getErrorMessage(json.decode(response.body)));
     }
   }
 
   @override
   Future<List<SegmentoModel>> listarSegmentos() async {
-    try {
-      print('🔵 Iniciando carga de segmentos');
+    final response = await protectedGet('/api/admin/listar_segmento_accesorio');
 
-      final String? token = await TokenService.getToken();
-      if (token == null || token.isEmpty) {
-        throw Exception('No hay token de autenticación.');
-      }
-
-      final response = await http.get(
-        Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/listar_segmento_accesorio'),
-        headers: {
-          'Content-Type': 'application/json',
-          'accept': '*/*',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      print('🟡 Response status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        final List<dynamic> data = responseData['data'];
-        return data.map((json) => SegmentoModel.fromJson(json)).toList();
-      } else if (response.statusCode == 401) {
-        throw Exception('No autorizado. Token inválido o expirado.');
-      } else {
-        throw Exception('Error al cargar segmentos: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('❌ ERROR en listarSegmentos: $e');
-      rethrow;
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body)['data'];
+      return data.map((json) => SegmentoModel.fromJson(json)).toList();
+    } else {
+      throw Exception('Error al cargar segmentos: ${response.statusCode}');
     }
   }
 
   @override
   Future<List<TipoAccesorioModel>> listarTiposAccesorioPorSegmento(int segmentoId) async {
-    try {
-      print('🔵 Iniciando carga de tipos accesorio para segmento: $segmentoId');
+    final response = await protectedGet('/api/general/listar-tipos-accesorio-por-segmento/$segmentoId');
 
-      final String? token = await TokenService.getToken();
-      if (token == null || token.isEmpty) {
-        throw Exception('No hay token de autenticación.');
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body)['data'];
+      if (data.isNotEmpty) {
+        final List<dynamic> tiposData = data[0]['tipos'];
+        return tiposData.map((json) => TipoAccesorioModel.fromJson(json)).toList();
       }
-
-      final response = await http.get(
-        Uri.parse('${EnvironmentConfig.baseUrl}/api/general/listar-tipos-accesorio-por-segmento/$segmentoId'),
-        headers: {
-          'Content-Type': 'application/json',
-          'accept': '*/*',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      print('🟡 Response status: ${response.statusCode}');
-      print('🟡 Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        final List<dynamic> data = responseData['data'];
-
-        if (data.isNotEmpty) {
-          final Map<String, dynamic> firstItem = data[0];
-          final List<dynamic> tiposData = firstItem['tipos'];
-          print('🟡 Tipos encontrados: ${tiposData.length}');
-          return tiposData.map((json) => TipoAccesorioModel.fromJson(json)).toList();
-        } else {
-          print('🟡 No hay datos en la respuesta');
-          return [];
-        }
-      } else {
-        throw Exception('Error al cargar tipos de accesorio: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('❌ ERROR en listarTiposAccesorioPorSegmento: $e');
-      rethrow;
+      return [];
+    } else {
+      throw Exception('Error al cargar tipos de accesorio: ${response.statusCode}');
     }
   }
 
   @override
   Future<List<VehiculoModel>> listarVehiculos() async {
-    try {
-      print('🔵 Iniciando carga de vehículos');
+    final response = await protectedGet('/api/general/listar-vehiculos');
 
-      final String? token = await TokenService.getToken();
-      if (token == null || token.isEmpty) {
-        throw Exception('No hay token de autenticación.');
-      }
-
-      final response = await http.get(
-        Uri.parse('${EnvironmentConfig.baseUrl}/api/general/listar-vehiculos'),
-        headers: {
-          'Content-Type': 'application/json',
-          'accept': '*/*',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      print('🟡 Response status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        final List<dynamic> vehiculosData = responseData['data'][0]['vehiculos'];
-        return vehiculosData.map((json) => VehiculoModel.fromJson(json)).toList();
-      } else {
-        throw Exception('Error al cargar vehículos: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('❌ ERROR en listarVehiculos: $e');
-      rethrow;
+    if (response.statusCode == 200) {
+      final List<dynamic> vehiculosData = json.decode(response.body)['data'][0]['vehiculos'];
+      return vehiculosData.map((json) => VehiculoModel.fromJson(json)).toList();
+    } else {
+      throw Exception('Error al cargar vehículos: ${response.statusCode}');
     }
   }
 
   @override
   Future<Map<String, dynamic>> registrarTipoAccesorio(TipoAccesorioRegistroDto dto) async {
-    final token = await TokenService.getToken();
-    if (token == null || token.isEmpty) throw Exception('No hay token.');
-
-    final response = await http.post(
-      Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/registro_tipo_accesorio'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: json.encode(dto.toJson()),
-    );
+    final response = await protectedPost('/api/admin/registro_tipo_accesorio', dto.toJson());
 
     if (response.statusCode == 201 || response.statusCode == 200) {
+      // tipVnombre está en dto.tipoAccesorio.tipVnombre
+      AppLogger.audit('Tipo de accesorio registrado: ${dto.tipoAccesorio.tipVnombre}', action: 'CREATE', entity: 'TipoAccesorio', source: 'AccessoryRemoteDataSource');
       return json.decode(response.body);
     } else {
       throw Exception('Error al registrar tipo: ${response.statusCode}');
@@ -215,110 +103,46 @@ class AccessoryRemoteDataSourceImpl implements AccessoryRemoteDataSource {
 
   @override
   Future<List<AccesorioModel>> listarAccesoriosPorVehiculo(int vehId) async {
-    try {
-      final token = await TokenService.getToken();
-      final response = await http.get(
-        Uri.parse('${EnvironmentConfig.baseUrl}/api/general/vehiculo/$vehId/accesorios'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'accept': 'application/json',
-        },
-      );
+    final response = await protectedGet('/api/general/vehiculo/$vehId/accesorios');
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        final List<dynamic> data = responseData['data'];
-        return data.map((json) => AccesorioModel.fromJson(json)).toList();
-      } else {
-        throw Exception('Error al cargar accesorios: ${response.statusCode}');
-      }
-    } catch (e) {
-      rethrow;
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body)['data'];
+      return data.map((json) => AccesorioModel.fromJson(json)).toList();
+    } else {
+      throw Exception('Error al cargar accesorios: ${response.statusCode}');
     }
   }
 
   @override
   Future<AccesorioModel> obtenerDetalleAccesorio(int accId) async {
-    try {
-      final token = await TokenService.getToken();
-      final response = await http.get(
-        Uri.parse('${EnvironmentConfig.baseUrl}/api/general/accesorio/$accId'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'accept': 'application/json',
-        },
-      );
+    final response = await protectedGet('/api/general/accesorio/$accId');
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        return AccesorioModel.fromJson(responseData['data']);
-      } else {
-        throw Exception('Error al obtener detalle: ${response.statusCode}');
-      }
-    } catch (e) {
-      rethrow;
+    if (response.statusCode == 200) {
+      return AccesorioModel.fromJson(json.decode(response.body)['data']);
+    } else {
+      throw Exception('Error al obtener detalle: ${response.statusCode}');
     }
   }
 
   @override
   Future<AccesorioDetalleModel> getAccesorioDetalle(int accId) async {
-    try {
-      final token = await TokenService.getToken();
-      final response = await http.get(
-        Uri.parse('${EnvironmentConfig.baseUrl}/api/general/accesorio/$accId'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'accept': 'application/json',
-        },
-      );
+    final response = await protectedGet('/api/general/accesorio/$accId');
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        return AccesorioDetalleModel.fromJson(responseData['data']);
-      } else {
-        throw Exception('Error al obtener detalle completo: ${response.statusCode}');
-      }
-    } catch (e) {
-      rethrow;
+    if (response.statusCode == 200) {
+      return AccesorioDetalleModel.fromJson(json.decode(response.body)['data']);
+    } else {
+      throw Exception('Error al obtener detalle completo: ${response.statusCode}');
     }
   }
 
-  // ─── REQF08 - API20: Actualizar accesorio ──────────────────────────────────
   @override
   Future<void> actualizarAccesorio(AccesorioActualizarDto dto) async {
-    try {
-      print('🔵 Iniciando actualización de accesorio ID: ${dto.accesorioId}');
+    final response = await protectedPut('/api/general/actualizar-accesorio', dto.toJson());
 
-      final String? token = await TokenService.getToken();
-      if (token == null || token.isEmpty) {
-        throw Exception('No hay token de autenticación.');
-      }
-
-      print('📡 Enviando DTO actualización: ${dto.toJson()}');
-
-      final response = await http.put(
-        Uri.parse('${EnvironmentConfig.baseUrl}/api/general/actualizar-accesorio'),
-        headers: {
-          'Content-Type': 'application/json',
-          'accept': '*/*',
-          'Authorization': 'Bearer $token',
-        },
-        body: json.encode(dto.toJson()),
-      );
-
-      print('🟡 Response status: ${response.statusCode}');
-      print('🟡 Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        return;
-      } else if (response.statusCode == 401) {
-        throw Exception('No autorizado. Token inválido o expirado.');
-      } else {
-        throw Exception('Error al actualizar accesorio: ${response.statusCode} - ${response.body}');
-      }
-    } catch (e) {
-      print('❌ ERROR en actualizarAccesorio: $e');
-      rethrow;
+    if (response.statusCode == 200) {
+      AppLogger.audit('Accesorio actualizado ID: ${dto.accesorioId}', action: 'UPDATE', entity: 'Accesorio', source: 'AccessoryRemoteDataSource');
+    } else {
+      throw Exception('Error al actualizar accesorio: ${response.statusCode}');
     }
   }
 }
