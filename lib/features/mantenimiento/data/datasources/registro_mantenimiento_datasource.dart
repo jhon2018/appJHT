@@ -201,7 +201,7 @@ class RegistroMantenimientoDataSourceImpl extends BaseRemoteDataSource
     // ── Gasto — nota: el prefijo "Gasto." lo agrega buildAndSendRegistroRequest
     final gastoFields = {
       'gas_vtipo': gasto.gasVtipo,
-      'gas_inumero_documento': gasto.gasInumeroDocumento.toString(),
+      'gas_vnumero_documento': gasto.gasInumeroDocumento.toString(),
       'gas_vtipo_gasto': gasto.gasVtipoGasto,
       'gas_vmoneda': gasto.gasVmoneda,
       'gas_bmonto': gasto.gasBmonto.toString(),
