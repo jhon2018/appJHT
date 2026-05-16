@@ -32,26 +32,32 @@ const Map<MenuItemType, MenuItemConfig> menuItemVisualConfig = {
   MenuItemType.mantenimiento: MenuItemConfig(
     icon: '🔧',
     title: 'Mantenimiento',
+    materialIcon: Icons.build_circle_rounded,
   ),
   MenuItemType.vehiculo: MenuItemConfig(
     icon: '🚗',
     title: 'Vehículo',
+    materialIcon: Icons.directions_bus_filled_rounded,
   ),
   MenuItemType.proveedor: MenuItemConfig(
     icon: '🏢',
     title: 'Proveedor',
+    materialIcon: Icons.store_mall_directory_rounded,
   ),
   MenuItemType.conductores: MenuItemConfig(
     icon: '👨‍💼',
-    title: 'Conductores',
+    title: 'Colaboradores',
+    materialIcon: Icons.badge_rounded,
   ),
   MenuItemType.accesorios: MenuItemConfig(
     icon: '🔩',
     title: 'Accesorios',
+    materialIcon: Icons.settings_input_component_rounded,
   ),
   MenuItemType.ayuda: MenuItemConfig(
     icon: '❓',
     title: 'Ayuda',
+    materialIcon: Icons.help_outline_rounded,
   ),
 };
 
@@ -112,6 +118,7 @@ class MenuUtil {
       return MenuItem(
         icon: config.icon,
         title: config.title,
+        materialIcon: config.materialIcon,
         enabled: true, // Todos los permitidos están enabled
       );
     }).toList();
@@ -122,11 +129,13 @@ class MenuUtil {
 class MenuItem {
   final String icon;
   final String title;
+  final IconData? materialIcon;
   final bool enabled;
 
   MenuItem({
     required this.icon,
     required this.title,
+    this.materialIcon,
     required this.enabled,
   });
 }

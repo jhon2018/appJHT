@@ -227,15 +227,16 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
     context.read<AccessoryBloc>().add(RegistrarAccesorioEvent(dto: dto));
 
     _ultimoDtoEnviado = dto;
-
-
   }
 
   void _agregarTipoAccesorio() {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AddAccessoryTypeModal(),
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<AccessoryBloc>(),
+        child: const AddAccessoryTypeModal(),
+      ),
     );
   }
 
@@ -245,6 +246,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2030),
+      locale: const Locale('es', 'ES'),
     );
 
     if (picked != null) {
@@ -407,74 +409,155 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
             maxWidth: isMobile ? MediaQuery.of(context).size.width - 20 : 600,
             maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(isMobile ? 16 : 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Center(
-                  child: Text(
-                    'AGREGAR ACCESORIO',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF303366),
-                    ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // --- CABECERA ---
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF303366),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Divider(color: Colors.grey),
-                const SizedBox(height: 24),
-
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      // Primera fila: Segmento y Nombre de Accesorio
-                      if (!isMobile)
-                        Row(
-                          children: [
-                            Expanded(child: _buildSegmentoDropdown()),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildTipoAccesorioDropdown(),
-                                  _buildAddTypeButton(),
-                                ],
-                              ),
-                            ),
-                          ],
-                        )
-                      else
-                        Column(
-                          children: [
-                            _buildSegmentoDropdown(),
-                            _buildTipoAccesorioDropdown(),
-                            _buildAddTypeButton(),
-                          ],
-                        ),
-
-                      const SizedBox(height: 16),
-
-                      // Vehículo
-                      _buildVehiculoDropdown(),
-
-                      // Descripción (se autocompleta cuando se selecciona tipo accesorio)
-                      _buildFormField(
-                        'Descripción del Accesorio',
-                        _descripcionController,
-                        (value) => null,
-                        maxLines: 2,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
                       ),
+                      child: const Icon(
+                        Icons.settings_suggest_outlined,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'AGREGAR ACCESORIO',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            'Complete todos los campos requeridos',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-                      // Segunda fila: Marca y Código de Fabricante
-                      if (!isMobile)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildFormField(
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(isMobile ? 16 : 24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        // ── SECCIÓN 1: Clasificación ───────────────────────────
+                        _sectionTitle('Clasificación', Icons.category_outlined),
+                        const SizedBox(height: 12),
+                        if (!isMobile)
+                          Row(
+                            children: [
+                              Expanded(child: _buildSegmentoDropdown()),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildTipoAccesorioDropdown(),
+                                    _buildAddTypeButton(),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSegmentoDropdown(),
+                              _buildTipoAccesorioDropdown(),
+                              _buildAddTypeButton(),
+                            ],
+                          ),
+
+                        const SizedBox(height: 24),
+
+                        // ── SECCIÓN 2: Vehículo ────────────────────────────────
+                        _sectionTitle(
+                          'Vehículo',
+                          Icons.directions_car_outlined,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildVehiculoDropdown(),
+
+                        const SizedBox(height: 24),
+
+                        // ── SECCIÓN 3: Identificación ──────────────────────────
+                        _sectionTitle('Identificación', Icons.badge_outlined),
+                        const SizedBox(height: 12),
+                        _buildFormField(
+                          'Descripción del Accesorio',
+                          _descripcionController,
+                          (value) => null,
+                          maxLines: 2,
+                        ),
+                        const SizedBox(height: 12),
+                        if (!isMobile)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildFormField(
+                                  'Marca de Accesorio',
+                                  _marcaController,
+                                  (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Ingrese la marca del accesorio';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildFormField(
+                                  'Código de Fabricante',
+                                  _codigoFabricanteController,
+                                  (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Ingrese el código del fabricante';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          Column(
+                            children: [
+                              _buildFormField(
                                 'Marca de Accesorio',
                                 _marcaController,
                                 (value) {
@@ -484,10 +567,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
                                   return null;
                                 },
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildFormField(
+                              _buildFormField(
                                 'Código de Fabricante',
                                 _codigoFabricanteController,
                                 (value) {
@@ -497,65 +577,52 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
                                   return null;
                                 },
                               ),
-                            ),
-                          ],
-                        )
-                      else
-                        Column(
-                          children: [
-                            _buildFormField(
-                              'Marca de Accesorio',
-                              _marcaController,
-                              (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Ingrese la marca del accesorio';
-                                }
-                                return null;
-                              },
-                            ),
-                            _buildFormField(
-                              'Código de Fabricante',
-                              _codigoFabricanteController,
-                              (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Ingrese el código del fabricante';
-                                }
-                                return null;
-                              },
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
 
-                      // Tercera fila: Fechas de Instalación y Retiro
-                      if (!isMobile)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildDateField(
+                        const SizedBox(height: 24),
+
+                        // ── SECCIÓN 4: Instalación ─────────────────────────────
+                        _sectionTitle(
+                          'Instalación',
+                          Icons.build_circle_outlined,
+                        ),
+                        const SizedBox(height: 12),
+                        if (!isMobile)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildDateField(
+                                  'Fecha de Instalación',
+                                  _fechaInstalacion,
+                                  () => _selectDateConHora(context, true),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildFormField(
+                                  'Kilometraje de Instalación',
+                                  _kilometrajeInstalacionController,
+                                  (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Ingrese el kilometraje de instalación';
+                                    }
+                                    return null;
+                                  },
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          Column(
+                            children: [
+                              _buildDateField(
                                 'Fecha de Instalación',
                                 _fechaInstalacion,
                                 () => _selectDateConHora(context, true),
                               ),
-                            ),
-                          ],
-                        )
-                      else
-                        Column(
-                          children: [
-                            _buildDateField(
-                              'Fecha de Instalación',
-                              _fechaInstalacion,
-                              () => _selectDateConHora(context, true),
-                            ),
-                          ],
-                        ),
-
-                      // Cuarta fila: Kilometraje de Instalación y Retiro
-                      if (!isMobile)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildFormField(
+                              _buildFormField(
                                 'Kilometraje de Instalación',
                                 _kilometrajeInstalacionController,
                                 (value) {
@@ -566,69 +633,87 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
                                 },
                                 keyboardType: TextInputType.number,
                               ),
-                            ),
-                          ],
-                        )
-                      else
-                        Column(
+                            ],
+                          ),
+
+                        const SizedBox(height: 24),
+
+                        // ── SECCIÓN 5: Estado y Notas ──────────────────────────
+                        _sectionTitle('Estado y Notas', Icons.info_outline),
+                        const SizedBox(height: 12),
+                        _buildEstadoDropdown(),
+                        const SizedBox(height: 12),
+                        _buildFormField(
+                          'Observaciones',
+                          _observacionesController,
+                          (value) => null,
+                          maxLines: 3,
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // ── Botones ────────────────────────────────────────────
+                        Row(
                           children: [
-                            _buildFormField(
-                              'Kilometraje de Instalación',
-                              _kilometrajeInstalacionController,
-                              (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Ingrese el kilometraje de instalación';
-                                }
-                                return null;
-                              },
-                              keyboardType: TextInputType.number,
+                            Expanded(
+                              child: _buildButton(
+                                text: 'CANCELAR',
+                                backgroundColor: Colors.grey[300]!,
+                                textColor: Colors.grey[700]!,
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('No se registró accesorio'),
+                                      backgroundColor: Color(0xFFF59E0B),
+                                      behavior: SnackBarBehavior.floating,
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildButton(
+                                text: 'GUARDAR',
+                                backgroundColor: const Color(0xFF303366),
+                                textColor: Colors.white,
+                                onPressed: _submitForm,
+                              ),
                             ),
                           ],
                         ),
-
-                      // Estado
-                      _buildEstadoDropdown(),
-
-                      // Observaciones
-                      _buildFormField(
-                        'Observaciones',
-                        _observacionesController,
-                        (value) => null,
-                        maxLines: 3,
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // Botones
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildButton(
-                              text: 'CANCELAR',
-                              backgroundColor: Colors.grey[300]!,
-                              textColor: Colors.grey[700]!,
-                              onPressed: () => Navigator.of(context).pop(),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildButton(
-                              text: 'GUARDAR',
-                              backgroundColor: const Color(0xFF303366),
-                              textColor: Colors.white,
-                              onPressed: _submitForm,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ), // Column (header + Flexible)
+        ), // ConstrainedBox
+      ), // Dialog
+    ); // BlocListener
+  }
+
+  // ── Section title ──────────────────────────────────────────────────────────
+  Widget _sectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: const Color(0xFF2558A8)),
+        const SizedBox(width: 8),
+        Text(
+          title.toUpperCase(),
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF2558A8),
+            letterSpacing: 1.1,
           ),
         ),
-      ),
+        const SizedBox(width: 10),
+        const Expanded(child: Divider(color: Color(0xFFD1D9E6), thickness: 1)),
+      ],
     );
   }
 

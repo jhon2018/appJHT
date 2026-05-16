@@ -1,5 +1,7 @@
 // lib/features/vehicle/presentation/pages/vehicle_page.dart
 import 'package:app_jht_front/features/vehicle/data/models/vehicle_list_response.dart';
+import 'dart:async';
+import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
@@ -7,6 +9,7 @@ import 'package:app_jht_front/features/vehicle/presentation/widgets/add_vehicle_
 import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
 import 'package:app_jht_front/features/vehicle/presentation/widgets/edit_vehicle_modal.dart';
 import 'package:app_jht_front/features/vehicle/domain/entities/vehicle_entity.dart';
+import 'package:app_jht_front/features/shared/presentation/mixins/navigation_helper_mixin.dart';
 
 class VehiclePage extends StatefulWidget {
   final String userName;
@@ -22,17 +25,19 @@ class VehiclePage extends StatefulWidget {
   State<VehiclePage> createState() => _VehiclePageState();
 }
 
-class _VehiclePageState extends State<VehiclePage> {
+class _VehiclePageState extends State<VehiclePage>
+    with NavigationHelperMixin<VehiclePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _horizontalScrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
-  
+
   // Variables de paginación
   int _currentPage = 1;
   final int _itemsPerPage = 5;
-  
+
   // Variables de filtros
   String _searchQuery = '';
+  Timer? _debounceTimer;
   String _filterEstado = 'Todos';
 
   @override
@@ -45,22 +50,25 @@ class _VehiclePageState extends State<VehiclePage> {
   void dispose() {
     _horizontalScrollController.dispose();
     _searchController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
   // Métodos de paginación
-  List<VehicleListData> _getCurrentPageVehicles(List<VehicleListData> allVehicles) {
+  List<VehicleListData> _getCurrentPageVehicles(
+    List<VehicleListData> allVehicles,
+  ) {
     final startIndex = (_currentPage - 1) * _itemsPerPage;
     final endIndex = startIndex + _itemsPerPage;
-    
+
     if (startIndex >= allVehicles.length) {
       return [];
     }
-    
+
     if (endIndex >= allVehicles.length) {
       return allVehicles.sublist(startIndex);
     }
-    
+
     return allVehicles.sublist(startIndex, endIndex);
   }
 
@@ -74,202 +82,221 @@ class _VehiclePageState extends State<VehiclePage> {
     });
   }
 
-void _openAddVehicleModal() {
-  final vehicleBloc = context.read<VehicleBloc>();
- 
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => BlocProvider.value(
-      value: vehicleBloc,
-      child: AddVehicleModal(
-        onVehicleAdded: () {
-          // ← Se llama desde el modal cuando el registro es exitoso
-          vehicleBloc.add(const VehicleEvent.cargarVehiculos());
-          _resetPagination();
-        },
+  void _openAddVehicleModal() {
+    AppNotification.info(context, 'Formulario de registro abierto');
+    final vehicleBloc = context.read<VehicleBloc>();
+
+    // Extraer placas existentes del estado actual del bloc
+    final existingPlates = vehicleBloc.state.maybeWhen(
+      vehiculosCargados: (vehicles) => vehicles.map((v) => v.placa).toList(),
+      orElse: () => <String>[],
+    );
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => BlocProvider.value(
+        value: vehicleBloc,
+        child: AddVehicleModal(
+          existingPlates: existingPlates,
+          onVehicleAdded: () {
+            vehicleBloc.add(const VehicleEvent.cargarVehiculos());
+            _resetPagination();
+            AppNotification.success(
+              context,
+              'Vehículo registrado correctamente.',
+            );
+          },
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   List<VehicleListData> _filterVehicles(List<VehicleListData> vehicles) {
     return vehicles.where((vehicle) {
-      final matchesSearch = _searchQuery.isEmpty ||
+      final matchesSearch =
+          _searchQuery.isEmpty ||
           vehicle.placa.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          vehicle.numeroVin.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          vehicle.numeroVin.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ) ||
           vehicle.marca.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           vehicle.modelo.toLowerCase().contains(_searchQuery.toLowerCase());
-      
-      final matchesEstado = _filterEstado == 'Todos' || 
-          vehicle.estado == _filterEstado;
-      
+
+      final matchesEstado =
+          _filterEstado == 'Todos' || vehicle.estado == _filterEstado;
+
       return matchesSearch && matchesEstado;
     }).toList();
   }
 
   void _handleMenuSelection(String itemTitle) {
-    ScaffoldMessenger.of(_scaffoldKey.currentContext!).showSnackBar(
-      SnackBar(
-        content: Text('Navegando a: $itemTitle'),
-        backgroundColor: const Color(0xFF303366),
-      ),
-    );
+    navigateToMenuPage(context, itemTitle, widget.userName, widget.userRole);
   }
-void _openEditVehicleModal(VehicleListData vehicle) {
-  final vehicleBloc = context.read<VehicleBloc>(); // ← capturar ANTES del showDialog
 
-  final vehicleEntity = VehicleEntity(
-    vehiculoId: vehicle.vehiculoId,
-    placa: vehicle.placa,
-    marca: vehicle.marca,
-    modelo: vehicle.modelo,
-    numeroVin: vehicle.numeroVin,
-    color: vehicle.color,
-    numAsientos: vehicle.numAsientos,
-    numEjes: vehicle.numEjes,
-    pesoNeto: vehicle.pesoNeto,
-    pesoBruto: vehicle.pesoBruto,
-    cargaUtil: vehicle.cargaUtil,
-    fechaFabricacion: DateTime.parse(vehicle.fechaFabricacion),
-    largo: vehicle.largo,
-    ancho: vehicle.ancho,
-    alto: vehicle.alto,
-    tipo: vehicle.tipo,
-    kilometraje: vehicle.kilometraje,
-    tarjetaUnicaCirculacion: vehicle.tarjetaUnicaCirculacion,
-    fechaHabilitacionTUC: DateTime.parse(vehicle.fechaHabilitacionTUC),
-    fechaVencimientoTUC: DateTime.parse(vehicle.fechaVencimientoTUC),
-    fechaRegistro: DateTime.parse(vehicle.fechaRegistro),
-    fechaBaja: vehicle.fechaBaja != null
-        ? DateTime.parse(vehicle.fechaBaja!)
-        : null,
-    estado: vehicle.estado,
-  );
+  void _openEditVehicleModal(VehicleListData vehicle) {
+    final vehicleBloc = context
+        .read<VehicleBloc>(); // ← capturar ANTES del showDialog
 
-  print('🔵 VehicleEntity creado - ID: ${vehicleEntity.vehiculoId}');
+    final vehicleEntity = VehicleEntity(
+      vehiculoId: vehicle.vehiculoId,
+      placa: vehicle.placa,
+      marca: vehicle.marca,
+      modelo: vehicle.modelo,
+      numeroVin: vehicle.numeroVin,
+      color: vehicle.color,
+      numAsientos: vehicle.numAsientos,
+      numEjes: vehicle.numEjes,
+      pesoNeto: vehicle.pesoNeto,
+      pesoBruto: vehicle.pesoBruto,
+      cargaUtil: vehicle.cargaUtil,
+      fechaFabricacion: DateTime.parse(vehicle.fechaFabricacion),
+      largo: vehicle.largo,
+      ancho: vehicle.ancho,
+      alto: vehicle.alto,
+      tipo: vehicle.tipo,
+      kilometraje: vehicle.kilometraje,
+      tarjetaUnicaCirculacion: vehicle.tarjetaUnicaCirculacion,
+      fechaHabilitacionTUC: DateTime.parse(vehicle.fechaHabilitacionTUC),
+      fechaVencimientoTUC: DateTime.parse(vehicle.fechaVencimientoTUC),
+      fechaRegistro: DateTime.parse(vehicle.fechaRegistro),
+      fechaBaja: vehicle.fechaBaja != null
+          ? DateTime.parse(vehicle.fechaBaja!)
+          : null,
+      estado: vehicle.estado,
+    );
 
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => BlocProvider.value( // ← ESTO ES LO QUE FALTABA
-      value: vehicleBloc,
-      child: EditVehicleModal(vehicle: vehicleEntity),
-    ),
-  );
-}
+    print('🔵 VehicleEntity creado - ID: ${vehicleEntity.vehiculoId}');
 
-  void _openAccesoriosModal(VehicleListData vehicle) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Ver accesorios de: ${vehicle.placa} - Próximamente'),
-        backgroundColor: const Color(0xFF303366),
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => BlocProvider.value(
+        // ← ESTO ES LO QUE FALTABA
+        value: vehicleBloc,
+        child: EditVehicleModal(vehicle: vehicleEntity),
       ),
     );
   }
 
-@override
-Widget build(BuildContext context) {
-  final bool isMobile = MediaQuery.of(context).size.width < 768;
-  
-  return Scaffold(
-    key: _scaffoldKey,
-    endDrawer: Drawer(
-      child: SideMenu(
-        userName: widget.userName,
-        userRole: widget.userRole,
-        onClose: () => Navigator.pop(context),
-        onItemSelected: _handleMenuSelection,
-      ),
-    ),
-    backgroundColor: Colors.white,
-    body: BlocListener<VehicleBloc, VehicleState>(
-      listener: (context, state) {
-        state.maybeWhen(
-actualizacionExitosa: (response) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Row(
-        children: [
-          const Icon(Icons.check_circle, color: Colors.white, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              response.message, // "Vehículo actualizado correctamente"
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-      backgroundColor: Colors.green[700],
-      duration: const Duration(seconds: 4),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    ),
-  );
-  context.read<VehicleBloc>().add(const VehicleEvent.cargarVehiculos());
-  _resetPagination();
-},
-          error: (message) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(message),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 5),
+  void _showLoadingDialog(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: const Color(0xFF303366),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: Colors.white),
+            const SizedBox(height: 20),
+            Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
               ),
-            );
-          },
-          orElse: () {},
-        );
-      },
-      child: Column(
-        children: [
-          Expanded(
-            child: CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  backgroundColor: Colors.white,
-                  elevation: 1,
-                  pinned: true,
-                  title: const Text(
-                    'JHT TRANSPORT',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF303366),
-                    ),
-                  ),
-                  actions: [
-                    _buildMenuButton(),
-                  ],
-                ),
-                
-                SliverList(
-                  delegate: SliverChildListDelegate([
-                    Padding(
-                      padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHeaderWithAddButton(isMobile),
-                          const SizedBox(height: 16),
-                          _buildMobileFilters(isMobile),
-                          const SizedBox(height: 16),
-                          _buildResponsiveTable(isMobile),
-                          const SizedBox(height: 16),
-                        ],
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /*
+  void _openAccesoriosModal(VehicleListData vehicle) {
+    AppNotification.info(context, 'Accesorios de: \${vehicle.placa}');
+  }
+  */
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isMobile = MediaQuery.of(context).size.width < 768;
+
+    return Scaffold(
+      key: _scaffoldKey,
+      endDrawer: Drawer(
+        child: SideMenu(
+          userName: widget.userName,
+          userRole: widget.userRole,
+          onClose: () => Navigator.pop(context),
+          onItemSelected: _handleMenuSelection,
+        ),
+      ),
+      backgroundColor: Colors.white,
+      body: BlocListener<VehicleBloc, VehicleState>(
+        listener: (context, state) {
+          state.maybeWhen(
+            loading: () {
+              _showLoadingDialog('Cargando vehículos...');
+            },
+            vehiculosCargados: (vehiculos) {
+              if (Navigator.canPop(context)) Navigator.pop(context);
+            },
+            actualizacionExitosa: (response) {
+              AppNotification.success(context, response.message);
+              context.read<VehicleBloc>().add(
+                const VehicleEvent.cargarVehiculos(),
+              );
+              _resetPagination();
+            },
+            error: (message) {
+              if (Navigator.canPop(context)) Navigator.pop(context);
+              AppNotification.error(context, message);
+            },
+            orElse: () {},
+          );
+        },
+        child: Column(
+          children: [
+            Expanded(
+              child: CustomScrollView(
+                slivers: [
+                  SliverAppBar(
+                    backgroundColor: Colors.white,
+                    elevation: 1,
+                    pinned: true,
+                    title: const Text(
+                      'JHT TRANSPORT',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF303366),
                       ),
                     ),
-                  ]),
-                ),
-              ],
+                    actions: [_buildMenuButton()],
+                  ),
+
+                  SliverList(
+                    delegate: SliverChildListDelegate([
+                      Padding(
+                        padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeaderWithAddButton(isMobile),
+                            const SizedBox(height: 16),
+                            _buildMobileFilters(isMobile),
+                            const SizedBox(height: 16),
+                            _buildResponsiveTable(isMobile),
+                            const SizedBox(height: 16),
+                          ],
+                        ),
+                      ),
+                    ]),
+                  ),
+                ],
+              ),
             ),
-          ),
-          _buildCopyright(),
-        ],
+            _buildCopyright(),
+          ],
+        ),
       ),
-    ),
-  );  
+    );
   }
 
   Widget _buildMenuButton() {
@@ -282,12 +309,17 @@ actualizacionExitosa: (response) {
         padding: const EdgeInsets.all(12),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(3, (_) => Container(
-            width: 4, height: 4,
-            decoration: const BoxDecoration(
-              color: Colors.black87, shape: BoxShape.circle,
+          children: List.generate(
+            3,
+            (_) => Container(
+              width: 4,
+              height: 4,
+              decoration: const BoxDecoration(
+                color: Colors.black87,
+                shape: BoxShape.circle,
+              ),
             ),
-          )),
+          ),
         ),
       ),
     );
@@ -429,7 +461,7 @@ actualizacionExitosa: (response) {
 
   Widget _buildMobileFilters(bool isMobile) {
     if (!isMobile) return const SizedBox.shrink();
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -492,7 +524,8 @@ actualizacionExitosa: (response) {
         return state.maybeWhen(
           loading: () => _buildLoadingWidget(),
           error: (message) => _buildErrorWidget(message),
-          vehiculosCargados: (vehicles) => _buildVehiclesContent(isMobile, vehicles),
+          vehiculosCargados: (vehicles) =>
+              _buildVehiclesContent(isMobile, vehicles),
           orElse: () => const SizedBox.shrink(),
         );
       },
@@ -530,14 +563,26 @@ actualizacionExitosa: (response) {
           const SizedBox(height: 16),
           const Text(
             'Error al cargar vehículos',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.red,
+            ),
           ),
           const SizedBox(height: 8),
-          Text(message, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[700])),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey[700]),
+          ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () => context.read<VehicleBloc>().add(const VehicleEvent.cargarVehiculos()),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF303366)),
+            onPressed: () => context.read<VehicleBloc>().add(
+              const VehicleEvent.cargarVehiculos(),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF303366),
+            ),
             child: const Text('Reintentar'),
           ),
         ],
@@ -545,15 +590,18 @@ actualizacionExitosa: (response) {
     );
   }
 
-  Widget _buildVehiclesContent(bool isMobile, List<VehicleListData> allVehicles) {
+  Widget _buildVehiclesContent(
+    bool isMobile,
+    List<VehicleListData> allVehicles,
+  ) {
     final filteredVehicles = _filterVehicles(allVehicles);
     final totalPages = _getTotalPages(filteredVehicles.length);
     final currentPageVehicles = _getCurrentPageVehicles(filteredVehicles);
-    
+
     if (filteredVehicles.isEmpty) {
       return _buildEmptyWidget();
     }
-    
+
     return Column(
       children: [
         if (isMobile)
@@ -579,7 +627,11 @@ actualizacionExitosa: (response) {
           const SizedBox(height: 16),
           Text(
             'No se encontraron vehículos',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.grey[600]),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[600],
+            ),
           ),
           if (_searchQuery.isNotEmpty || _filterEstado != 'Todos') ...[
             const SizedBox(height: 8),
@@ -672,10 +724,18 @@ actualizacionExitosa: (response) {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildInfoRow(Icons.vpn_key, 'VIN', vehicle.numeroVin),
+                      child: _buildInfoRow(
+                        Icons.vpn_key,
+                        'VIN',
+                        vehicle.numeroVin,
+                      ),
                     ),
                     Expanded(
-                      child: _buildInfoRow(Icons.palette, 'Color', vehicle.color),
+                      child: _buildInfoRow(
+                        Icons.palette,
+                        'Color',
+                        vehicle.color,
+                      ),
                     ),
                   ],
                 ),
@@ -710,6 +770,7 @@ actualizacionExitosa: (response) {
                         foregroundColor: Colors.grey[700],
                       ),
                     ),
+                    /*
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
                       onPressed: () => _openAccesoriosModal(vehicle),
@@ -720,6 +781,7 @@ actualizacionExitosa: (response) {
                         foregroundColor: Colors.white,
                       ),
                     ),
+                    */
                   ],
                 ),
               ],
@@ -761,80 +823,223 @@ actualizacionExitosa: (response) {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey[300]!),
       ),
-      child: Scrollbar(
-        controller: _horizontalScrollController,
-        thumbVisibility: true,
-        child: SingleChildScrollView(
-          controller: _horizontalScrollController,
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            headingRowHeight: 50,
-            dataRowHeight: 55,
-            horizontalMargin: 16,
-            columnSpacing: 24,
-            headingRowColor: WidgetStateProperty.all(const Color(0xFF303366)),
-            columns: const [
-              DataColumn(label: SizedBox(width: 100, child: Text('Placa', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)))),
-              DataColumn(label: SizedBox(width: 150, child: Text('VIN', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)))),
-              DataColumn(label: SizedBox(width: 120, child: Text('Marca/Modelo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)))),
-              DataColumn(label: SizedBox(width: 80, child: Text('Color', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)))),
-              DataColumn(label: SizedBox(width: 100, child: Text('Fecha Fab.', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)))),
-              DataColumn(label: SizedBox(width: 60, child: Text('KM', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)))),
-              DataColumn(label: SizedBox(width: 80, child: Text('Estado', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)))),
-              DataColumn(label: SizedBox(width: 100, child: Text('Acciones', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)))),
-            ],
-            rows: vehicles.map((vehicle) {
-              return DataRow(cells: [
-                DataCell(Text(vehicle.placa, style: const TextStyle(fontSize: 13))),
-                DataCell(Text(vehicle.numeroVin, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis)),
-                DataCell(Text('${vehicle.marca} ${vehicle.modelo}', style: const TextStyle(fontSize: 13))),
-                DataCell(Text(vehicle.color, style: const TextStyle(fontSize: 13))),
-                DataCell(Text(vehicle.fechaFabricacion, style: const TextStyle(fontSize: 12))),
-                DataCell(Text('${vehicle.kilometraje}', style: const TextStyle(fontSize: 13))),
-                DataCell(
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: vehicle.estado == 'Activo' ? Colors.green[50] : Colors.red[50],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      vehicle.estado,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: vehicle.estado == 'Activo' ? Colors.green : Colors.red,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Scrollbar(
+            controller: _horizontalScrollController,
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              controller: _horizontalScrollController,
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: DataTable(
+                  headingRowHeight: 50,
+                  dataRowHeight: 55,
+                  horizontalMargin: 16,
+                  columnSpacing: 24,
+                  headingRowColor: WidgetStateProperty.all(
+                    const Color(0xFF303366),
                   ),
-                ),
-                DataCell(
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
-                        onPressed: () => _openEditVehicleModal(vehicle),
-                        tooltip: 'Editar',
+                  columns: const [
+                    DataColumn(
+                      label: SizedBox(
+                        width: 100,
+                        child: Text(
+                          'Placa',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: 150,
+                        child: Text(
+                          'VIN',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: 120,
+                        child: Text(
+                          'Marca/Modelo',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: 80,
+                        child: Text(
+                          'Color',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: 100,
+                        child: Text(
+                          'Fecha Fab.',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: 60,
+                        child: Text(
+                          'KM',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: 80,
+                        child: Text(
+                          'Estado',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: 100,
+                        child: Text(
+                          'Acciones',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  rows: vehicles.map((vehicle) {
+                    return DataRow(
+                      cells: [
+                        DataCell(
+                          Text(
+                            vehicle.placa,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            vehicle.numeroVin,
+                            style: const TextStyle(fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            '${vehicle.marca} ${vehicle.modelo}',
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            vehicle.color,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            vehicle.fechaFabricacion,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            '${vehicle.kilometraje}',
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        DataCell(
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: vehicle.estado == 'Activo'
+                                  ? Colors.green[50]
+                                  : Colors.red[50],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              vehicle.estado,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: vehicle.estado == 'Activo'
+                                    ? Colors.green
+                                    : Colors.red,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  size: 20,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () => _openEditVehicleModal(vehicle),
+                                tooltip: 'Editar',
+                              ),
+                              /*
                       IconButton(
                         icon: const Icon(Icons.build, size: 20, color: Color(0xFF303366)),
                         onPressed: () => _openAccesoriosModal(vehicle),
                         tooltip: 'Ver accesorios',
                       ),
-                    ],
-                  ),
+                      */
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
                 ),
-              ]);
-            }).toList(),
-          ),
-        ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildPagination(int totalPages, int totalItems) {
     if (totalPages <= 1) return const SizedBox.shrink();
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -852,15 +1057,24 @@ actualizacionExitosa: (response) {
               ),
               Row(
                 children: [
-                  Text('Por página:', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                  Text(
+                    'Por página:',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey[400]!),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text('$_itemsPerPage', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                    child: Text(
+                      '$_itemsPerPage',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
                   ),
                 ],
               ),
@@ -914,7 +1128,11 @@ actualizacionExitosa: (response) {
     );
   }
 
-  Widget _buildPaginationButton(String text, {bool isActive = false, VoidCallback? onPressed}) {
+  Widget _buildPaginationButton(
+    String text, {
+    bool isActive = false,
+    VoidCallback? onPressed,
+  }) {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
@@ -928,7 +1146,9 @@ actualizacionExitosa: (response) {
         child: Text(
           text,
           style: TextStyle(
-            color: isActive ? Colors.white : (onPressed != null ? Colors.grey[800] : Colors.grey[400]),
+            color: isActive
+                ? Colors.white
+                : (onPressed != null ? Colors.grey[800] : Colors.grey[400]),
             fontSize: 12,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
           ),
@@ -947,7 +1167,7 @@ actualizacionExitosa: (response) {
       ),
       child: Center(
         child: Text(
-          '© 2025 JHT Transport Company\nTodos los derechos reservados.',
+          '© 2026 JHT Transport Company\nTodos los derechos reservados.',
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.grey[600], fontSize: 12, height: 1.4),
         ),

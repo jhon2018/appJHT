@@ -4,11 +4,97 @@ import 'dart:convert';
 import 'package:app_jht_front/features/mantenimiento/data/models/accesorio_vehiculo_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:app_jht_front/core/network/base_remote_data_source.dart';
-import 'package:app_jht_front/features/config/environment_config.dart';
-import 'package:app_jht_front/core/utils/token_service.dart';
+import 'package:app_jht_front/core/utils/app_logger.dart';
 import '../models/datos_iniciales_model.dart';
-import '../models/item_mantenimiento_form_model.dart';
+import '../models/accesorio_models.dart';
+import '../services/photo_upload_service.dart';
+import '../services/multipart_photo_upload_service.dart';
 
+// ─── HistoricoItem — un ítem del array HistoricoMantenimientosJson ────────────
+class HistoricoItem {
+  final int accIid;
+  final String hisVdescripcion;
+  final int hisIproxKilometraje;
+  final String hisDproximaFech; // "yyyy-MM-dd"
+  final String hisVestado;
+  final String dicVtipo; // "Mantenimiento" | "Cambio"
+  final int dicIid;
+  // Solo Cambio
+  final String? accVmarca;
+  final String? accVcodigoFabricante;
+  final int? accIkilometrajeInstalacion;
+  final String accVestado; // siempre "Activo"
+  final int? vehIid;
+  final int? tipIid; // acc.tipoId de API13
+  // Foto del ítem (se sube como FotosHistorico[i])
+  final SelectedPhoto? foto;
+
+  const HistoricoItem({
+    required this.accIid,
+    required this.hisVdescripcion,
+    required this.hisIproxKilometraje,
+    required this.hisDproximaFech,
+    required this.hisVestado,
+    required this.dicVtipo,
+    required this.dicIid,
+    this.accVmarca,
+    this.accVcodigoFabricante,
+    this.accIkilometrajeInstalacion,
+    this.accVestado = 'Activo',
+    this.vehIid,
+    this.tipIid,
+    this.foto,
+  });
+
+  bool get esCambio => dicVtipo.toLowerCase().contains('cambio');
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{
+      'acc_iid': accIid,
+      'his_vdescripcion': hisVdescripcion,
+      'his_iproximo_kilometraje': hisIproxKilometraje,
+      'his_dproxima_fech': hisDproximaFech,
+      'his_vestado': hisVestado,
+      'his_vlink_foto': '',
+      'dic_vtipo': dicVtipo,
+      'dic_iid': dicIid,
+      'acc_vestado': accVestado,
+    };
+    if (esCambio) {
+      map['acc_vmarca'] = accVmarca ?? '';
+      map['acc_vcodigo_fabricante'] = accVcodigoFabricante ?? '';
+      map['acc_ikilometraje_instalacion'] = accIkilometrajeInstalacion ?? 0;
+      map['veh_iid'] = vehIid ?? 0;
+      map['tip_iid'] = tipIid ?? 0;
+    }
+    return map;
+  }
+}
+
+// ─── GastoRegistro ────────────────────────────────────────────────────────────
+class GastoRegistro {
+  final String gasVtipo; // Boleta | Factura
+  final int gasInumeroDocumento;
+  final String gasVtipoGasto; // Mantenimiento | Compra
+  final String gasVmoneda; // Soles | Dólares
+  final double gasBmonto;
+  final String gasDfechaGasto; // "yyyy-MM-dd" — fecha de mantenimiento
+  final String gasVdescripcion;
+  final SelectedPhoto? foto;
+
+  const GastoRegistro({
+    required this.gasVtipo,
+    required this.gasInumeroDocumento,
+    required this.gasVtipoGasto,
+    required this.gasVmoneda,
+    required this.gasBmonto,
+    required this.gasDfechaGasto,
+    required this.gasVdescripcion,
+    this.foto,
+  });
+}
+
+// ─── Interface ────────────────────────────────────────────────────────────────
 abstract class RegistroMantenimientoDataSource {
   Future<DatosInicialesModel> getDatosIniciales();
   Future<List<AccesorioVehiculoModel>> getAccesoriosPorVehiculo(int vehiculoId);
@@ -22,177 +108,148 @@ abstract class RegistroMantenimientoDataSource {
     required int vehIid,
     required int proIid,
     required int bitKilometraje,
-    required int bitCantidad,
     required DateTime bitFechaRegistro,
-    required List<ItemMantenimientoForm> items,
-    // Gasto
-    required String gasTipo,
-    required String gasMoneda,
-    required int gasNumeroDocumento,
-    required double gasMonto,
-    required DateTime gasFechaGasto,
-    required String gasDescripcion,
-    required String gasTipoGasto,
-    String? gastoFotoPath,
+    required List<HistoricoItem> historicos,
+    required GastoRegistro gasto,
   });
 }
 
+// ─── Implementación ───────────────────────────────────────────────────────────
 class RegistroMantenimientoDataSourceImpl extends BaseRemoteDataSource
     implements RegistroMantenimientoDataSource {
-  // ── API12: datos-iniciales ────────────────────────────────────────────────
+  final _photoService = MultipartPhotoUploadService();
+
   @override
   Future<DatosInicialesModel> getDatosIniciales() async {
-    final response = await protectedGet('/api/general/datos-iniciales');
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return DatosInicialesModel.fromJson(json);
-    }
-    throw Exception('Error al cargar datos iniciales: ${response.statusCode}');
+    final res = await protectedGet('/api/general/datos-iniciales');
+    _check(res, 'datos iniciales');
+    return DatosInicialesModel.fromJson(
+      jsonDecode(res.body) as Map<String, dynamic>,
+    );
   }
 
-  // ── API13: accesorios-por-vehiculo/{id} ───────────────────────────────────
   @override
   Future<List<AccesorioVehiculoModel>> getAccesoriosPorVehiculo(
-      int vehiculoId) async {
-    final response = await protectedGet(
-        '/api/general/accesorios-por-vehiculo/$vehiculoId');
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final data = json['data'] as List? ?? [];
-      return data.map((e) => AccesorioVehiculoModel.fromJson(e)).toList();
-    }
-    throw Exception(
-        'Error al cargar accesorios del vehículo: ${response.statusCode}');
+    int vehiculoId,
+  ) async {
+    final res = await protectedGet(
+      '/api/general/accesorios-por-vehiculo/$vehiculoId',
+    );
+    _check(res, 'accesorios por vehículo');
+    final data =
+        (jsonDecode(res.body) as Map<String, dynamic>)['data'] as List? ?? [];
+    return data.map((e) => AccesorioVehiculoModel.fromJson(e)).toList();
   }
 
-  // ── API14: accesorios-por-concepto ────────────────────────────────────────
   @override
   Future<List<AccesorioConceptoModel>> getAccesoriosPorConcepto({
     required int smaId,
     required int vehId,
   }) async {
-    final response = await protectedGet(
+    final res = await protectedGet(
       '/api/general/accesorios-por-concepto',
       queryParameters: {
         'sma_iid': smaId.toString(),
         'veh_iid': vehId.toString(),
       },
     );
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final data = json['data'] as List? ?? [];
-      return data.map((e) => AccesorioConceptoModel.fromJson(e)).toList();
-    }
-    throw Exception(
-        'Error al cargar accesorios por concepto: ${response.statusCode}');
+    _check(res, 'accesorios por concepto');
+    final data =
+        (jsonDecode(res.body) as Map<String, dynamic>)['data'] as List? ?? [];
+    return data.map((e) => AccesorioConceptoModel.fromJson(e)).toList();
   }
 
-  // ── API15: conceptos-mantenimiento ────────────────────────────────────────
   @override
   Future<List<ConceptoMantenimientoModel>> getConceptosMantenimiento(
-      int tipId) async {
-    final response = await protectedGet(
+    int tipId,
+  ) async {
+    final res = await protectedGet(
       '/api/general/conceptos-mantenimiento',
       queryParameters: {'tip_iid': tipId.toString()},
     );
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final data = json['data'] as List? ?? [];
-      return data.map((e) => ConceptoMantenimientoModel.fromJson(e)).toList();
-    }
-    throw Exception(
-        'Error al cargar conceptos de mantenimiento: ${response.statusCode}');
+    _check(res, 'conceptos de mantenimiento');
+    final data =
+        (jsonDecode(res.body) as Map<String, dynamic>)['data'] as List? ?? [];
+    return data.map((e) => ConceptoMantenimientoModel.fromJson(e)).toList();
   }
 
-  // ── API16: registrar-mantenimiento (multipart/form-data) ──────────────────
   @override
   Future<int> registrarMantenimiento({
     required int perIid,
     required int vehIid,
     required int proIid,
     required int bitKilometraje,
-    required int bitCantidad,
     required DateTime bitFechaRegistro,
-    required List<ItemMantenimientoForm> items,
-    required String gasTipo,
-    required String gasMoneda,
-    required int gasNumeroDocumento,
-    required double gasMonto,
-    required DateTime gasFechaGasto,
-    required String gasDescripcion,
-    required String gasTipoGasto,
-    String? gastoFotoPath,
+    required List<HistoricoItem> historicos,
+    required GastoRegistro gasto,
   }) async {
-    final String? token = await TokenService.getToken();
-    if (token == null) throw Exception('Sin token de autenticación');
+    // ── Bitácora ─────────────────────────────────────────────────────────────
+    final bitacoraFields = {
+      'Bitacora.per_iid': perIid.toString(),
+      'Bitacora.veh_iid': vehIid.toString(),
+      'Bitacora.pro_iid': proIid.toString(),
+      'Bitacora.bit_ikilometraje': bitKilometraje.toString(),
+      'Bitacora.bit_icantidad': historicos.length.toString(),
+      'Bitacora.bit_dfech_registro': bitFechaRegistro.toIso8601String(),
+    };
 
-    final url =
-        '${EnvironmentConfig.baseUrl}/api/general/registrar-mantenimiento';
+    // ── HistoricoMantenimientosJson ───────────────────────────────────────────
+    final historicoJson = jsonEncode(
+      historicos.map((h) => h.toJson()).toList(),
+    );
 
-    final request = http.MultipartRequest('POST', Uri.parse(url));
-    request.headers['Authorization'] = 'Bearer $token';
-    request.headers['accept'] = '*/*';
+    // ── Gasto — nota: el prefijo "Gasto." lo agrega buildAndSendRegistroRequest
+    final gastoFields = {
+      'gas_vtipo': gasto.gasVtipo,
+      'gas_inumero_documento': gasto.gasInumeroDocumento.toString(),
+      'gas_vtipo_gasto': gasto.gasVtipoGasto,
+      'gas_vmoneda': gasto.gasVmoneda,
+      'gas_bmonto': gasto.gasBmonto.toString(),
+      'gas_dfecha_gasto': gasto.gasDfechaGasto,
+      'gas_vdescripcion': gasto.gasVdescripcion,
+    };
 
-    // ── Bitácora ─────────────────────────────────────────────────────────
-    request.fields['Bitacora.per_iid'] = perIid.toString();
-    request.fields['Bitacora.veh_iid'] = vehIid.toString();
-    request.fields['Bitacora.pro_iid'] = proIid.toString();
-    request.fields['Bitacora.bit_ikilometraje'] = bitKilometraje.toString();
-    request.fields['Bitacora.bit_icantidad'] = bitCantidad.toString();
-    request.fields['Bitacora.bit_dfech_registro'] =
-        bitFechaRegistro.toIso8601String();
+    // ── Fotos (índice = índice del histórico) ─────────────────────────────────
+    final fotosHistorico = historicos.map((h) => h.foto).toList();
 
-    // ── Histórico JSON ────────────────────────────────────────────────────
-    final historicoList =
-        items.map((item) => item.toHistoricoJson()).toList();
-    request.fields['HistoricoMantenimientosJson'] = jsonEncode(historicoList);
-
-    // ── Gasto ─────────────────────────────────────────────────────────────
-    request.fields['Gasto.gas_vtipo'] = gasTipo;
-    request.fields['Gasto.gas_vmoneda'] = gasMoneda;
-    request.fields['Gasto.gas_inumero_documento'] =
-        gasNumeroDocumento.toString();
-    request.fields['Gasto.gas_bmonto'] = gasMonto.toString();
-    request.fields['Gasto.gas_dfecha_gasto'] =
-        gasFechaGasto.toIso8601String().split('T').first;
-    request.fields['Gasto.gas_vdescripcion'] = gasDescripcion;
-    request.fields['Gasto.gas_vtipo_gasto'] = gasTipoGasto;
-
-    // ── Fotos de accesorios históricos ────────────────────────────────────
-    for (int i = 0; i < items.length; i++) {
-      final item = items[i];
-      if (item.fotoPath != null && item.fotoPath!.isNotEmpty) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'FotosHistorico',
-          item.fotoPath!,
-        ));
-      }
-    }
-
-    // ── Foto del gasto (factura/boleta) ───────────────────────────────────
-    if (gastoFotoPath != null && gastoFotoPath.isNotEmpty) {
-      request.files.add(await http.MultipartFile.fromPath(
-        'Gasto.gas_vlink_foto',
-        gastoFotoPath,
-      ));
-    }
-
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
+    final response = await _photoService.buildAndSendRegistroRequest(
+      bitacoraFields: bitacoraFields,
+      historicoJson: historicoJson,
+      gastoFields: gastoFields,
+      fotosHistorico: fotosHistorico,
+      fotoGasto: gasto.foto,
+    );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return json['data'] as int? ?? 0;
+      final id = json['data'] as int? ?? json['bitacoraId'] as int? ?? 0;
+
+      // ✅ Auditoría de negocio
+      AppLogger.audit(
+        'Mantenimiento registrado con éxito. ID: $id',
+        action: 'CREATE',
+        entity: 'Mantenimiento',
+        source: 'RegistroMantenimientoDataSource',
+      );
+
+      return id;
     }
 
-    // Intentar extraer mensaje de error
     try {
-      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      final msg = errorJson['message'] ?? 'Error al registrar mantenimiento';
-      throw Exception(msg);
+      final err = jsonDecode(response.body) as Map<String, dynamic>;
+      throw Exception(
+        err['message'] ?? err['error'] ?? 'Error al registrar mantenimiento',
+      );
     } catch (_) {
       throw Exception(
-          'Error al registrar mantenimiento: ${response.statusCode}');
+        'Error al registrar mantenimiento: ${response.statusCode}',
+      );
+    }
+  }
+
+  void _check(http.Response res, String label) {
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      throw Exception('Error al cargar $label: ${res.statusCode}');
     }
   }
 }

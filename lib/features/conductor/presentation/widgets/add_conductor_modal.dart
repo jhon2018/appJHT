@@ -11,7 +11,23 @@ import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_blo
 import 'package:app_jht_front/features/conductor/data/models/conductor_registro_dto.dart';
 import 'package:app_jht_front/features/supplier/data/models/tipo_telefono_model.dart';
 import 'package:app_jht_front/features/config/environment_config.dart';
+import 'package:flutter/services.dart';
 
+// ── Color tokens ──────────────────────────────────────────────────────────────
+const _primary = Color(0xFF303366);
+const _primaryLt = Color(0xFFEEEFF6);
+const _border = Color(0xFFD1D5DB);
+const _surface = Color(0xFFF8F9FC);
+const _textPri = Color(0xFF1A1A2E);
+const _textSec = Color(0xFF6B7280);
+const _green = Color(0xFF16A34A);
+const _greenBg = Color(0xFFDCFCE7);
+const _yellow = Color(0xFFD97706);
+const _yellowBg = Color(0xFFFEF3C7);
+const _red = Color(0xFFDC2626);
+const _redBg = Color(0xFFFEE2E2);
+const _blue = Color(0xFF2563EB);
+const _blueBg = Color(0xFFDBEAFE);
 
 class AddConductorModal extends StatefulWidget {
   final Function()? onConductorAdded;
@@ -48,11 +64,27 @@ class _AddConductorModalState extends State<AddConductorModal> {
   final List<TextEditingController> _telefonoControllers = [
     TextEditingController(),
   ];
-  final List<TipoTelefonoModel?> _telefonoTipos = [null];
+  // Usamos int para el id del tipo (evita IdentityMap en Flutter Web)
+  final List<int?> _telefonoTitIds = [null];
 
   // Variables para dropdowns
   String? _estadoValue;
   String? _cargoValue;
+
+  // DNI duplicado
+  bool _dniDuplicado = false;
+
+  // Email suggestions
+  bool _showEmailSuggestions = false;
+  final List<String> _emailDomains = [
+    'gmail.com',
+    'hotmail.com',
+    'outlook.com',
+    'yahoo.com',
+    'empresa.pe',
+    'jht.pe',
+  ];
+  List<String> _emailSuggestions = [];
 
   // Listas
   final List<String> _estadoOptions = ['Activo', 'Inactivo'];
@@ -78,7 +110,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
 
   Future<void> _cargarTiposTelefono() async {
     try {
-print('🟡 Cargando tipos de teléfono...');
+      print('🟡 Cargando tipos de teléfono...');
 
       final String? token = await TokenService.getToken();
 
@@ -88,7 +120,9 @@ print('🟡 Cargando tipos de teléfono...');
 
       // ✅ Usando EnvironmentConfig para centralizar la URL
       final response = await http.get(
-        Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/consulta_tipo_telefono'),
+        Uri.parse(
+          '${EnvironmentConfig.baseUrl}/api/admin/consulta_tipo_telefono',
+        ),
         headers: {
           'Authorization': 'Bearer $token',
           'accept': 'application/json',
@@ -115,13 +149,14 @@ print('🟡 Cargando tipos de teléfono...');
       }
     } catch (e) {
       print('❌ ERROR al cargar tipos de teléfono: $e');
-      setState(() {
-        _tiposTelefonoList = [
-          TipoTelefonoModel(id: 1, tipo: 'Celular', uso: 'Personal'),
-          TipoTelefonoModel(id: 2, tipo: 'Fijo', uso: 'Oficina'),
-          TipoTelefonoModel(id: 3, tipo: 'WhatsApp', uso: 'Personal'),
-        ];
-      });
+      if (mounted)
+        setState(() {
+          _tiposTelefonoList = [
+            TipoTelefonoModel(id: 1, tipo: 'Celular', uso: 'Personal'),
+            TipoTelefonoModel(id: 2, tipo: 'Fijo', uso: 'Oficina'),
+            TipoTelefonoModel(id: 3, tipo: 'Celular', uso: 'WhatsApp'),
+          ];
+        });
     }
   }
 
@@ -140,6 +175,7 @@ print('🟡 Cargando tipos de teléfono...');
       initialDate: DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime(2100),
+      locale: const Locale('es', 'ES'),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -229,6 +265,7 @@ print('🟡 Cargando tipos de teléfono...');
             children: [
               Expanded(
                 child: _buildDialogButton(
+                  isMobile: MediaQuery.of(context).size.width < 768,
                   text: 'CANCELAR',
                   backgroundColor: Colors.grey[300]!,
                   textColor: Colors.grey[700]!,
@@ -238,6 +275,7 @@ print('🟡 Cargando tipos de teléfono...');
               const SizedBox(width: 12),
               Expanded(
                 child: _buildDialogButton(
+                  isMobile: MediaQuery.of(context).size.width < 768,
                   text: 'CONFIRMAR',
                   backgroundColor: const Color(0xFF303366),
                   textColor: Colors.white,
@@ -279,6 +317,7 @@ print('🟡 Cargando tipos de teléfono...');
         actions: [
           Center(
             child: _buildDialogButton(
+              isMobile: MediaQuery.of(context).size.width < 768,
               text: 'ENTENDIDO',
               backgroundColor: Colors.red,
               textColor: Colors.white,
@@ -322,8 +361,12 @@ print('🟡 Cargando tipos de teléfono...');
     }
 
     // Validar campos obligatorios
+    if (_dniDuplicado) {
+      _mostrarErrorDialog('El DNI ${_dniController.text} ya está registrado.');
+      return;
+    }
     for (int i = 0; i < _telefonoControllers.length; i++) {
-      if (_telefonoTipos[i] == null) {
+      if (_telefonoTitIds[i] == null) {
         _mostrarErrorDialog(
           'Seleccione el tipo y uso para el teléfono ${i + 1}',
         );
@@ -366,15 +409,14 @@ print('🟡 Cargando tipos de teléfono...');
         );
       }
 
-      // Crear lista de teléfonos DTO
-      final telefonos = _telefonoControllers.asMap().entries.map((entry) {
-        final index = entry.key;
-        final controller = entry.value;
-        return TelefonoConductorDto(
-          numero: controller.text,
-          tipoId: _telefonoTipos[index]!.id,
-        );
-      }).toList();
+      // Crear lista de teléfonos DTO (usar _telefonoTitIds para evitar IdentityMap)
+      final telefonos = List<TelefonoConductorDto>.generate(
+        _telefonoControllers.length,
+        (i) => TelefonoConductorDto(
+          numero: _telefonoControllers[i].text.trim(),
+          tipoId: _telefonoTitIds[i] ?? 1,
+        ),
+      );
 
       // Crear DTO principal
       final dto = ConductorRegistroDto(
@@ -389,17 +431,62 @@ print('🟡 Cargando tipos de teléfono...');
     }
   }
 
+  // ── DNI helpers ──────────────────────────────────────────────────────────
+  void _onDniChanged(String v) {
+    final dup = _getPersonasActuales().any((p) => p.dni.toString() == v);
+    if (dup != _dniDuplicado) setState(() => _dniDuplicado = dup);
+  }
+
+  List<dynamic> _getPersonasActuales() {
+    final s = context.read<ConductorBloc>().state;
+    return s.maybeWhen(personasCargadas: (list) => list, orElse: () => []);
+  }
+
+  // ── Email helpers ──────────────────────────────────────────────────────────
+  void _onEmailChanged(String v) {
+    if (v.contains('@')) {
+      final parts = v.split('@');
+      final domain = parts.last.toLowerCase();
+      final sugs = domain.isEmpty
+          ? _emailDomains.map((d) => '${parts.first}@$d').toList()
+          : _emailDomains
+                .where((d) => d.startsWith(domain))
+                .map((d) => '${parts.first}@$d')
+                .toList();
+      setState(() {
+        _emailSuggestions = sugs;
+        _showEmailSuggestions = sugs.isNotEmpty;
+      });
+    } else {
+      setState(() {
+        _emailSuggestions = [];
+        _showEmailSuggestions = false;
+      });
+    }
+  }
+
   void _agregarTelefono() {
     if (_telefonoControllers.length < 3) {
       setState(() {
         _telefonoControllers.add(TextEditingController());
-        _telefonoTipos.add(null);
+        _telefonoTitIds.add(null);
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Máximo 3 teléfonos permitidos'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          backgroundColor: _yellow,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          content: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Máximo 3 teléfonos permitidos',
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -410,7 +497,7 @@ print('🟡 Cargando tipos de teléfono...');
       setState(() {
         _telefonoControllers[index].dispose();
         _telefonoControllers.removeAt(index);
-        _telefonoTipos.removeAt(index);
+        _telefonoTitIds.removeAt(index);
       });
     }
   }
@@ -462,6 +549,7 @@ print('🟡 Cargando tipos de teléfono...');
       },
       child: Dialog(
         backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
         insetPadding: const EdgeInsets.all(20),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Container(
@@ -469,30 +557,67 @@ print('🟡 Cargando tipos de teléfono...');
             maxWidth: isMobile ? double.infinity : 800,
             maxHeight: MediaQuery.of(context).size.height * 0.95,
           ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Center(
-                    child: Text(
-                      'AGREGAR CONDUCTOR o ADMINISTRADOR',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF303366),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // --- CABECERA ---
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: const BoxDecoration(
+                  color: _primary,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.badge_outlined,
+                          color: Colors.white, size: 24),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'AGREGAR COLABORADOR',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            'Complete todos los campos requeridos',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Divider(color: Colors.grey),
-                  const SizedBox(height: 24),
-
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
+                  ],
+                ),
+              ),
+              // --- FORMULARIO ---
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: EdgeInsets.all(isMobile ? 16 : 24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
                         // Información Personal
                         _buildSectionTitle('INFORMACIÓN PERSONAL'),
                         const SizedBox(height: 16),
@@ -502,20 +627,7 @@ print('🟡 Cargando tipos de teléfono...');
                           Row(
                             children: [
                               Expanded(
-                                child: _buildFormField(
-                                  'DNI',
-                                  _dniController,
-                                  (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Ingrese el DNI';
-                                    }
-                                    if (value.length != 8) {
-                                      return 'El DNI debe tener 8 dígitos';
-                                    }
-                                    return null;
-                                  },
-                                  keyboardType: TextInputType.number,
-                                ),
+                                child: _buildDniField(),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -543,20 +655,7 @@ print('🟡 Cargando tipos de teléfono...');
                         else
                           Column(
                             children: [
-                              _buildFormField(
-                                'DNI',
-                                _dniController,
-                                (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Ingrese el DNI';
-                                  }
-                                  if (value.length != 8) {
-                                    return 'El DNI debe tener 8 dígitos';
-                                  }
-                                  return null;
-                                },
-                                keyboardType: TextInputType.number,
-                              ),
+                              _buildDniField(),
                               _buildFormField(
                                 'Primer Nombre',
                                 _primerNombreController,
@@ -768,20 +867,7 @@ print('🟡 Cargando tipos de teléfono...');
                           Row(
                             children: [
                               Expanded(
-                                child: _buildFormField(
-                                  'Email',
-                                  _emailController,
-                                  (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Ingrese el email';
-                                    }
-                                    if (!value.contains('@')) {
-                                      return 'Ingrese un email válido';
-                                    }
-                                    return null;
-                                  },
-                                  keyboardType: TextInputType.emailAddress,
-                                ),
+                                child: _buildEmailField(),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -812,20 +898,7 @@ print('🟡 Cargando tipos de teléfono...');
                         else
                           Column(
                             children: [
-                              _buildFormField(
-                                'Email',
-                                _emailController,
-                                (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Ingrese el email';
-                                  }
-                                  if (!value.contains('@')) {
-                                    return 'Ingrese un email válido';
-                                  }
-                                  return null;
-                                },
-                                keyboardType: TextInputType.emailAddress,
-                              ),
+                              _buildEmailField(),
                               _buildDateField(
                                 'Fecha Ingreso',
                                 _fechaIngresoController,
@@ -1072,22 +1145,47 @@ print('🟡 Cargando tipos de teléfono...');
                             ),
                         ],
 
-                        const SizedBox(height: 32),
+                        SizedBox(height: isMobile ? 16 : 32),
 
                         // Botones
                         Row(
                           children: [
                             Expanded(
                               child: _buildButton(
+                                isMobile: isMobile,
                                 text: 'CANCELAR',
                                 backgroundColor: Colors.grey[300]!,
                                 textColor: Colors.grey[700]!,
-                                onPressed: () => Navigator.of(context).pop(),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      backgroundColor: _yellow,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      content: const Row(
+                                        children: [
+                                          Icon(Icons.info_outline,
+                                              color: Colors.white, size: 18),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'No se registró colaborador',
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildButton(
+                                isMobile: isMobile,
                                 text: 'GUARDAR',
                                 backgroundColor: const Color(0xFF303366),
                                 textColor: Colors.white,
@@ -1096,137 +1194,317 @@ print('🟡 Cargando tipos de teléfono...');
                             ),
                           ],
                         ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF303366).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        title,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF303366),
-        ),
-      ),
-    );
-  }
+  // ── Section title ──────────────────────────────────────────────────────────
+  Widget _buildSectionTitle(String title) => Padding(
+        padding: const EdgeInsets.only(top: 20, bottom: 12),
+        child: Row(children: [
+          const Icon(Icons.chevron_right, size: 18, color: _primary),
+          const SizedBox(width: 6),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: _primary,
+                  letterSpacing: 0.6)),
+          const SizedBox(width: 10),
+          const Expanded(child: Divider(color: _border)),
+        ]),
+      );
 
+  // ── Generic text field ─────────────────────────────────────────────────────
   Widget _buildFormField(
     String label,
     TextEditingController controller,
     String? Function(String?) validator, {
     TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+    Widget? suffixIcon,
+    String? hintText,
+    void Function(String)? onChanged,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label,
           style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF303366),
+              fontSize: 12, fontWeight: FontWeight.w600, color: _textPri)),
+      const SizedBox(height: 4),
+      TextFormField(
+        controller: controller,
+        validator: validator,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        onChanged: onChanged,
+        style: const TextStyle(fontSize: 13),
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: hintText,
+          hintStyle: const TextStyle(fontSize: 12, color: _textSec),
+          suffixIcon: suffixIcon,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _border),
           ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          validator: validator,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF303366)),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _primary, width: 1.5),
           ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _red),
+          ),
+          errorStyle: const TextStyle(fontSize: 10, color: _red, height: 0.9),
         ),
-        const SizedBox(height: 16),
-      ],
-    );
+      ),
+      const SizedBox(height: 14),
+    ]);
   }
 
+  // ── DNI field with duplicate tooltip ──────────────────────────────────────
+  Widget _buildDniField() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        const Text('DNI / Carné *',
+            style: TextStyle(
+                fontSize: 12, fontWeight: FontWeight.w600, color: _textPri)),
+        const SizedBox(width: 4),
+        Tooltip(
+          message: 'DNI peruano: 8 dígitos\nCarné de extranjería: 9 dígitos',
+          triggerMode: TooltipTriggerMode.tap,
+          child: const Icon(Icons.info_outline, size: 13, color: _textSec),
+        ),
+      ]),
+      const SizedBox(height: 4),
+      TextFormField(
+        controller: _dniController,
+        keyboardType: TextInputType.number,
+        style: const TextStyle(fontSize: 13),
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(9),
+        ],
+        onChanged: _onDniChanged,
+        decoration: InputDecoration(
+          isDense: true,
+          counterText: '',
+          filled: true,
+          fillColor: Colors.white,
+          hintText: '12345678',
+          hintStyle: const TextStyle(fontSize: 12, color: _textSec),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(
+                color: _dniDuplicado ? _yellow : _border, width: 1.2),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(
+                color: _dniDuplicado ? _yellow : _primary, width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _red),
+          ),
+          errorStyle: const TextStyle(fontSize: 10, color: _red, height: 0.9),
+          suffixIcon: _dniDuplicado
+              ? Tooltip(
+                  message: '⚠️ Este DNI ya está registrado',
+                  triggerMode: TooltipTriggerMode.tap,
+                  decoration: BoxDecoration(
+                    color: _yellowBg,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: _yellow),
+                  ),
+                  textStyle:
+                      const TextStyle(color: _yellow, fontSize: 12),
+                  child: const Icon(Icons.warning_amber_rounded,
+                      color: _yellow, size: 18),
+                )
+              : null,
+        ),
+        validator: (v) {
+          if (v == null || v.isEmpty) return 'Obligatorio';
+          if (v.length < 8 || v.length > 9) return '8-9 dígitos';
+          if (_dniDuplicado) return 'DNI ya registrado';
+          return null;
+        },
+      ),
+      if (_dniDuplicado)
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Row(children: const [
+            Icon(Icons.warning_amber_rounded, size: 12, color: _yellow),
+            SizedBox(width: 4),
+            Text('DNI ya registrado',
+                style: TextStyle(
+                    fontSize: 11,
+                    color: _yellow,
+                    fontWeight: FontWeight.w600)),
+          ]),
+        ),
+      const SizedBox(height: 14),
+    ]);
+  }
+
+  // ── Email field with @domain suggestions ──────────────────────────────────
+  Widget _buildEmailField() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Text('Correo electrónico *',
+          style: TextStyle(
+              fontSize: 12, fontWeight: FontWeight.w600, color: _textPri)),
+      const SizedBox(height: 4),
+      TextFormField(
+        controller: _emailController,
+        keyboardType: TextInputType.emailAddress,
+        style: const TextStyle(fontSize: 13),
+        onChanged: _onEmailChanged,
+        onFieldSubmitted: (_) =>
+            setState(() => _showEmailSuggestions = false),
+        decoration: InputDecoration(
+          isDense: true,
+          filled: true,
+          fillColor: Colors.white,
+          hintText: 'usuario@gmail.com',
+          hintStyle: const TextStyle(fontSize: 12, color: _textSec),
+          prefixIcon: const Icon(Icons.email_outlined,
+              size: 16, color: _textSec),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          border:
+              OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _primary, width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _red),
+          ),
+          errorStyle:
+              const TextStyle(fontSize: 10, color: _red, height: 0.9),
+        ),
+        validator: (v) {
+          if (v == null || v.isEmpty) return 'Obligatorio';
+          if (!v.contains('@') || !v.contains('.'))
+            return 'Correo inválido';
+          return null;
+        },
+      ),
+      // Suggestions dropdown
+      if (_showEmailSuggestions && _emailSuggestions.isNotEmpty)
+        Container(
+          margin: const EdgeInsets.only(top: 2),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: _primary.withOpacity(0.3)),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2))
+            ],
+          ),
+          child: Column(
+            children: _emailSuggestions
+                .take(4)
+                .map((s) => InkWell(
+                      onTap: () {
+                        _emailController.text = s;
+                        setState(() => _showEmailSuggestions = false);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        child: Row(children: [
+                          const Icon(Icons.alternate_email,
+                              size: 13, color: _primary),
+                          const SizedBox(width: 8),
+                          Text(s,
+                              style: const TextStyle(
+                                  fontSize: 12, color: _textPri)),
+                        ]),
+                      ),
+                    ))
+                .toList(),
+          ),
+        ),
+      const SizedBox(height: 14),
+    ]);
+  }
+
+  // ── Date field ─────────────────────────────────────────────────────────────
   Widget _buildDateField(
     String label,
     TextEditingController controller,
-    VoidCallback onTap, { // CAMBIADO: Ahora es VoidCallback
+    VoidCallback onTap, {
     bool isRequired = false,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label,
           style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF303366),
+              fontSize: 12, fontWeight: FontWeight.w600, color: _textPri)),
+      const SizedBox(height: 4),
+      InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: double.infinity,
+          padding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            border: Border.all(color: _border),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
           ),
+          child: Row(children: [
+            Expanded(
+              child: Text(
+                controller.text.isEmpty ? 'Seleccionar fecha' : controller.text,
+                style: TextStyle(
+                    fontSize: 13,
+                    color: controller.text.isEmpty ? _textSec : _textPri),
+              ),
+            ),
+            const Icon(Icons.calendar_today_outlined,
+                size: 16, color: _textSec),
+          ]),
         ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: onTap, // Ahora recibe directamente el callback
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[400]!),
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.white,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    controller.text.isEmpty
-                        ? 'Seleccionar fecha'
-                        : controller.text,
-                    style: TextStyle(
-                      color: controller.text.isEmpty
-                          ? Colors.grey
-                          : Colors.black,
-                    ),
-                  ),
-                ),
-                const Icon(Icons.calendar_today, size: 20, color: Colors.grey),
-              ],
-            ),
-          ),
+      ),
+      if (isRequired && controller.text.isEmpty)
+        const Padding(
+          padding: EdgeInsets.only(top: 4),
+          child: Text('Obligatorio',
+              style: TextStyle(fontSize: 10, color: _red)),
         ),
-        if (isRequired && controller.text.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(top: 4),
-            child: Text(
-              'Este campo es requerido',
-              style: TextStyle(color: Colors.red, fontSize: 12),
-            ),
-          ),
-        const SizedBox(height: 16),
-      ],
-    );
+      const SizedBox(height: 14),
+    ]);
   }
 
+  // ── Dropdown ───────────────────────────────────────────────────────────────
   Widget _buildDropdownField(
     String label,
     String? value,
@@ -1234,213 +1512,333 @@ print('🟡 Cargando tipos de teléfono...');
     void Function(String?) onChanged,
     String? Function(String?) validator,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
+    final effective = items.contains(value) ? value : null;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label,
           style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF303366),
+              fontSize: 12, fontWeight: FontWeight.w600, color: _textPri)),
+      const SizedBox(height: 4),
+      DropdownButtonFormField<String>(
+        value: effective,
+        dropdownColor: Colors.white,
+        style: const TextStyle(fontSize: 13, color: _textPri),
+        decoration: InputDecoration(
+          isDense: true,
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          border:
+              OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _border),
           ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: value,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF303366)),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _primary, width: 1.5),
           ),
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(value: item, child: Text(item));
-          }).toList(),
-          onChanged: onChanged,
-          validator: validator,
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _red),
+          ),
+          errorStyle:
+              const TextStyle(fontSize: 10, color: _red, height: 0.9),
         ),
-        const SizedBox(height: 16),
-      ],
-    );
+        items: items
+            .map((i) => DropdownMenuItem(
+                value: i, child: Text(i, style: const TextStyle(fontSize: 13))))
+            .toList(),
+        onChanged: onChanged,
+        validator: validator,
+      ),
+      const SizedBox(height: 14),
+    ]);
   }
 
+  // ── Teléfono row ──────────────────────────────────────────────────────────
   Widget _buildTelefonoRow(int index, bool isMobile) {
-    return Column(
-      children: [
-        if (index > 0) const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Tipo y uso del teléfono
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Tipo y Uso',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF303366),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    height: 45,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[400]!),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.white,
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<TipoTelefonoModel?>(
-                        value: _telefonoTipos[index],
-                        isExpanded: true,
-                        hint: const Text(
-                          'Seleccione tipo y uso',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        items: _tiposTelefonoList.map((TipoTelefonoModel tipo) {
-                          return DropdownMenuItem<TipoTelefonoModel>(
-                            value: tipo,
-                            child: Text(
-                              tipo.displayText,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (TipoTelefonoModel? value) {
-                          setState(() {
-                            _telefonoTipos[index] = value;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
+    final titId = _telefonoTitIds[index];
+    final tipoSel = titId != null
+        ? _tiposTelefonoList.firstWhere((t) => t.id == titId,
+            orElse: () => _tiposTelefonoList.first)
+        : null;
+    final esFijo = tipoSel?.tipo.toLowerCase().contains('fijo') == true;
+    final esMovil = tipoSel?.tipo.toLowerCase().contains('celular') == true ||
+        tipoSel?.tipo.toLowerCase().contains('móvil') == true;
+    final limitTxt = esFijo ? '7-9 dígitos' : '9-11 dígitos';
+    final maxLen = esFijo ? 9 : 11;
+    final numVal = _telefonoControllers[index].text;
+    final tipoDetectado = _detectarTipoTel(numVal);
 
-            // Número de teléfono
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Teléfono',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF303366),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  TextFormField(
-                    controller: _telefonoControllers[index],
-                    keyboardType: TextInputType.phone,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      hintText: 'Ej: 987654321',
-                      hintStyle: const TextStyle(fontSize: 12),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Ingrese el teléfono';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            // Botón eliminar (solo si hay más de uno)
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: _primaryLt,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: _primary.withOpacity(0.15)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // Header row
+          Row(children: [
+            const Icon(Icons.phone, color: _primary, size: 15),
+            const SizedBox(width: 6),
+            Text('Teléfono ${index + 1}',
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: _primary)),
+            const Spacer(),
             if (_telefonoControllers.length > 1)
-              Padding(
-                padding: const EdgeInsets.only(top: 28, left: 8),
-                child: InkWell(
-                  onTap: () => _eliminarTelefono(index),
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.red[50],
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Icon(Icons.delete, color: Colors.red[700], size: 18),
-                  ),
+              GestureDetector(
+                onTap: () => _eliminarTelefono(index),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                      color: _redBg,
+                      borderRadius: BorderRadius.circular(6)),
+                  child: const Icon(Icons.delete_outline,
+                      color: _red, size: 15),
                 ),
               ),
+          ]),
+          const SizedBox(height: 10),
+          // Tipo + Numero responsive
+          isMobile
+              ? Column(children: [
+                  _tipoDropTel(index, titId),
+                  const SizedBox(height: 8),
+                  _numFieldTel(
+                      index, esFijo, esMovil, limitTxt, maxLen),
+                ])
+              : Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Expanded(child: _tipoDropTel(index, titId)),
+                  const SizedBox(width: 10),
+                  Expanded(child: _numFieldTel(
+                      index, esFijo, esMovil, limitTxt, maxLen)),
+                ]),
+          // Dynamic type badge
+          if (tipoDetectado.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: tipoDetectado.contains('Móvil') ||
+                        tipoDetectado.contains('Celular')
+                    ? _greenBg
+                    : _blueBg,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(tipoDetectado,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: tipoDetectado.contains('Móvil') ||
+                            tipoDetectado.contains('Celular')
+                        ? _green
+                        : _blue,
+                  )),
+            ),
           ],
-        ),
-      ],
+        ]),
+      ),
     );
   }
 
+  Widget _tipoDropTel(int index, int? titId) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Tipo y Uso *',
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _textSec)),
+          const SizedBox(height: 4),
+          Container(
+            height: 42,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              border: Border.all(
+                  color: titId == null ? _yellow : _border),
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.white,
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<int>(
+                value: titId,
+                isExpanded: true,
+                dropdownColor: Colors.white,
+                hint: const Text('Seleccione tipo',
+                    style: TextStyle(fontSize: 12, color: _textSec)),
+                items: _tiposTelefonoList
+                    .map((t) => DropdownMenuItem<int>(
+                          value: t.id,
+                          child: Text(t.displayText,
+                              style: const TextStyle(fontSize: 12)),
+                        ))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null)
+                    setState(() => _telefonoTitIds[index] = v);
+                },
+              ),
+            ),
+          ),
+          if (titId == null)
+            const Padding(
+              padding: EdgeInsets.only(top: 3),
+              child: Text('Seleccione un tipo',
+                  style: TextStyle(fontSize: 10, color: _yellow)),
+            ),
+        ],
+      );
+
+  Widget _numFieldTel(int index, bool esFijo, bool esMovil,
+      String limitTxt, int maxLen) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        const Text('Número *',
+            style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: _textSec)),
+        const SizedBox(width: 4),
+        Tooltip(
+          message: 'Fijo Lima: 01XXXXXXX (7-9 dígitos)\n'
+              'Celular: 9XXXXXXXX (9 dígitos)\n'
+              'Con país Perú: 51XXXXXXXXX (11 dígitos)',
+          triggerMode: TooltipTriggerMode.tap,
+          child:
+              const Icon(Icons.info_outline, size: 12, color: _textSec),
+        ),
+      ]),
+      const SizedBox(height: 4),
+      TextFormField(
+        controller: _telefonoControllers[index],
+        keyboardType: TextInputType.phone,
+        style: const TextStyle(fontSize: 13),
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(maxLen),
+        ],
+        onChanged: (_) => setState(() {}),
+        decoration: InputDecoration(
+          isDense: true,
+          counterText: '',
+          filled: true,
+          fillColor: Colors.white,
+          hintText: limitTxt,
+          hintStyle: const TextStyle(fontSize: 12, color: _textSec),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          border:
+              OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide:
+                const BorderSide(color: _primary, width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _red),
+          ),
+          errorStyle:
+              const TextStyle(fontSize: 10, color: _red, height: 0.9),
+        ),
+        validator: (val) {
+          if (val == null || val.isEmpty) return 'Obligatorio';
+          final n = val.replaceAll(RegExp(r'\s+'), '');
+          if (esFijo && (n.length < 7 || n.length > 9))
+            return 'Fijo: 7 a 9 dígitos';
+          if (esMovil && n.length != 9 && n.length != 11)
+            return 'Móvil: 9 u 11 dígitos';
+          return null;
+        },
+      ),
+    ]);
+  }
+
+  String _detectarTipoTel(String numero) {
+    final n = numero.replaceAll(RegExp(r'\s+'), '');
+    if (n.isEmpty) return '';
+    if (n.startsWith('51') && n.length == 11 && n[2] == '9')
+      return '📱 Móvil (con código país)';
+    if (n.startsWith('51') && n.length >= 10)
+      return '📞 Fijo (con código país)';
+    if (n.startsWith('9') && n.length == 9) return '📱 Celular / Móvil';
+    if (n.length == 7 || (n.length == 9 && n.startsWith('0')))
+      return '📞 Teléfono fijo';
+    return '';
+  }
+
+  // ── Main button ────────────────────────────────────────────────────────────
   Widget _buildButton({
+    required bool isMobile,
     required String text,
     required Color backgroundColor,
     required Color textColor,
     required VoidCallback onPressed,
+    IconData? icon,
   }) {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: TextButton(
+    return SizedBox(
+      height: isMobile ? 42 : 48,
+      child: ElevatedButton(
         onPressed: onPressed,
-        child: Text(
-          text,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: textColor,
+          elevation: 0,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          if (icon != null) ...[
+            Icon(icon, size: 16, color: textColor),
+            const SizedBox(width: 6),
+          ],
+          Text(text,
+              style: TextStyle(
+                  color: textColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700)),
+        ]),
       ),
     );
   }
 
+  // ── Dialog button ──────────────────────────────────────────────────────────
   Widget _buildDialogButton({
+    required bool isMobile,
     required String text,
     required Color backgroundColor,
     required Color textColor,
     required VoidCallback onPressed,
   }) {
-    return Container(
-      height: 45,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: TextButton(
+    return SizedBox(
+      height: isMobile ? 38 : 44,
+      child: ElevatedButton(
         onPressed: onPressed,
-        child: Text(
-          text,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: textColor,
+          elevation: 0,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
+        child: Text(text,
+            style: TextStyle(
+                color: textColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w600)),
       ),
     );
   }
 }
+

@@ -1,14 +1,48 @@
 // lib/features/supplier/presentation/widgets/add_supplier_modal.dart
-// DESCRIPCIÓN: Modal para agregar un nuevo proveedor con todos los campos requeridos.
+// MEJORAS: A-RUC counter+tooltip, B-Tipo chips, C-Banco select Perú,
+//          D-Banco junto a N°Cuenta, E-validaciones opcionales, F-tel validate, I-spinner azul
+import 'dart:async';
+import 'dart:convert';
+import 'package:app_jht_front/core/utils/token_service.dart';
+import 'package:app_jht_front/core/widgets/app_notification.dart';
+import 'package:app_jht_front/features/config/environment_config.dart';
+import 'package:app_jht_front/features/supplier/data/models/supplier_registro_dto.dart';
 import 'package:app_jht_front/features/supplier/data/models/tipo_telefono_model.dart';
 import 'package:app_jht_front/features/supplier/presentation/bloc/supplier_bloc.dart';
-import 'package:app_jht_front/features/supplier/data/models/supplier_registro_dto.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:app_jht_front/core/utils/token_service.dart';
-import 'package:app_jht_front/features/config/environment_config.dart';
+
+// ─── Design tokens ──────────────────────────────────────────────────────────
+const _kPrimary   = Color(0xFF303366);
+const _kPrimaryBg = Color(0xFFEEEFF5);
+const _kBorder    = Color(0xFFE0E0E0);
+const _kTextSub   = Color(0xFF757575);
+const _kError     = Color(0xFFC62828);
+const _kInfoBg    = Color(0xFFE3F2FD);
+const _kInfo      = Color(0xFF1565C0);
+
+// ─── Bancos del Perú ────────────────────────────────────────────────────────
+const _kBancosPeru = [
+  'BCP — Banco de Crédito del Perú',
+  'BBVA Perú',
+  'Scotiabank Perú',
+  'Interbank',
+  'BanBif',
+  'Banco de la Nación',
+  'Banco Pichincha',
+  'Banco Falabella',
+  'Banco Ripley',
+  'Mibanco',
+  'HSBC Perú',
+  'Citibank Perú',
+  'Santander Perú',
+  'Otro',
+];
+
+// ─── Segmentos predefinidos de tipo proveedor ────────────────────────────────
+const _kTiposPredef = ['Servicio', 'Producto', 'Servicio + Producto'];
 
 class AddSupplierModal extends StatefulWidget {
   final Function()? onSupplierAdded;
@@ -26,823 +60,854 @@ class AddSupplierModal extends StatefulWidget {
 
 class _AddSupplierModalState extends State<AddSupplierModal> {
   final _formKey = GlobalKey<FormState>();
+  bool _isSubmitting = false;
+  bool _cargandoTiposTel = true;
 
-  // Controladores para los campos principales
-  final _razonSocialController = TextEditingController();
-  final _direccionController = TextEditingController();
-  final _rucController = TextEditingController();
-  final _tipoController = TextEditingController();
-  final _bancoController = TextEditingController();
-  final _encargadoController = TextEditingController();
-  final _representanteController = TextEditingController();
-  final _ubicacionLinkController = TextEditingController();
-  final _correoController = TextEditingController();
-  final _numeroCuentaController = TextEditingController();
-  final _observacionController = TextEditingController();
+  // Controladores
+  final _razonSocialCtrl    = TextEditingController();
+  final _direccionCtrl      = TextEditingController();
+  final _rucCtrl            = TextEditingController();
+  final _tipoCtrl           = TextEditingController();
+  final _encargadoCtrl      = TextEditingController();
+  final _representanteCtrl  = TextEditingController();
+  final _ubicacionLinkCtrl  = TextEditingController();
+  final _correoCtrl         = TextEditingController();
+  final _numeroCuentaCtrl   = TextEditingController();
+  final _observacionCtrl    = TextEditingController();
 
-  // Controladores para teléfonos (lista dinámica)
-  final List<TextEditingController> _telefonoControllers = [
-    TextEditingController(),
-  ];
-  final List<String?> _telefonoTipos = [null];
+  // RUC — contador reactivo
+  int _rucLen = 0;
 
-  // Variables para dropdowns
+  // Tipo proveedor
+  String? _tipoSeleccionado;   // chip seleccionado
+
+  // Banco — select
+  String? _bancoSeleccionado;
+  bool _bancoEsOtro = false;
+  final _bancoOtroCtrl = TextEditingController();
+
+  // Estado
   String? _estadoValue;
-  final List<String> _estadoOptions = ['Activo', 'Inactivo'];
+
+  // Teléfonos
+  final List<TextEditingController> _telControllers = [TextEditingController()];
+  final List<String?> _telTipos = [null];
   List<TipoTelefonoModel> _tiposTelefonoList = [];
 
   @override
   void initState() {
     super.initState();
+    _rucCtrl.addListener(() => setState(() => _rucLen = _rucCtrl.text.length));
     _cargarTiposTelefono();
   }
 
   Future<void> _cargarTiposTelefono() async {
     try {
-      print('🟡 Cargando tipos de teléfono...');
-
-      final String? token = await TokenService.getToken();
-      if (token == null || token.isEmpty) {
-        throw Exception('No hay token de autenticación.');
-      }
-
-      final response = await http.get(
+      final token = await TokenService.getToken();
+      if (token == null || token.isEmpty) throw Exception('Sin token');
+      final res = await http.get(
         Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/consulta_tipo_telefono'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'accept': 'application/json',
-        },
+        headers: {'Authorization': 'Bearer $token', 'accept': 'application/json'},
       );
-
-      print('🟡 Response status tipos teléfono: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        final data = responseData['data'] as List;
-        final tipos = data.map((item) => TipoTelefonoModel.fromJson(item)).toList();
-
-        setState(() {
-          _tiposTelefonoList = tipos;
+      if (res.statusCode == 200) {
+        final data = (json.decode(res.body)['data'] as List);
+        if (mounted) setState(() {
+          _tiposTelefonoList = data.map((e) => TipoTelefonoModel.fromJson(e)).toList();
+          _cargandoTiposTel = false;
         });
-        print('🟢 Tipos de teléfono cargados: ${tipos.length}');
       } else {
-        throw Exception('Error al obtener tipos de teléfono: ${response.statusCode}');
+        throw Exception('HTTP ${res.statusCode}');
       }
-    } catch (e) {
-      print('❌ ERROR al cargar tipos de teléfono: $e');
-      setState(() {
+    } catch (_) {
+      if (mounted) setState(() {
         _tiposTelefonoList = [
-          TipoTelefonoModel(id: 1, tipo: 'Celular', uso: 'Personal'),
-          TipoTelefonoModel(id: 2, tipo: 'Fijo', uso: 'Oficina'),
-          TipoTelefonoModel(id: 3, tipo: 'WhatsApp', uso: 'Personal'),
+          TipoTelefonoModel(id: 1, tipo: 'Celular',   uso: 'Personal'),
+          TipoTelefonoModel(id: 2, tipo: 'Fijo',      uso: 'Oficina'),
+          TipoTelefonoModel(id: 3, tipo: 'WhatsApp',  uso: 'Personal'),
         ];
+        _cargandoTiposTel = false;
       });
     }
   }
 
   @override
   void dispose() {
-    _razonSocialController.dispose();
-    _direccionController.dispose();
-    _rucController.dispose();
-    _tipoController.dispose();
-    _bancoController.dispose();
-    _encargadoController.dispose();
-    _representanteController.dispose();
-    _ubicacionLinkController.dispose();
-    _correoController.dispose();
-    _numeroCuentaController.dispose();
-    _observacionController.dispose();
-    for (var controller in _telefonoControllers) {
-      controller.dispose();
-    }
+    _razonSocialCtrl.dispose(); _direccionCtrl.dispose();
+    _rucCtrl.dispose(); _tipoCtrl.dispose();
+    _encargadoCtrl.dispose(); _representanteCtrl.dispose();
+    _ubicacionLinkCtrl.dispose(); _correoCtrl.dispose();
+    _numeroCuentaCtrl.dispose(); _observacionCtrl.dispose();
+    _bancoOtroCtrl.dispose();
+    for (final c in _telControllers) c.dispose();
     super.dispose();
   }
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      _showConfirmationDialog();
-    }
+  // ── Helpers RUC ──────────────────────────────────────────────────────────
+  String _rucTipo(String ruc) {
+    if (ruc.length < 2) return '';
+    final pref = ruc.substring(0, 2);
+    if (pref == '10') return 'Persona Natural';
+    if (pref == '20') return 'Empresa / Sociedad';
+    if (pref == '15') return 'No domiciliado';
+    return 'Tipo desconocido';
   }
 
-  void _showConfirmationDialog() {
+  /// Longitud máxima según prefijo: 10 dígitos para Persona Natural (10xx),
+  /// 11 dígitos para Empresa/Sociedad (20xx) y por defecto.
+  int _rucMaxLen() {
+    final text = _rucCtrl.text;
+    if (text.length >= 2 && text.substring(0, 2) == '10') return 10;
+    return 11;
+  }
+
+  Color _rucColor() {
+    final maxLen = _rucMaxLen();
+    if (_rucLen == maxLen) return const Color(0xFF2E7D32);
+    if (_rucLen > maxLen)  return _kError;
+    return _kTextSub;
+  }
+
+  // ── Helpers teléfono ─────────────────────────────────────────────────────
+  String _detectarTipoTel(String numero) {
+    final n = numero.replaceAll(RegExp(r'\s+'), '');
+    if (n.isEmpty) return '';
+    // Con código de país
+    if (n.startsWith('51') && n.length == 11 && n[2] == '9') return '📱 Móvil (con código país)';
+    if (n.startsWith('51') && n.length >= 10) return '📞 Fijo (con código país)';
+    // Sin código
+    if (n.startsWith('9') && n.length == 9) return '📱 Celular / Móvil';
+    if (n.length == 7 || (n.length == 9 && n.startsWith('0'))) return '📞 Teléfono fijo';
+    if (n.length >= 6 && n.length <= 9) return '📞 Posible fijo';
+    return '';
+  }
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+  void _submitForm() {
+    if (!_formKey.currentState!.validate()) return;
+    if (_estadoValue == null) {
+      AppNotification.warning(context, 'Seleccione el estado del proveedor.', isModal: true);
+      return;
+    }
+    for (int i = 0; i < _telControllers.length; i++) {
+      if (_telTipos[i] == null) {
+        AppNotification.warning(context, 'Seleccione el tipo para el teléfono ${i + 1}.', isModal: true);
+        return;
+      }
+    }
+    _showConfirmDialog();
+  }
+
+  void _showConfirmDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text(
-          'Confirmar Registro',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF303366),
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: Row(children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: _kPrimaryBg, borderRadius: BorderRadius.circular(8)),
+            child: const Icon(Icons.store_outlined, color: _kPrimary, size: 20),
           ),
-        ),
-        content: const Text(
-          '¿Está seguro de que desea agregar este proveedor?',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14),
-        ),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: _buildDialogButton(
-                  text: 'CANCELAR',
-                  backgroundColor: Colors.grey[300]!,
-                  textColor: Colors.grey[700]!,
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildDialogButton(
-                  text: 'CONFIRMAR',
-                  backgroundColor: const Color(0xFF303366),
-                  textColor: Colors.white,
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _registrarSupplier();
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
+          const SizedBox(width: 12),
+          const Text('Confirmar registro',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _kPrimary)),
+        ]),
+        content: const Text('¿Desea registrar este proveedor?',
+            style: TextStyle(fontSize: 14)),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [Row(children: [
+          Expanded(child: _dialogBtn('CANCELAR', Colors.grey[100]!, Colors.grey[700]!,
+              () => Navigator.of(context).pop())),
+          const SizedBox(width: 12),
+          Expanded(child: _dialogBtn('CONFIRMAR', _kPrimary, Colors.white, () {
+            Navigator.of(context).pop();
+            _registrar();
+          })),
+        ])],
       ),
     );
   }
 
-  void _registrarSupplier() {
-    // Validar que todos los teléfonos tengan tipo y uso seleccionados
-    for (int i = 0; i < _telefonoControllers.length; i++) {
-      if (_telefonoTipos[i] == null || _telefonoTipos[i]!.isEmpty) {
-        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-          SnackBar(
-            content: Text('Seleccione el tipo y uso para el teléfono ${i + 1}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-    }
+  void _registrar() {
+    setState(() => _isSubmitting = true);
+    final bancoFinal = _bancoEsOtro ? _bancoOtroCtrl.text.trim() : (_bancoSeleccionado ?? '');
+    final tipoFinal  = _tipoCtrl.text.trim().isNotEmpty ? _tipoCtrl.text.trim()
+        : (_tipoSeleccionado ?? '');
 
-    if (_formKey.currentState!.validate() && _estadoValue != null) {
-      final telefonos = List<TelefonoDto>.generate(
-        _telefonoControllers.length,
-        (index) {
-          final tipoUso = _telefonoTipos[index]!;
-          final parts = tipoUso.split(' - ');
-          final tipo = parts[0];
-          final uso = parts.length > 1 ? parts[1] : '';
-
-          return TelefonoDto(
-            numero: _telefonoControllers[index].text,
-            tipo: tipo,
-            uso: uso,
-          );
-        },
+    final telefonos = List<TelefonoDto>.generate(_telControllers.length, (i) {
+      final parts = (_telTipos[i] ?? '').split(' - ');
+      return TelefonoDto(
+        numero: _telControllers[i].text.trim(),
+        tipo:   parts[0],
+        uso:    parts.length > 1 ? parts[1] : '',
       );
+    });
 
-      final dto = SupplierRegistroDto(
-        razonSocial: _razonSocialController.text,
-        representante: _representanteController.text,
-        direccion: _direccionController.text,
-        linkUbicacion: _ubicacionLinkController.text,
-        ruc: _rucController.text,
-        tipo: _tipoController.text,
-        correo: _correoController.text,
-        banco: _bancoController.text,
-        numCuenta: _numeroCuentaController.text,
-        encargado: _encargadoController.text,
-        estado: _estadoValue!,
-        observaciones: _observacionController.text,
-        telefonos: telefonos,
-      );
+    final dto = SupplierRegistroDto(
+      razonSocial:   _razonSocialCtrl.text.trim(),
+      representante: _representanteCtrl.text.trim(),
+      direccion:     _direccionCtrl.text.trim(),
+      linkUbicacion: _ubicacionLinkCtrl.text.trim(),
+      ruc:           _rucCtrl.text.trim(),
+      tipo:          tipoFinal,
+      correo:        _correoCtrl.text.trim(),
+      banco:         bancoFinal,
+      numCuenta:     _numeroCuentaCtrl.text.trim(),
+      encargado:     _encargadoCtrl.text.trim(),
+      estado:        _estadoValue!,
+      observaciones: _observacionCtrl.text.trim(),
+      telefonos:     telefonos,
+    );
 
-      final bloc = BlocProvider.of<SupplierBloc>(context);
-      bloc.add(SupplierEvent.registrarProveedor(dto: dto));
-    }
+    BlocProvider.of<SupplierBloc>(context).add(SupplierEvent.registrarProveedor(dto: dto));
   }
 
-  void _agregarTelefono() {
+  void _agregarTelefono() => setState(() {
+    _telControllers.add(TextEditingController());
+    _telTipos.add(null);
+  });
+
+  void _eliminarTelefono(int index) {
+    if (_telControllers.length <= 1) return;
     setState(() {
-      _telefonoControllers.add(TextEditingController());
-      _telefonoTipos.add(null);
+      _telControllers[index].dispose();
+      _telControllers.removeAt(index);
+      _telTipos.removeAt(index);
     });
   }
 
-  void _eliminarTelefono(int index) {
-    if (_telefonoControllers.length > 1) {
-      setState(() {
-        _telefonoControllers[index].dispose();
-        _telefonoControllers.removeAt(index);
-        _telefonoTipos.removeAt(index);
-      });
-    }
-  }
-
+  // ── BUILD ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 768;
+    final isMobile = MediaQuery.of(context).size.width < 768;
 
     return BlocListener<SupplierBloc, SupplierState>(
-      listener: (context, state) {
+      listener: (ctx, state) {
         state.when(
-          initial: () {},
-          loading: () {},
+          initial:       () {},
+          loading:       () {},
+          listLoaded:    (_) {},
+          detailLoaded:  (_) {},
+          updateSuccess: (_) {},
           success: (response) {
+            setState(() => _isSubmitting = false);
             Navigator.of(context).pop();
-            ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-              SnackBar(
-                content: Text(response.message),
-                backgroundColor: const Color(0xFF303366),
-                duration: const Duration(seconds: 5),
-              ),
-            );
-            if (widget.onSupplierAdded != null) {
-              widget.onSupplierAdded!();
-            }
+            AppNotification.success(widget.parentContext, response.message);
+            widget.onSupplierAdded?.call();
           },
-          listLoaded: (response) {},
-          detailLoaded: (response) {},
-          updateSuccess: (response) {},
           error: (message) {
-            ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-              SnackBar(
-                content: Text('Error: $message'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            setState(() => _isSubmitting = false);
+            AppNotification.error(context, message, isModal: true);
           },
         );
       },
       child: Dialog(
         backgroundColor: Colors.white,
-        insetPadding: const EdgeInsets.all(20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Container(
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 12 : 40, vertical: 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxWidth: isMobile ? double.infinity : 600,
-            maxHeight: MediaQuery.of(context).size.height * 0.9,
+            maxWidth: 640,
+            maxHeight: MediaQuery.of(context).size.height * 0.92,
           ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Center(
-                    child: Text(
-                      'AGREGAR PROVEEDOR',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF303366),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            _buildHeader(),
+            Flexible(child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              child: Form(
+                key: _formKey,
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+                  // ── Datos principales ──────────────────────────────────
+                  _sectionTitle('DATOS PRINCIPALES', Icons.business),
+                  const SizedBox(height: 12),
+
+                  _row2(isMobile,
+                    _field('Razón Social *', _razonSocialCtrl,
+                        validator: (v) => v!.isEmpty ? 'Requerido' : null),
+                    _rucField(),
+                  ),
+                  _field('Dirección *', _direccionCtrl,
+                      validator: (v) => v!.isEmpty ? 'Requerido' : null),
+
+                  // ── Tipo de proveedor (B) ──────────────────────────────
+                  _tipoProveedorField(),
+
+                  // ── Banco + N° Cuenta juntos (C + D) ──────────────────
+                  _row2(isMobile, _bancoSelect(), _field('N° de Cuenta *', _numeroCuentaCtrl,
+                      keyboard: TextInputType.number,
+                      validator: (v) => v!.isEmpty ? 'Requerido' : null)),
+
+                  _row2(isMobile,
+                    _field('Representante *', _representanteCtrl,
+                        validator: (v) => v!.isEmpty ? 'Requerido' : null),
+                    _field('Encargado *', _encargadoCtrl,
+                        validator: (v) => v!.isEmpty ? 'Requerido' : null),
+                  ),
+                  _field('Correo *', _correoCtrl,
+                      keyboard: TextInputType.emailAddress,
+                      validator: (v) {
+                        if (v!.isEmpty) return 'Requerido';
+                        if (!v.contains('@')) return 'Correo inválido';
+                        return null;
+                      }),
+
+                  // Opcionales (E)
+                  _field('Link de Ubicación', _ubicacionLinkCtrl,
+                      hint: 'https://maps.google.com/...'),
+                  _estadoDropdown(),
+                  _field('Observaciones', _observacionCtrl, maxLines: 3),
+
+                  const SizedBox(height: 8),
+
+                  // ── Teléfonos (F) ──────────────────────────────────────
+                  _sectionTitle('TELÉFONOS', Icons.phone_outlined),
+                  const SizedBox(height: 12),
+
+                  if (_cargandoTiposTel)
+                    _loadingWidget('Cargando tipos de contacto...')
+                  else ...[
+                    ...List.generate(_telControllers.length,
+                        (i) => _telefonoRow(i, isMobile)),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: _agregarTelefono,
+                      icon: const Icon(Icons.add, size: 16),
+                      label: const Text('AGREGAR TELÉFONO',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _kPrimary,
+                        side: const BorderSide(color: _kPrimary),
+                        minimumSize: const Size(double.infinity, 44),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Divider(color: Colors.grey),
-                  const SizedBox(height: 24),
+                  ],
 
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        // Fila 1: Razón Social y RUC
-                        if (!isMobile)
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildFormField(
-                                  'Razón Social',
-                                  _razonSocialController,
-                                  (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Ingrese la razón social';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildFormField(
-                                  'RUC',
-                                  _rucController,
-                                  (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Ingrese el RUC';
-                                    }
-                                    if (value.length != 11) {
-                                      return 'El RUC debe tener 11 dígitos';
-                                    }
-                                    return null;
-                                  },
-                                  keyboardType: TextInputType.number,
-                                ),
-                              ),
-                            ],
-                          )
-                        else
-                          Column(
-                            children: [
-                              _buildFormField(
-                                'Razón Social',
-                                _razonSocialController,
-                                (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Ingrese la razón social';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              _buildFormField(
-                                'RUC',
-                                _rucController,
-                                (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Ingrese el RUC';
-                                  }
-                                  if (value.length != 11) {
-                                    return 'El RUC debe tener 11 dígitos';
-                                  }
-                                  return null;
-                                },
-                                keyboardType: TextInputType.number,
-                              ),
-                            ],
-                          ),
+                  const SizedBox(height: 32),
 
-                        // Dirección
-                        _buildFormField('Dirección', _direccionController, (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Ingrese la dirección';
-                          }
-                          return null;
-                        }),
-
-                        // Fila 2: Tipo y Banco
-                        if (!isMobile)
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildFormField(
-                                  'Tipo',
-                                  _tipoController,
-                                  (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Ingrese el tipo';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildFormField(
-                                  'Banco',
-                                  _bancoController,
-                                  (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Ingrese el banco';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                            ],
-                          )
-                        else
-                          Column(
-                            children: [
-                              _buildFormField('Tipo', _tipoController, (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Ingrese el tipo';
-                                }
-                                return null;
-                              }),
-                              _buildFormField('Banco', _bancoController, (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Ingrese el banco';
-                                }
-                                return null;
-                              }),
-                            ],
-                          ),
-
-                        // Encargado
-                        _buildFormField('Encargado', _encargadoController, (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Ingrese el encargado';
-                          }
-                          return null;
-                        }),
-
-                        // SECCIÓN DE TELÉFONOS (dinámica)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Teléfonos',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF303366),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-
-                            ...List.generate(_telefonoControllers.length, (index) {
-                              return _buildTelefonoRow(index, isMobile);
-                            }),
-
-                            Container(
-                              width: double.infinity,
-                              height: 40,
-                              margin: const EdgeInsets.only(top: 8),
-                              child: OutlinedButton(
-                                onPressed: _agregarTelefono,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF303366),
-                                  side: const BorderSide(color: Color(0xFF303366)),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.add, size: 16),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'AGREGAR TELÉFONO',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Representante
-                        _buildFormField(
-                          'Representante',
-                          _representanteController,
-                          (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Ingrese el representante';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        // Link de ubicación
-                        _buildFormField(
-                          'Link de Ubicación',
-                          _ubicacionLinkController,
-                          (value) => null,
-                        ),
-
-                        // Correo
-                        _buildFormField(
-                          'Correo',
-                          _correoController,
-                          (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Ingrese el correo';
-                            }
-                            if (!value.contains('@')) {
-                              return 'Ingrese un correo válido';
-                            }
-                            return null;
-                          },
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-
-                        // Número de Cuenta
-                        _buildFormField(
-                          'Número de Cuenta',
-                          _numeroCuentaController,
-                          (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Ingrese el número de cuenta';
-                            }
-                            return null;
-                          },
-                          keyboardType: TextInputType.number,
-                        ),
-
-                        // Estado (dropdown)
-                        _buildEstadoDropdown(),
-
-                        // Observaciones
-                        _buildFormField(
-                          'Observaciones',
-                          _observacionController,
-                          (value) => null,
-                          maxLines: 3,
-                        ),
-
-                        const SizedBox(height: 32),
-
-                        // Botones
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildButton(
-                                text: 'CANCELAR',
-                                backgroundColor: Colors.grey[300]!,
-                                textColor: Colors.grey[700]!,
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildButton(
-                                text: 'GUARDAR',
-                                backgroundColor: const Color(0xFF303366),
-                                textColor: Colors.white,
-                                onPressed: _submitForm,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  // Botones acción
+                  Row(children: [
+                    Expanded(child: _actionBtn('CANCELAR', Colors.grey[100]!,
+                        Colors.grey[700]!, () => Navigator.of(context).pop())),
+                    const SizedBox(width: 12),
+                    Expanded(child: _isSubmitting
+                        ? _loadingWidget('Registrando proveedor...')
+                        : _actionBtn('GUARDAR', _kPrimary, Colors.white, _submitForm,
+                            icon: Icons.save_outlined)),
+                  ]),
+                ]),
               ),
-            ),
-          ),
+            )),
+          ]),
         ),
       ),
     );
   }
 
-  Widget _buildTelefonoRow(int index, bool isMobile) {
-    return Column(
-      children: [
-        if (index > 0) const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Tipo y Uso',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF303366),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    height: 45,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[400]!),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.white,
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _telefonoTipos[index],
-                        isExpanded: true,
-                        hint: const Text(
-                          'Seleccione tipo y uso',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        items: _tiposTelefonoList.map((TipoTelefonoModel tipo) {
-                          return DropdownMenuItem<String>(
-                            value: tipo.displayText,
-                            child: Text(
-                              tipo.displayText,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (String? value) {
-                          setState(() {
-                            _telefonoTipos[index] = value;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Teléfono',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF303366),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  TextFormField(
-                    controller: _telefonoControllers[index],
-                    keyboardType: TextInputType.phone,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      hintText: 'Ej: 987654321',
-                      hintStyle: const TextStyle(fontSize: 12),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Ingrese el teléfono';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            if (_telefonoControllers.length > 1)
-              Padding(
-                padding: const EdgeInsets.only(top: 28, left: 8),
-                child: InkWell(
-                  onTap: () => _eliminarTelefono(index),
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.red[50],
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Icon(Icons.delete, color: Colors.red[700], size: 18),
-                  ),
-                ),
-              ),
-          ],
+  // ── Header ────────────────────────────────────────────────────────────────
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: const BoxDecoration(
+        color: _kPrimary,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      child: Row(children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(Icons.store_outlined, color: Colors.white, size: 20),
         ),
-      ],
+        const SizedBox(width: 12),
+        const Expanded(
+          child: Text('AGREGAR PROVEEDOR',
+              style: TextStyle(color: Colors.white, fontSize: 16,
+                  fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+        ),
+        IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ]),
     );
   }
 
-  Widget _buildFormField(
-    String label,
-    TextEditingController controller,
-    String? Function(String?) validator, {
-    int maxLines = 1,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF303366),
+  // ── RUC field con contador + tooltip (A) ──────────────────────────────────
+  Widget _rucField() {
+    final tipo = _rucTipo(_rucCtrl.text);
+    final maxLen = _rucMaxLen();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Text('RUC *',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kPrimary)),
+          const SizedBox(width: 6),
+          Tooltip(
+            message: 'RUC Perú:\n• Empieza con 10 → Persona Natural (10 dígitos)\n'
+                '• Empieza con 20 → Empresa / Sociedad (11 dígitos)',
+            triggerMode: TooltipTriggerMode.tap,
+            child: const Icon(Icons.info_outline, size: 14, color: _kTextSub),
           ),
-        ),
-        const SizedBox(height: 8),
+          const Spacer(),
+          Text('$_rucLen / $maxLen',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _rucColor())),
+        ]),
+        const SizedBox(height: 6),
         TextFormField(
-          controller: controller,
-          validator: validator,
-          maxLines: maxLines,
-          keyboardType: keyboardType,
+          controller: _rucCtrl,
+          keyboardType: TextInputType.number,
+          maxLength: maxLen,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          style: const TextStyle(fontSize: 14),
           decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF303366)),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
+            counterText: '',
+            filled: true,
+            fillColor: Colors.grey[50],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kError)),
+            suffixIcon: _rucLen == maxLen
+                ? const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 18)
+                : null,
           ),
-        ),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildEstadoDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Estado',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF303366),
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: _estadoValue,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF303366)),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-          ),
-          items: _estadoOptions.map((String value) {
-            return DropdownMenuItem<String>(value: value, child: Text(value));
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              _estadoValue = value;
-            });
-          },
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Seleccione el estado';
-            }
+          validator: (v) {
+            if (v == null || v.isEmpty) return 'Ingrese el RUC';
+            final expectedLen = _rucMaxLen();
+            if (v.length != expectedLen) return 'El RUC debe tener exactamente $expectedLen dígitos';
             return null;
           },
         ),
-        const SizedBox(height: 16),
-      ],
+        // Indicador dinámico RUC 10 / RUC 20
+        if (tipo.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: _kInfoBg,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.info_outline, size: 12, color: _kInfo),
+              const SizedBox(width: 4),
+              Text(tipo, style: const TextStyle(fontSize: 11, color: _kInfo, fontWeight: FontWeight.w600)),
+            ]),
+          ),
+        ],
+      ]),
     );
   }
 
-  Widget _buildButton({
-    required String text,
-    required Color backgroundColor,
-    required Color textColor,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: TextButton(
-        onPressed: onPressed,
-        child: Text(
-          text,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+  // ── Tipo proveedor con chips + texto libre (B) ────────────────────────────
+  Widget _tipoProveedorField() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Tipo de Proveedor *',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kPrimary)),
+        const SizedBox(height: 8),
+        // Chips de selección rápida
+        Wrap(spacing: 8, runSpacing: 6, children: _kTiposPredef.map((t) {
+          final selected = _tipoSeleccionado == t;
+          return GestureDetector(
+            onTap: () => setState(() {
+              _tipoSeleccionado = selected ? null : t;
+              if (!selected) _tipoCtrl.text = t;
+              else if (_tipoCtrl.text == t) _tipoCtrl.clear();
+            }),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: selected ? _kPrimary : Colors.grey[100],
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: selected ? _kPrimary : _kBorder),
+              ),
+              child: Text(t, style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: selected ? Colors.white : Colors.grey[700],
+              )),
+            ),
+          );
+        }).toList()),
+        const SizedBox(height: 10),
+        // Campo libre (para otro tipo)
+        TextFormField(
+          controller: _tipoCtrl,
+          onChanged: (_) => setState(() => _tipoSeleccionado = null),
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'O escribe otro tipo...',
+            hintStyle: const TextStyle(fontSize: 13, color: _kTextSub),
+            filled: true,
+            fillColor: Colors.grey[50],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kError)),
           ),
+          validator: (v) {
+            final selec = _tipoSeleccionado != null || (v != null && v.isNotEmpty);
+            if (!selec) return 'Seleccione o escriba el tipo';
+            return null;
+          },
         ),
+      ]),
+    );
+  }
+
+  // ── Banco select (C) ──────────────────────────────────────────────────────
+  Widget _bancoSelect() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Banco *',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kPrimary)),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          value: _bancoSeleccionado,
+          isExpanded: true,
+          style: const TextStyle(fontSize: 14, color: Color(0xFF212121)),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.grey[50],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kError)),
+          ),
+          hint: const Text('Seleccione banco', style: TextStyle(fontSize: 13, color: _kTextSub)),
+          items: _kBancosPeru.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
+          onChanged: (v) => setState(() {
+            _bancoSeleccionado = v;
+            _bancoEsOtro = v == 'Otro';
+          }),
+          validator: (v) => v == null ? 'Seleccione un banco' : null,
+        ),
+        // Campo "Otro banco" condicional
+        if (_bancoEsOtro) ...[
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _bancoOtroCtrl,
+            style: const TextStyle(fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'Nombre del banco...',
+              hintStyle: const TextStyle(fontSize: 13, color: _kTextSub),
+              filled: true, fillColor: Colors.grey[50],
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: _kBorder)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+              errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: _kError)),
+            ),
+            validator: (v) => _bancoEsOtro && (v == null || v.isEmpty) ? 'Ingrese el banco' : null,
+          ),
+        ],
+      ]),
+    );
+  }
+
+  // ── Teléfono row con detector automático (F) ──────────────────────────────
+  Widget _telefonoRow(int index, bool isMobile) {
+    final numVal = _telControllers[index].text;
+    final tipoDetectado = _detectarTipoTel(numVal);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: _kPrimaryBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: _kPrimary.withOpacity(0.15)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.phone, color: _kPrimary, size: 16),
+            const SizedBox(width: 6),
+            Text('Teléfono ${index + 1}',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kPrimary)),
+            const Spacer(),
+            if (_telControllers.length > 1)
+              GestureDetector(
+                onTap: () => _eliminarTelefono(index),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(color: Colors.red[50], borderRadius: BorderRadius.circular(6)),
+                  child: Icon(Icons.delete_outline, color: Colors.red[700], size: 16),
+                ),
+              ),
+          ]),
+          const SizedBox(height: 10),
+          isMobile
+              ? Column(children: [_tipoDrop(index), const SizedBox(height: 10), _numField(index)])
+              : Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Expanded(child: _tipoDrop(index)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _numField(index)),
+                ]),
+          // Detector dinámico (tooltip tipo teléfono)
+          if (tipoDetectado.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: tipoDetectado.contains('Móvil') ? const Color(0xFFE8F5E9) : _kInfoBg,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(tipoDetectado, style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: tipoDetectado.contains('Móvil') ? const Color(0xFF2E7D32) : _kInfo,
+              )),
+            ),
+          ],
+        ]),
       ),
     );
   }
 
-  Widget _buildDialogButton({
-    required String text,
-    required Color backgroundColor,
-    required Color textColor,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      height: 45,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: TextButton(
-        onPressed: onPressed,
-        child: Text(
-          text,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+  Widget _tipoDrop(int index) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Text('Tipo y Uso *',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kTextSub)),
+      const SizedBox(height: 4),
+      Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: _kBorder),
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.white,
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: _telTipos[index],
+            isExpanded: true,
+            hint: const Text('Seleccione tipo', style: TextStyle(fontSize: 12)),
+            items: _tiposTelefonoList.map((t) => DropdownMenuItem<String>(
+              value: t.displayText,
+              child: Text(t.displayText, style: const TextStyle(fontSize: 12)),
+            )).toList(),
+            onChanged: (v) => setState(() => _telTipos[index] = v),
           ),
         ),
+      ),
+    ]);
+  }
+
+  Widget _numField(int index) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        const Text('Número *',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kTextSub)),
+        const SizedBox(width: 4),
+        Tooltip(
+          message: 'Fijo Lima: 01XXXXXXX o XXXXXXX (7 dígitos)\n'
+              'Celular: 9XXXXXXXX (9 dígitos)\n'
+              'Con país: 51 + 9 dígitos',
+          triggerMode: TooltipTriggerMode.tap,
+          child: const Icon(Icons.info_outline, size: 12, color: _kTextSub),
+        ),
+      ]),
+      const SizedBox(height: 4),
+      TextFormField(
+        controller: _telControllers[index],
+        keyboardType: TextInputType.phone,
+        style: const TextStyle(fontSize: 13),
+        onChanged: (_) => setState(() {}),
+        decoration: InputDecoration(
+          filled: true, fillColor: Colors.white,
+          hintText: 'Ej: 987654321',
+          hintStyle: const TextStyle(fontSize: 12),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: _kBorder)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: _kBorder)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+          errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: _kError)),
+        ),
+        validator: (v) {
+          if (v == null || v.isEmpty) return 'Ingrese el número';
+          final n = v.replaceAll(RegExp(r'\s+'), '');
+          if (n.length < 7) return 'Número muy corto (mínimo 7 dígitos)';
+          if (n.length > 12) return 'Número muy largo (máximo 12 dígitos)';
+          return null;
+        },
+      ),
+    ]);
+  }
+
+  // ── Estado dropdown ───────────────────────────────────────────────────────
+  Widget _estadoDropdown() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Estado *',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kPrimary)),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          value: _estadoValue,
+          style: const TextStyle(fontSize: 14, color: Color(0xFF212121)),
+          decoration: InputDecoration(
+            filled: true, fillColor: Colors.grey[50],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kError)),
+          ),
+          hint: const Text('Seleccione estado', style: TextStyle(fontSize: 13, color: _kTextSub)),
+          items: const [
+            DropdownMenuItem(value: 'Activo',   child: Text('Activo')),
+            DropdownMenuItem(value: 'Inactivo', child: Text('Inactivo')),
+          ],
+          onChanged: (v) => setState(() => _estadoValue = v),
+          validator: (v) => v == null ? 'Seleccione el estado' : null,
+        ),
+      ]),
+    );
+  }
+
+  // ── Loading widget azul (I) ───────────────────────────────────────────────
+  Widget _loadingWidget(String texto) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      decoration: BoxDecoration(
+        color: _kInfoBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _kInfo.withOpacity(0.25)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const SizedBox(
+          width: 20, height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+            valueColor: AlwaysStoppedAnimation<Color>(_kInfo),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(texto, style: const TextStyle(
+            fontSize: 13, color: _kInfo, fontWeight: FontWeight.w600)),
+      ]),
+    );
+  }
+
+  // ── Helpers layout ────────────────────────────────────────────────────────
+  Widget _sectionTitle(String title, IconData icon) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Icon(icon, color: _kPrimary, size: 16),
+        const SizedBox(width: 6),
+        Text(title, style: const TextStyle(
+            fontSize: 12, fontWeight: FontWeight.w700, color: _kPrimary, letterSpacing: 0.5)),
+      ]),
+      const SizedBox(height: 8),
+      const Divider(color: _kBorder, height: 1),
+      const SizedBox(height: 4),
+    ]);
+  }
+
+  Widget _row2(bool isMobile, Widget left, Widget right) {
+    if (isMobile) return Column(children: [left, right]);
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Expanded(child: left),
+      const SizedBox(width: 16),
+      Expanded(child: right),
+    ]);
+  }
+
+  Widget _field(String label, TextEditingController ctrl, {
+    String? Function(String?)? validator,
+    int maxLines = 1,
+    TextInputType keyboard = TextInputType.text,
+    String? hint,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: const TextStyle(
+            fontSize: 13, fontWeight: FontWeight.w600, color: _kPrimary)),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: ctrl, validator: validator,
+          maxLines: maxLines, keyboardType: keyboard,
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            filled: true, fillColor: Colors.grey[50],
+            hintText: hint,
+            hintStyle: const TextStyle(fontSize: 13, color: _kTextSub),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kError)),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _actionBtn(String label, Color bg, Color fg, VoidCallback onTap, {IconData? icon}) {
+    return SizedBox(
+      height: 48,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: bg, foregroundColor: fg, elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          if (icon != null) ...[Icon(icon, size: 16), const SizedBox(width: 6)],
+          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+        ]),
+      ),
+    );
+  }
+
+  Widget _dialogBtn(String label, Color bg, Color fg, VoidCallback onTap) {
+    return SizedBox(height: 44,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: bg, foregroundColor: fg, elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
       ),
     );
   }

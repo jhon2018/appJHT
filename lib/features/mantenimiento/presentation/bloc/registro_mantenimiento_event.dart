@@ -2,6 +2,7 @@
 
 import 'package:app_jht_front/features/mantenimiento/data/models/accesorio_vehiculo_model.dart';
 import 'package:flutter/foundation.dart';
+import '../../data/models/item_mantenimiento_form_model.dart';
 
 @immutable
 abstract class RegistroMantenimientoEvent {
@@ -132,4 +133,25 @@ class RegistrarMantenimientoEvent extends RegistroMantenimientoEvent {
 /// Reset completo del formulario
 class ResetRegistroEvent extends RegistroMantenimientoEvent {
   const ResetRegistroEvent();
+}
+
+/// Nuevo evento V2 — usa HistoricoItem + GastoRegistro directamente
+class RegistrarMantenimientoV2Event extends RegistroMantenimientoEvent {
+  final int perIid;
+  final int vehIid;
+  final int proIid;
+  final int bitKilometraje;
+  final DateTime bitFechaRegistro;
+  final List<dynamic> historicos; // List<HistoricoItem>
+  final dynamic gasto; // GastoRegistro
+
+  const RegistrarMantenimientoV2Event({
+    required this.perIid,
+    required this.vehIid,
+    required this.proIid,
+    required this.bitKilometraje,
+    required this.bitFechaRegistro,
+    required this.historicos,
+    required this.gasto,
+  });
 }

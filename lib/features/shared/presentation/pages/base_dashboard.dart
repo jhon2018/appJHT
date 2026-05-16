@@ -1,4 +1,5 @@
 // lib/features/shared/presentation/pages/base_dashboard.dart
+import 'dart:ui';
 import 'package:app_jht_front/core/network/http_client.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/features/accessory/presentation/pages/accessory_page.dart';
@@ -24,9 +25,14 @@ import 'package:app_jht_front/features/vehicle/domain/usecases/listar_vehiculos_
 import 'package:app_jht_front/features/vehicle/domain/usecases/registrar_vehiculo_usecase.dart';
 import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
 import 'package:app_jht_front/features/vehicle/presentation/pages/vehicle_page.dart';
+import 'package:app_jht_front/features/accessory/presentation/bloc/accessory_bloc.dart';
+import 'package:app_jht_front/features/accessory/domain/repositories/accessory_repository_impl.dart';
+import 'package:app_jht_front/features/accessory/data/datasources/accessory_remote_data_source.dart';
 import 'package:flutter/material.dart';
+import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../widgets/side_menu.dart';
+import 'package:app_jht_front/features/shared/presentation/mixins/navigation_helper_mixin.dart';
 
 class BaseDashboard extends StatefulWidget {
   final String userName;
@@ -45,7 +51,7 @@ class BaseDashboard extends StatefulWidget {
 }
 
 class _BaseDashboardState extends State<BaseDashboard>
-    with SingleTickerProviderStateMixin, DashboardResponsiveMixin {
+    with SingleTickerProviderStateMixin, DashboardResponsiveMixin, NavigationHelperMixin<BaseDashboard> {
   bool _isMenuOpen = false;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -120,24 +126,42 @@ class _BaseDashboardState extends State<BaseDashboard>
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnimation.value,
-          child: Container(
-            color: Colors.white,
-            child: Column(
-              children: [
-                _buildHeader(isDesktopDevice),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.all(isDesktopDevice ? 24 : 16),
-                    child: widget.contentBuilder != null
-                        ? widget.contentBuilder!(context, isDesktopDevice) // ← Usa el contentBuilder si existe
-                        : _buildDefaultContent(), // ← Muestra el dashboard genérico si no hay contentBuilder
+        return Stack(
+          children: [
+            Transform.scale(
+              scale: _scaleAnimation.value,
+              child: Container(
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    _buildHeader(isDesktopDevice),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: EdgeInsets.all(isDesktopDevice ? 24 : 16),
+                        child: widget.contentBuilder != null
+                            ? widget.contentBuilder!(context, isDesktopDevice)
+                            : _buildDefaultContent(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Filtro de desenfoque cuando el menú está abierto (Móvil)
+            if (_isMenuOpen && !isDesktopDevice)
+              Positioned.fill(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: 5 * _animationController.value,
+                    sigmaY: 5 * _animationController.value,
+                  ),
+                  child: Container(
+                    color: Colors.black.withOpacity(0.1 * _animationController.value),
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+          ],
         );
       },
     );
@@ -148,25 +172,46 @@ class _BaseDashboardState extends State<BaseDashboard>
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: isDesktopDevice ? 32 : 20,
-        vertical: isDesktopDevice ? 20 : 16,
+        vertical: isDesktopDevice ? 16 : 12,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey[300]!, width: 1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border(bottom: BorderSide(color: Colors.grey[100]!, width: 1)),
       ),
       child: SafeArea(
         bottom: false,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'JHT TRANSPORT\nCOMPANY',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF303366),
-                letterSpacing: 1.0,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'JHT TRANSPORT',
+                  style: TextStyle(
+                    fontSize: isDesktopDevice ? 20 : 16,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF303366),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                Text(
+                  'COMPANY',
+                  style: TextStyle(
+                    fontSize: isDesktopDevice ? 12 : 10,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF4834D4),
+                    letterSpacing: 2.0,
+                  ),
+                ),
+              ],
             ),
             Row(
               children: [
@@ -175,46 +220,33 @@ class _BaseDashboardState extends State<BaseDashboard>
                     'Bienvenido, ${widget.userName}',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
                     ),
                   ),
                   const SizedBox(width: 20),
                 ],
-                InkWell(
-                  onTap: _toggleMenu,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 4,
-                          decoration: const BoxDecoration(
-                            color: Colors.black87,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        Container(
-                          width: 4,
-                          height: 4,
-                          decoration: const BoxDecoration(
-                            color: Colors.black87,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        Container(
-                          width: 4,
-                          height: 4,
-                          decoration: const BoxDecoration(
-                            color: Colors.black87,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
+                // Botón de Menú Estilizado
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _toggleMenu,
+                    borderRadius: BorderRadius.circular(12),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: _isMenuOpen 
+                            ? const Color(0xFF303366) 
+                            : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        _isMenuOpen ? Icons.close_rounded : Icons.menu_rounded,
+                        color: _isMenuOpen ? Colors.white : const Color(0xFF303366),
+                        size: 24,
+                      ),
                     ),
                   ),
                 ),
@@ -261,8 +293,8 @@ class _BaseDashboardState extends State<BaseDashboard>
               const Color(0xFF4CAF50),
             ),
             _buildCategoryCard(
-              'CONDUCTORES',
-              'Gestión de conductores, licencias, capacitaciones y asignaciones.',
+              'COLABORADORES',
+              'Gestión de colaboradores, licencias, capacitaciones y asignaciones.',
               const Color(0xFF2196F3),
             ),
             _buildCategoryCard(
@@ -417,7 +449,6 @@ class _BaseDashboardState extends State<BaseDashboard>
               onClose: _closeMenu,
               onItemSelected: (itemTitle) {
                 _closeMenu();
-                _showNavigationMessage(itemTitle);
                 _navigateToPage(itemTitle);
               },
             ),
@@ -439,7 +470,6 @@ class _BaseDashboardState extends State<BaseDashboard>
             onClose: _closeMenu,
             onItemSelected: (itemTitle) {
               _closeMenu();
-              _showNavigationMessage(itemTitle);
               _navigateToPage(itemTitle);
             },
           ),
@@ -455,144 +485,9 @@ class _BaseDashboardState extends State<BaseDashboard>
     );
   }
 
-  // ✅ FUNCIÓN DE NAVEGACIÓN (se mantiene igual)
+  // ✅ FUNCIÓN DE NAVEGACIÓN (Usa el mixin centralizado)
   void _navigateToPage(String pageName) {
-    switch (pageName) {
-case 'Vehículo':
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => BlocProvider(
-        create: (context) {
-          final vehicleDataSource = VehicleRemoteDataSourceImpl(
-            httpClient: HttpClient(),
-          );
-          
-          final vehicleRepository = VehicleRepositoryImpl(
-            remoteDataSource: vehicleDataSource,
-          );
-          
-          return VehicleBloc(
-            registrarVehiculoUseCase: RegistrarVehiculoUseCase(
-              vehicleRepository, // ✅ POSICIONAL
-            ),
-            listarVehiculosUseCase: ListarVehiculosUseCase(
-              vehicleRepository, // ✅ POSICIONAL
-            ),
-            actualizarVehiculoUseCase: ActualizarVehiculoUseCase(
-              vehicleRepository, // ✅ POSICIONAL
-            ),
-          );
-        },
-        child: VehiclePage(
-          userName: widget.userName,
-          userRole: widget.userRole,
-        ),
-      ),
-    ),
-  );
-  break;
-      case 'Mantenimiento':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => BlocProvider(
-              create: (context) =>
-                  MantenimientoBloc(repository: MantenimientoRepository())
-                    ..add(LoadMantenimientosEvent()),
-              child: MantenimientoPage(
-                userName: widget.userName,
-                userRole: widget.userRole,
-              ),
-            ),
-          ),
-        );
-        break;
-      case 'Proveedor':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => SupplierPage(
-              userName: widget.userName,
-              userRole: widget.userRole,
-            ),
-          ),
-        );
-        break;
-      case 'Conductores':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) {
-              final remoteDataSource = ConductorRemoteDataSourceImpl();
-              final repository = ConductorRepositoryImpl(
-                remoteDataSource: remoteDataSource,
-              );
-
-              return BlocProvider(
-                create: (context) => ConductorBloc(
-                  registrarConductorUseCase: RegistrarConductorUseCase(
-                    repository: repository,
-                  ),
-                  listarPersonasUseCase: ListarPersonasUseCase(
-                    repository: repository,
-                  ),
-                  obtenerPersonaDetalleUseCase: ObtenerPersonaDetalleUseCase(
-                    repository: repository,
-                  ),
-                  actualizarPersonaUseCase: ActualizarPersonaUseCase(
-                    repository: repository,
-                  ),
-                  conductorRepository: repository,
-                )..add(const ConductorEvent.listarPersonas()),
-                child: ConductorPage(
-                  userName: widget.userName,
-                  userRole: widget.userRole,
-                  dataSource: remoteDataSource,
-                ),
-              );
-            },
-          ),
-        );
-        break;
-      case 'Accesorios':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => AccessoryPage(
-              userName: widget.userName,
-              userRole: widget.userRole,
-            ),
-          ),
-        );
-        break;
-      case 'Ayuda':
-        _showNotImplementedMessage(pageName);
-        break;
-      default:
-        _showNotImplementedMessage(pageName);
-        print('Navegación a $pageName no implementada.');
-    }
-  }
-
-  void _showNotImplementedMessage(String pageName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$pageName - Página en desarrollo'),
-        backgroundColor: Colors.orange,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _showNavigationMessage(String pageName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Navegando a: $pageName'),
-        backgroundColor: const Color(0xFF303366),
-        duration: const Duration(seconds: 1),
-      ),
-    );
+    navigateToMenuPage(context, pageName, widget.userName, widget.userRole);
   }
 
   void _showLogoutConfirmation(BuildContext context) {
@@ -653,17 +548,19 @@ case 'Vehículo':
       Future.delayed(const Duration(milliseconds: 100), () {
         scaffoldMessenger.showSnackBar(
           const SnackBar(
-            content: Text('Sesión cerrada correctamente'),
-            backgroundColor: Color(0xFF303366),
-            duration: Duration(seconds: 4),
+            content: Text('✅ Sesión cerrada correctamente'),
+            backgroundColor: Color(0xFF2E7D32),
+            duration: Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       });
     } catch (e) {
       scaffoldMessenger.showSnackBar(
         SnackBar(
-          content: Text('Error al cerrar sesión: $e'),
-          backgroundColor: Colors.red,
+          content: Text('❌ Error al cerrar sesión: $e'),
+          backgroundColor: Color(0xFFC62828),
+          behavior: SnackBarBehavior.floating,
         ),
       );
     }

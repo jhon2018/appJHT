@@ -20,6 +20,24 @@ const _kBorder    = Color(0xFFE0E0E0);
 const _kTextSub   = Color(0xFF757575);
 const _kError     = Color(0xFFC62828);
 
+// ─── Bancos del Perú ──────────────────────────
+const _kBancosPeru = [
+  'BCP — Banco de Crédito del Perú',
+  'BBVA Perú',
+  'Scotiabank Perú',
+  'Interbank',
+  'BanBif',
+  'Banco de la Nación',
+  'Banco Pichincha',
+  'Banco Falabella',
+  'Banco Ripley',
+  'Mibanco',
+  'HSBC Perú',
+  'Citibank Perú',
+  'Santander Perú',
+  'Otro',
+];
+
 // ─────────────────────────────────────────────
 //  BUG FIX #2 — normalizador de estado
 //  La API puede devolver "Activo", "ACTIVO", "activo".
@@ -69,6 +87,11 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
   // ✅ BUG FIX #2: normalizado a MAYÚSCULAS
   String? _estadoValue;
 
+  // Banco select
+  String? _bancoSeleccionado;
+  bool _bancoEsOtro = false;
+  late final TextEditingController _bancoOtroCtrl;
+
   List<TipoTelefonoModel> _tiposTelefono = [];
   bool _cargandoTipos = true;
 
@@ -96,9 +119,25 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
 
     // ✅ BUG FIX #2 aplicado aquí
     _estadoValue = _normalizeEstado(p.estado);
-    // Si el valor normalizado no está en el dropdown, ponemos null
     if (_estadoValue != 'ACTIVO' && _estadoValue != 'INACTIVO') {
       _estadoValue = null;
+    }
+
+    // Banco: buscar si el valor actual coincide con la lista
+    final bancoActual = p.banco;
+    final estaEnLista = _kBancosPeru.contains(bancoActual);
+    if (estaEnLista) {
+      _bancoSeleccionado = bancoActual;
+      _bancoEsOtro = (bancoActual == 'Otro');
+      _bancoOtroCtrl = TextEditingController();
+    } else if (bancoActual.isNotEmpty) {
+      _bancoSeleccionado = 'Otro';
+      _bancoEsOtro = true;
+      _bancoOtroCtrl = TextEditingController(text: bancoActual);
+    } else {
+      _bancoSeleccionado = null;
+      _bancoEsOtro = false;
+      _bancoOtroCtrl = TextEditingController();
     }
 
     _telControllers = [];
@@ -225,6 +264,10 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
       ),
     );
 
+    final bancoFinal = _bancoEsOtro
+        ? _bancoOtroCtrl.text.trim()
+        : (_bancoSeleccionado ?? _bancoCtrl.text.trim());
+
     final dto = SupplierActualizarDto(
       proveedorId:  widget.proveedor.proveedorId,
       razonSocial:  _razonSocialCtrl.text.trim(),
@@ -234,7 +277,7 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
       ruc:          int.tryParse(_rucCtrl.text) ?? 0,
       tipo:         _tipoCtrl.text.trim(),
       correo:       _correoCtrl.text.trim(),
-      banco:        _bancoCtrl.text.trim(),
+      banco:        bancoFinal,
       numCuenta:    int.tryParse(_numeroCuentaCtrl.text) ?? 0,
       encargado:    _encargadoCtrl.text.trim(),
       estado:       _estadoValue!,
@@ -273,6 +316,7 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
     _numeroCuentaCtrl.dispose();
     _observacionCtrl.dispose();
     for (final c in _telControllers) c.dispose();
+    _bancoOtroCtrl.dispose();
     super.dispose();
   }
 
@@ -335,8 +379,7 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
                         _row2(isMobile,
                           _field('Tipo Proveedor *', _tipoCtrl,
                               validator: (v) => v!.isEmpty ? 'Requerido' : null),
-                          _field('Banco *', _bancoCtrl,
-                              validator: (v) => v!.isEmpty ? 'Requerido' : null),
+                          _bancoSelectEdit(),
                         ),
                         _row2(isMobile,
                           _field('Representante *', _representanteCtrl,
@@ -345,6 +388,9 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
                               validator: (v) => v!.isEmpty ? 'Requerido' : null),
                         ),
                         _row2(isMobile,
+                          _field('N° Cuenta *', _numeroCuentaCtrl,
+                              keyboard: TextInputType.number,
+                              validator: (v) => v!.isEmpty ? 'Requerido' : null),
                           _field('Correo *', _correoCtrl,
                               keyboard: TextInputType.emailAddress,
                               validator: (v) {
@@ -352,9 +398,6 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
                                 if (!v.contains('@')) return 'Correo inválido';
                                 return null;
                               }),
-                          _field('N° Cuenta *', _numeroCuentaCtrl,
-                              keyboard: TextInputType.number,
-                              validator: (v) => v!.isEmpty ? 'Requerido' : null),
                         ),
                         _field('Link Ubicación', _ubicacionLinkCtrl),
                         _estadoDropdown(),
@@ -366,10 +409,7 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
                         const SizedBox(height: 12),
 
                         if (_cargandoTipos)
-                          const Center(child: Padding(
-                            padding: EdgeInsets.all(16),
-                            child: CircularProgressIndicator(color: _kPrimary),
-                          ))
+                          _loadingWidget('Cargando tipos de contacto...')
                         else ...[
                           ...List.generate(_telControllers.length,
                               (i) => _telefonoRow(i, isMobile)),
@@ -409,6 +449,85 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
           ),
         ),
       ),
+    );
+  }
+
+  // ── Banco select edición (C+D) ───────────────────────────────────────────
+  Widget _bancoSelectEdit() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Banco *',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kPrimary)),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          value: _bancoSeleccionado,
+          isExpanded: true,
+          style: const TextStyle(fontSize: 14, color: Color(0xFF212121)),
+          decoration: InputDecoration(
+            filled: true, fillColor: Colors.grey[50],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kError)),
+          ),
+          hint: const Text('Seleccione banco', style: TextStyle(fontSize: 13, color: _kTextSub)),
+          items: _kBancosPeru.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
+          onChanged: (v) => setState(() {
+            _bancoSeleccionado = v;
+            _bancoEsOtro = v == 'Otro';
+          }),
+          validator: (v) => v == null ? 'Seleccione un banco' : null,
+        ),
+        if (_bancoEsOtro) ...[
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _bancoOtroCtrl,
+            style: const TextStyle(fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'Nombre del banco...',
+              hintStyle: const TextStyle(fontSize: 13, color: _kTextSub),
+              filled: true, fillColor: Colors.grey[50],
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: _kBorder)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+              errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: _kError)),
+            ),
+            validator: (v) => _bancoEsOtro && (v == null || v.isEmpty) ? 'Ingrese el banco' : null,
+          ),
+        ],
+      ]),
+    );
+  }
+
+  // ── Loading widget azul (I) ───────────────────────────────────────────────
+  Widget _loadingWidget(String texto) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE3F2FD),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF1565C0).withOpacity(0.25)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const SizedBox(width: 20, height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1565C0)),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(texto, style: const TextStyle(
+            fontSize: 13, color: Color(0xFF1565C0), fontWeight: FontWeight.w600)),
+      ]),
     );
   }
 

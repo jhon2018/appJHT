@@ -108,6 +108,7 @@ _selectedEstado = v.estado == 'ACTIVO' || v.estado == 'Activo' ? 'Activo' : 'Ina
       initialDate: current ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2035),
+      locale: const Locale('es', 'ES'),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
           colorScheme: const ColorScheme.light(primary: _primaryColor),

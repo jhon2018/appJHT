@@ -74,6 +74,8 @@ class PersonaModel {
   final String fechaRegistro;
   final String? fechaIngreso;
   final String? fechaSalida;
+  final String? usuario;
+  final String? contrasena;
   final List<TelefonoModel> telefonos;
   final ConductorDetalleModel? conductor;
 
@@ -92,6 +94,8 @@ class PersonaModel {
     required this.fechaRegistro,
     this.fechaIngreso,
     this.fechaSalida,
+    this.usuario,
+    this.contrasena,
     required this.telefonos,
     this.conductor,
   });
@@ -130,23 +134,24 @@ class PersonaModel {
 
 factory PersonaModel.fromJson(Map<String, dynamic> json) {
   return PersonaModel(
-    personaId: json['personaId'] as int,
-    dni: json['dni'] as int,
-    primerNombre: json['primerNombre']?.toString() ?? '',
-    segundoNombre: json['segundoNombre']?.toString() ?? '',
-    apellidoPaterno: json['apellidoPaterno']?.toString() ?? '',
-    apellidoMaterno: json['apellidoMaterno']?.toString() ?? '',
-    fechaNacimiento: json['fechaNacimiento']?.toString(),
-    correo: json['correo']?.toString(),
-    cargo: json['cargo']?.toString(),
-    salario: (json['salario'] as num?)?.toDouble(),
-    estado: json['estado']?.toString() ?? '',
-    fechaRegistro: json['fechaRegistro']?.toString() ?? '',
-    fechaIngreso: json['fechaIngreso']?.toString(),
-    fechaSalida: json['fechaSalida']?.toString(),
+    personaId: json['personaId'] as int? ?? json['per_iid'] as int? ?? 0,
+    dni: json['dni'] as int? ?? json['per_idni'] as int? ?? 0,
+    primerNombre: json['primerNombre']?.toString() ?? json['per_vprimer_nom']?.toString() ?? '',
+    segundoNombre: json['segundoNombre']?.toString() ?? json['per_vsegundo_nom']?.toString() ?? '',
+    apellidoPaterno: json['apellidoPaterno']?.toString() ?? json['per_vapellido_pa']?.toString() ?? '',
+    apellidoMaterno: json['apellidoMaterno']?.toString() ?? json['per_vapellido_ma']?.toString() ?? '',
+    fechaNacimiento: json['fechaNacimiento']?.toString() ?? json['per_dfecha_nacimiento']?.toString(),
+    correo: json['correo']?.toString() ?? json['per_vcorreo']?.toString(),
+    cargo: json['cargo']?.toString() ?? json['per_vcargo']?.toString(),
+    salario: (json['salario'] as num? ?? json['per_isalario'] as num?)?.toDouble(),
+    estado: json['estado']?.toString() ?? json['per_vestado']?.toString() ?? '',
+    fechaRegistro: json['fechaRegistro']?.toString() ?? json['per_dfecha_registro']?.toString() ?? '',
+    fechaIngreso: json['fechaIngreso']?.toString() ?? json['per_dfecha_ingreso']?.toString(),
+    fechaSalida: json['fechaSalida']?.toString() ?? json['per_dfecha_salida']?.toString(),
+    usuario: json['usuario']?.toString() ?? json['per_vusuario']?.toString() ?? json['usu_vnombre']?.toString(),
+    contrasena: json['contrasena']?.toString() ?? json['per_vcontrasena']?.toString() ?? json['usu_vcontrasena']?.toString(),
     telefonos: (json['telefonos'] as List<dynamic>?)
         ?.map((tel) {
-          // Manejar ambos formatos de teléfono
           if (tel is Map<String, dynamic>) {
             return TelefonoModel.fromJson(tel);
           }
