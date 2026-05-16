@@ -291,15 +291,15 @@ class _AddVehicleModalState extends State<AddVehicleModal> {
       listener: (context, state) {
         state.whenOrNull(
           registroExitoso: (response) {
-            Navigator.of(context).pop();
-            widget.onVehicleAdded
-                ?.call(); // ← notifica a vehicle_page para recargar
+            if (!mounted) return;
+            Navigator.of(context).pop(); // cierra el modal
             AppNotification.success(context, response.message);
           },
           error: (message) {
+            if (!mounted) return;
             showDialog(
               context: context,
-              builder: (context) => AlertDialog(
+              builder: (ctx) => AlertDialog(
                 backgroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -347,7 +347,7 @@ class _AddVehicleModalState extends State<AddVehicleModal> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => Navigator.of(ctx).pop(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
                         foregroundColor: Colors.white,
@@ -369,9 +369,7 @@ class _AddVehicleModalState extends State<AddVehicleModal> {
           },
         );
       },
-      child: PopScope(
-        canPop: false,
-        child: Dialog(
+      child: Dialog(
           backgroundColor: Colors.white,
           insetPadding: EdgeInsets.symmetric(
             horizontal: isMobile
@@ -408,7 +406,6 @@ class _AddVehicleModalState extends State<AddVehicleModal> {
             ),
           ),
         ),
-      ),
     );
   }
 

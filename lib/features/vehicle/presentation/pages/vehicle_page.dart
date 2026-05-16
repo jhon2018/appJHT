@@ -231,12 +231,6 @@ class _VehiclePageState extends State<VehiclePage>
       body: BlocListener<VehicleBloc, VehicleState>(
         listener: (context, state) {
           state.maybeWhen(
-            loading: () {
-              _showLoadingDialog('Cargando vehículos...');
-            },
-            vehiculosCargados: (vehiculos) {
-              if (Navigator.canPop(context)) Navigator.pop(context);
-            },
             actualizacionExitosa: (response) {
               AppNotification.success(context, response.message);
               context.read<VehicleBloc>().add(
@@ -244,9 +238,13 @@ class _VehiclePageState extends State<VehiclePage>
               );
               _resetPagination();
             },
-            error: (message) {
-              if (Navigator.canPop(context)) Navigator.pop(context);
-              AppNotification.error(context, message);
+            registroExitoso: (response) {
+              // La notificación ya se muestra en el modal.
+              // Solo recargar datos.
+              context.read<VehicleBloc>().add(
+                const VehicleEvent.cargarVehiculos(),
+              );
+              _resetPagination();
             },
             orElse: () {},
           );
