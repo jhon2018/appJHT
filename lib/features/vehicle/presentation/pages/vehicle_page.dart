@@ -138,6 +138,12 @@ class _VehiclePageState extends State<VehiclePage>
     final vehicleBloc = context
         .read<VehicleBloc>(); // ← capturar ANTES del showDialog
 
+    // Extraer placas existentes del estado actual del bloc
+    final existingPlates = vehicleBloc.state.maybeWhen(
+      vehiculosCargados: (vehicles) => vehicles.map((v) => v.placa).toList(),
+      orElse: () => <String>[],
+    );
+
     final vehicleEntity = VehicleEntity(
       vehiculoId: vehicle.vehiculoId,
       placa: vehicle.placa,
@@ -166,15 +172,15 @@ class _VehiclePageState extends State<VehiclePage>
       estado: vehicle.estado,
     );
 
-    print('🔵 VehicleEntity creado - ID: ${vehicleEntity.vehiculoId}');
-
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => BlocProvider.value(
-        // ← ESTO ES LO QUE FALTABA
         value: vehicleBloc,
-        child: EditVehicleModal(vehicle: vehicleEntity),
+        child: EditVehicleModal(
+          vehicle: vehicleEntity,
+          existingPlates: existingPlates,
+        ),
       ),
     );
   }
