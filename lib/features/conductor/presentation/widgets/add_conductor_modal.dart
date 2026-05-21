@@ -71,8 +71,9 @@ class _AddConductorModalState extends State<AddConductorModal> {
   String? _estadoValue;
   String? _cargoValue;
 
-  // DNI duplicado
+  // DNI duplicado y error inline
   bool _dniDuplicado = false;
+  String? _dniError; // mensaje de error inline bajo el campo DNI
 
   // Email suggestions
   bool _showEmailSuggestions = false;
@@ -196,11 +197,8 @@ class _AddConductorModalState extends State<AddConductorModal> {
     );
 
     if (picked != null) {
-      // Forzar un rebuild del widget específico
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        setState(() {
-          controller.text = _formatDate(picked);
-        });
+      setState(() {
+        controller.text = _formatDate(picked);
       });
       print('🟢 Fecha seleccionada: $picked');
       print('🔵 Controller text actualizado: ${controller.text}');
@@ -331,7 +329,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
 
   String _limpiarMensajeError(String message) {
     if (message.contains('DNI debe ser mayor que 0')) {
-      return 'El DNI debe tener exactamente 8 dígitos numéricos y ser mayor que 0.';
+      return 'La identificación (DNI o Carné) debe ser numérica y mayor que 0.';
     } else if (message.contains('Ocurrió un error al registrar')) {
       final partes = message.split(':');
       if (partes.length > 1) {
@@ -342,45 +340,86 @@ class _AddConductorModalState extends State<AddConductorModal> {
   }
 
   void _registrarConductor() {
-    // Validar DNI antes de enviar
+    // ── Validar DNI (solo mostrar aviso inline, NO cerrar modal) ──────────────
     final dniText = _dniController.text.trim();
+
     if (dniText.isEmpty) {
-      _mostrarErrorDialog('El DNI es requerido');
+      setState(() => _dniError = 'El DNI es requerido');
+      _mostrarSnackBarError('Complete el campo DNI / Carné');
       return;
     }
 
     if (dniText.length != 8) {
-      _mostrarErrorDialog('El DNI debe tener exactamente 8 dígitos');
+      setState(() => _dniError =
+          dniText.length < 8
+              ? 'Faltan ${8 - dniText.length} dígitos (DNI: 8 dígitos)'
+              : 'El backend solo acepta DNI de 8 dígitos. Carné no soportado aún.');
+      _mostrarSnackBarError(
+          dniText.length < 8
+              ? 'DNI incompleto: faltan ${8 - dniText.length} dígitos'
+              : 'El sistema solo admite DNI peruano (8 dígitos). El Carné de Extranjería (9 dígitos) aún no está habilitado en el servidor.');
       return;
     }
 
     final dni = int.tryParse(dniText);
     if (dni == null || dni <= 0) {
-      _mostrarErrorDialog('El DNI debe ser un número válido mayor que 0');
+      setState(() => _dniError = 'El DNI debe ser un número mayor que 0');
+      _mostrarSnackBarError('El DNI debe ser un número válido mayor que 0');
       return;
     }
 
-    // Validar campos obligatorios
+    // DNI OK → limpiar error inline
+    setState(() => _dniError = null);
+
+    // ── Validar DNI duplicado ─────────────────────────────────────────────────
     if (_dniDuplicado) {
-      _mostrarErrorDialog('El DNI ${_dniController.text} ya está registrado.');
+      setState(() => _dniError = 'Este DNI ya está registrado');
+      _mostrarSnackBarError('El DNI ${_dniController.text} ya está registrado.');
       return;
     }
+
+    // ── Validar teléfonos ─────────────────────────────────────────────────────
     for (int i = 0; i < _telefonoControllers.length; i++) {
       if (_telefonoTitIds[i] == null) {
-        _mostrarErrorDialog(
-          'Seleccione el tipo y uso para el teléfono ${i + 1}',
-        );
+        _mostrarSnackBarError(
+            'Seleccione el tipo y uso para el teléfono ${i + 1}');
         return;
       }
     }
 
-    // Validar cargo seleccionado
+    // ── Validar cargo ─────────────────────────────────────────────────────────
     if (_cargoValue == null) {
-      _mostrarErrorDialog('Seleccione el cargo');
+      _mostrarSnackBarError('Seleccione el cargo del colaborador');
       return;
     }
 
-    // Validar formulario
+    // ── Validar fechas (campos InkWell, ignorados por Form.validate) ──────────
+    if (_fechaIngresoController.text.isEmpty) {
+      _mostrarSnackBarError('La fecha de ingreso es requerida.');
+      return;
+    }
+    if (_cargoValue == 'Conductor') {
+      if (_fechaRegistroLicenciaController.text.isEmpty) {
+        _mostrarSnackBarError('La fecha de registro de licencia es requerida.');
+        return;
+      }
+      if (_fechaVencimientoLicenciaController.text.isEmpty) {
+        _mostrarSnackBarError(
+            'La fecha de vencimiento de licencia es requerida.');
+        return;
+      }
+    }
+
+    // ── Validar salario ───────────────────────────────────────────────────────
+    final salarioText = _salarioController.text.trim();
+    final salarioValue = double.tryParse(salarioText);
+    if (salarioValue == null || salarioValue < 0) {
+      _mostrarSnackBarError(
+          'El salario debe ser un número válido mayor o igual a 0.');
+      return;
+    }
+
+    // ── Construir y enviar DTO ────────────────────────────────────────────────
     if (_formKey.currentState!.validate() && _estadoValue != null) {
       // Crear DTO de persona
       final persona = PersonaDto(
@@ -392,7 +431,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
         fechaNacimiento: _fechaNacimientoController.text,
         correo: _emailController.text,
         cargo: _cargoValue!,
-        salario: double.parse(_salarioController.text),
+        salario: salarioValue,
         estado: _estadoValue!,
         fechaIngreso: _fechaIngresoController.text,
       );
@@ -431,10 +470,39 @@ class _AddConductorModalState extends State<AddConductorModal> {
     }
   }
 
+  // ── Inline snackbar (no cierra el modal) ────────────────────────────────────
+  void _mostrarSnackBarError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFFC62828),
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 4),
+        content: Row(children: [
+          const Icon(Icons.error_outline, color: Colors.white, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+              child: Text(message,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500))),
+        ]),
+      ),
+    );
+  }
+
   // ── DNI helpers ──────────────────────────────────────────────────────────
   void _onDniChanged(String v) {
     final dup = _getPersonasActuales().any((p) => p.dni.toString() == v);
-    if (dup != _dniDuplicado) setState(() => _dniDuplicado = dup);
+    // Limpiar error inline cuando el usuario corrige el campo
+    setState(() {
+      _dniDuplicado = dup;
+      // Si el usuario escribe y tiene exactamente 8 dígitos → limpiar el error
+      if (v.length == 8) _dniError = null;
+    });
   }
 
   List<dynamic> _getPersonasActuales() {
@@ -1278,6 +1346,26 @@ class _AddConductorModalState extends State<AddConductorModal> {
 
   // ── DNI field with duplicate tooltip ──────────────────────────────────────
   Widget _buildDniField() {
+    final dniLength = _dniController.text.length;
+    
+    // Calcular mensaje de estado de longitud
+    String lengthMessage = '';
+    Color lengthColor = _textSec;
+    IconData lengthIcon = Icons.info_outline;
+
+    if (dniLength > 0 && dniLength < 8) {
+      lengthMessage = 'Faltan ${8 - dniLength} dígitos para DNI';
+      lengthColor = _primary; // Color primario para progreso
+    } else if (dniLength == 8) {
+      lengthMessage = 'DNI válido (8). Digite 1 más si es Carné';
+      lengthColor = const Color(0xFF4CAF50); // Verde para éxito
+      lengthIcon = Icons.check_circle_outline;
+    } else if (dniLength == 9) {
+      lengthMessage = 'Carné válido (9 dígitos)';
+      lengthColor = const Color(0xFF4CAF50); // Verde para éxito
+      lengthIcon = Icons.check_circle_outline;
+    }
+
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         const Text('DNI / Carné *',
@@ -1313,42 +1401,73 @@ class _AddConductorModalState extends State<AddConductorModal> {
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(
-                color: _dniDuplicado ? _yellow : _border, width: 1.2),
+                color: _dniError != null
+                    ? _red
+                    : _dniDuplicado
+                        ? _yellow
+                        : _border,
+                width: 1.2),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(
-                color: _dniDuplicado ? _yellow : _primary, width: 1.5),
+                color: _dniError != null
+                    ? _red
+                    : _dniDuplicado
+                        ? _yellow
+                        : _primary,
+                width: 1.5),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide: const BorderSide(color: _red),
           ),
           errorStyle: const TextStyle(fontSize: 10, color: _red, height: 0.9),
-          suffixIcon: _dniDuplicado
-              ? Tooltip(
-                  message: '⚠️ Este DNI ya está registrado',
-                  triggerMode: TooltipTriggerMode.tap,
-                  decoration: BoxDecoration(
-                    color: _yellowBg,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: _yellow),
-                  ),
-                  textStyle:
-                      const TextStyle(color: _yellow, fontSize: 12),
-                  child: const Icon(Icons.warning_amber_rounded,
-                      color: _yellow, size: 18),
-                )
-              : null,
+          suffixIcon: _dniError != null
+              ? const Icon(Icons.cancel_outlined, color: _red, size: 18)
+              : _dniDuplicado
+                  ? Tooltip(
+                      message: '⚠️ Este DNI ya está registrado',
+                      triggerMode: TooltipTriggerMode.tap,
+                      decoration: BoxDecoration(
+                        color: _yellowBg,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: _yellow),
+                      ),
+                      textStyle:
+                          const TextStyle(color: _yellow, fontSize: 12),
+                      child: const Icon(Icons.warning_amber_rounded,
+                          color: _yellow, size: 18),
+                    )
+                  : dniLength == 8
+                      ? const Icon(Icons.check_circle_outline,
+                          color: Color(0xFF4CAF50), size: 18)
+                      : null,
         ),
         validator: (v) {
           if (v == null || v.isEmpty) return 'Obligatorio';
-          if (v.length < 8 || v.length > 9) return '8-9 dígitos';
+          if (v.length != 8) return 'DNI: exactamente 8 dígitos';
           if (_dniDuplicado) return 'DNI ya registrado';
           return null;
         },
       ),
-      if (_dniDuplicado)
+      // ── Mensajes inline (prioridad: error > duplicado > progreso) ────────────
+      if (_dniError != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Row(children: [
+            const Icon(Icons.cancel_outlined, size: 12, color: _red),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(_dniError!,
+                  style: const TextStyle(
+                      fontSize: 11,
+                      color: _red,
+                      fontWeight: FontWeight.w600)),
+            ),
+          ]),
+        )
+      else if (_dniDuplicado)
         Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Row(children: const [
@@ -1358,6 +1477,19 @@ class _AddConductorModalState extends State<AddConductorModal> {
                 style: TextStyle(
                     fontSize: 11,
                     color: _yellow,
+                    fontWeight: FontWeight.w600)),
+          ]),
+        )
+      else if (lengthMessage.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Row(children: [
+            Icon(lengthIcon, size: 12, color: lengthColor),
+            const SizedBox(width: 4),
+            Text(lengthMessage,
+                style: TextStyle(
+                    fontSize: 11,
+                    color: lengthColor,
                     fontWeight: FontWeight.w600)),
           ]),
         ),

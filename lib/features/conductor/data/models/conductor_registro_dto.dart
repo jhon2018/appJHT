@@ -53,12 +53,13 @@ class PersonaDto {
       'per_vsegundo_nom': segundoNombre,
       'per_vapellido_pa': apellidoPaterno,
       'per_vapellido_ma': apellidoMaterno,
-      'per_dfecha_nacimiento': fechaNacimiento,
+      // Enviar null si vacío; .NET espera DateOnly? y falla con string vacío ""
+      'per_dfecha_nacimiento': fechaNacimiento.isEmpty ? null : fechaNacimiento,
       'per_vcorreo': correo,
       'per_vcargo': cargo,
       'per_isalario': salario,
       'per_vestado': estado,
-      'per_dfecha_ingreso': fechaIngreso,
+      'per_dfecha_ingreso': fechaIngreso.isEmpty ? null : fechaIngreso,
     };
   }
 }
