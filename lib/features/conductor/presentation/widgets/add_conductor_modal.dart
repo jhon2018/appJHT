@@ -349,15 +349,15 @@ class _AddConductorModalState extends State<AddConductorModal> {
       return;
     }
 
-    if (dniText.length != 8) {
+    if (dniText.length < 8 || dniText.length > 9) {
       setState(() => _dniError =
           dniText.length < 8
-              ? 'Faltan ${8 - dniText.length} dígitos (DNI: 8 dígitos)'
-              : 'El backend solo acepta DNI de 8 dígitos. Carné no soportado aún.');
+              ? 'Faltan ${8 - dniText.length} dígitos (mínimo 8)'
+              : 'Máximo 9 dígitos permitidos');
       _mostrarSnackBarError(
           dniText.length < 8
-              ? 'DNI incompleto: faltan ${8 - dniText.length} dígitos'
-              : 'El sistema solo admite DNI peruano (8 dígitos). El Carné de Extranjería (9 dígitos) aún no está habilitado en el servidor.');
+              ? 'Documento incompleto: faltan ${8 - dniText.length} dígitos (mínimo 8)'
+              : 'El documento debe tener entre 8 y 9 dígitos');
       return;
     }
 
@@ -500,8 +500,8 @@ class _AddConductorModalState extends State<AddConductorModal> {
     // Limpiar error inline cuando el usuario corrige el campo
     setState(() {
       _dniDuplicado = dup;
-      // Si el usuario escribe y tiene exactamente 8 dígitos → limpiar el error
-      if (v.length == 8) _dniError = null;
+      // Si el usuario escribe y tiene 8 o 9 dígitos → limpiar el error
+      if (v.length == 8 || v.length == 9) _dniError = null;
     });
   }
 
@@ -699,16 +699,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
                               ),
                               const SizedBox(width: 16),
                               Expanded(
-                                child: _buildFormField(
-                                  'Primer Nombre',
-                                  _primerNombreController,
-                                  (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Ingrese el primer nombre';
-                                    }
-                                    return null;
-                                  },
-                                ),
+                                child: _buildPrimerNombreField(),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -724,16 +715,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
                           Column(
                             children: [
                               _buildDniField(),
-                              _buildFormField(
-                                'Primer Nombre',
-                                _primerNombreController,
-                                (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Ingrese el primer nombre';
-                                  }
-                                  return null;
-                                },
-                              ),
+                              _buildPrimerNombreField(),
                               _buildFormField(
                                 'Segundo Nombre',
                                 _segundoNombreController,
@@ -1439,14 +1421,14 @@ class _AddConductorModalState extends State<AddConductorModal> {
                       child: const Icon(Icons.warning_amber_rounded,
                           color: _yellow, size: 18),
                     )
-                  : dniLength == 8
+                  : (dniLength == 8 || dniLength == 9)
                       ? const Icon(Icons.check_circle_outline,
                           color: Color(0xFF4CAF50), size: 18)
                       : null,
         ),
         validator: (v) {
           if (v == null || v.isEmpty) return 'Obligatorio';
-          if (v.length != 8) return 'DNI: exactamente 8 dígitos';
+          if (v.length < 8 || v.length > 9) return 'Debe tener 8 o 9 dígitos';
           if (_dniDuplicado) return 'DNI ya registrado';
           return null;
         },
@@ -1495,6 +1477,160 @@ class _AddConductorModalState extends State<AddConductorModal> {
         ),
       const SizedBox(height: 14),
     ]);
+  }
+
+  // ── Primer Nombre field with min 4 chars tooltip ──────────────────────────
+  Widget _buildPrimerNombreField() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        const Text('Primer Nombre *',
+            style: TextStyle(
+                fontSize: 12, fontWeight: FontWeight.w600, color: _textPri)),
+        const SizedBox(width: 4),
+        Tooltip(
+          message: 'Mínimo 4 caracteres requeridos\npor seguridad en la creación de cuenta',
+          triggerMode: TooltipTriggerMode.tap,
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A2E),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          textStyle: const TextStyle(color: Colors.white, fontSize: 11),
+          child: const Icon(Icons.info_outline, size: 13, color: _textSec),
+        ),
+      ]),
+      const SizedBox(height: 4),
+      TextFormField(
+        controller: _primerNombreController,
+        style: const TextStyle(fontSize: 13),
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: 'Ej: Juan (mín. 4 caracteres)',
+          hintStyle: const TextStyle(fontSize: 12, color: _textSec),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _primary, width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _red),
+          ),
+          errorStyle: const TextStyle(fontSize: 10, color: _red, height: 0.9),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Ingrese el primer nombre';
+          }
+          if (value.trim().length < 4) {
+            // Mostrar AlertDialog de seguridad después del frame actual
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _mostrarAlertaNombreCorto(value.trim());
+            });
+            return 'Mínimo 4 caracteres requeridos';
+          }
+          return null;
+        },
+      ),
+      const SizedBox(height: 14),
+    ]);
+  }
+
+  // ── AlertDialog: Nombre demasiado corto ────────────────────────────────────
+  void _mostrarAlertaNombreCorto(String nombre) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: _yellowBg,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.security, color: _yellow, size: 22),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Nombre muy corto',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF303366),
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            RichText(
+              text: TextSpan(
+                style: const TextStyle(fontSize: 13, color: _textPri, height: 1.5),
+                children: [
+                  const TextSpan(
+                    text: 'El nombre "',
+                  ),
+                  TextSpan(
+                    text: nombre,
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: _red),
+                  ),
+                  TextSpan(
+                    text: '" tiene solo ${nombre.length} ${nombre.length == 1 ? 'carácter' : 'caracteres'}.',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: _yellowBg,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _yellow.withOpacity(0.3)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: _yellow, size: 16),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Por seguridad en la creación de la cuenta del colaborador, el primer nombre debe tener al menos 4 caracteres.',
+                      style: TextStyle(fontSize: 12, color: _textPri, height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          Center(
+            child: _buildDialogButton(
+              isMobile: MediaQuery.of(ctx).size.width < 768,
+              text: 'ENTENDIDO',
+              backgroundColor: const Color(0xFF303366),
+              textColor: Colors.white,
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── Email field with @domain suggestions ──────────────────────────────────
