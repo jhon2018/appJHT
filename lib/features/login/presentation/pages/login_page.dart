@@ -185,7 +185,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildResponsiveLayout(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery.sizeOf(context);
     final isWebOrTablet = size.width > 800;
 
     if (isWebOrTablet) {

@@ -283,7 +283,7 @@ class _AddVehicleModalState extends State<AddVehicleModal> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.sizeOf(context).width;
     final bool isMobile = screenWidth < 768;
     final bool isTablet = screenWidth >= 768 && screenWidth < 1200;
 
@@ -385,7 +385,7 @@ class _AddVehicleModalState extends State<AddVehicleModal> {
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: isMobile ? double.infinity : 900,
-              maxHeight: MediaQuery.of(context).size.height * 0.92,
+              maxHeight: MediaQuery.sizeOf(context).height * 0.92,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1424,7 +1424,7 @@ class _AddVehicleModalState extends State<AddVehicleModal> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: (MediaQuery.of(context).size.width - 160 - 32) / 3,
+            width: (MediaQuery.sizeOf(context).width - 160 - 32) / 3,
             child: _estadoDropdownContent(),
           ),
         ],

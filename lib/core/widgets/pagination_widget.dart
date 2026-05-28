@@ -24,10 +24,10 @@ class PaginationWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 768;
+    final bool isMobile = MediaQuery.sizeOf(context).width < 768;
     final bool isTablet =
-        MediaQuery.of(context).size.width >= 768 &&
-        MediaQuery.of(context).size.width < 1024;
+        MediaQuery.sizeOf(context).width >= 768 &&
+        MediaQuery.sizeOf(context).width < 1024;
 
     return Column(
       children: [

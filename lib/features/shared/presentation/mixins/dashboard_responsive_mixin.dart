@@ -8,15 +8,15 @@ mixin DashboardResponsiveMixin {
 
   // Determinar tipo de dispositivo
   bool isMobile(BuildContext context) =>
-      MediaQuery.of(context).size.width < mobileBreakpoint;
+      MediaQuery.sizeOf(context).width < mobileBreakpoint;
 
   bool isTablet(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
+    final width = MediaQuery.sizeOf(context).width;
     return width >= mobileBreakpoint && width < tabletBreakpoint;
   }
 
   bool isDesktop(BuildContext context) =>
-      MediaQuery.of(context).size.width >= tabletBreakpoint;
+      MediaQuery.sizeOf(context).width >= tabletBreakpoint;
 
   // Obtener número de columnas para grids responsivos
   int getGridCrossAxisCount(BuildContext context) {

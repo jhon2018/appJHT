@@ -263,7 +263,7 @@ class _EditAccessoryModalState extends State<EditAccessoryModal> {
   // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
+    final isMobile = MediaQuery.sizeOf(context).width < 700;
 
     return BlocListener<AccessoryBloc, AccessoryState>(
       listener: (context, state) {

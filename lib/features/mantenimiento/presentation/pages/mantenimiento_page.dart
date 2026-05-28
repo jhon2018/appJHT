@@ -164,7 +164,7 @@ class _MantenimientoPageState extends State<MantenimientoPage>
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 768;
+    final bool isMobile = MediaQuery.sizeOf(context).width < 768;
 
     return Scaffold(
       key: _scaffoldKey,

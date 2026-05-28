@@ -300,7 +300,7 @@ class _EditVehicleModalState extends State<EditVehicleModal> {
 
 @override
 Widget build(BuildContext context) {
-  final isMobile = MediaQuery.of(context).size.width < 768;
+  final isMobile = MediaQuery.sizeOf(context).width < 768;
 
   return BlocListener<VehicleBloc, VehicleState>(
     listener: (context, state) {
@@ -360,7 +360,7 @@ Widget build(BuildContext context) {
         child: Container(
           constraints: BoxConstraints(
             maxWidth: isMobile ? double.infinity : 680,
-            maxHeight: MediaQuery.of(context).size.height * 0.92,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.92,
           ),
           child: Column(
             children: [

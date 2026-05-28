@@ -323,7 +323,7 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
   // ── BUILD ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 768;
+    final isMobile = MediaQuery.sizeOf(context).width < 768;
 
     return BlocListener<SupplierBloc, SupplierState>(
       listener: (ctx, state) {
@@ -346,7 +346,7 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: 680,
-            maxHeight: MediaQuery.of(context).size.height * 0.92,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.92,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

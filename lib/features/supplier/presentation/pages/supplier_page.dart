@@ -95,7 +95,7 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
       ? 1
       : (_filteredProveedores.length / _itemsPerPage).ceil();
 
-  // bool get _isMobile => MediaQuery.of(context).size.width < 768;
+  // bool get _isMobile => MediaQuery.sizeOf(context).width < 768;
 
   @override
   void initState() {
@@ -292,7 +292,7 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
 
   @override
   Widget build(BuildContext context) {
-    _isMobile = MediaQuery.of(context).size.width < 768;
+    _isMobile = MediaQuery.sizeOf(context).width < 768;
 
     return BlocListener<SupplierBloc, SupplierState>(
       listener: (context, state) {

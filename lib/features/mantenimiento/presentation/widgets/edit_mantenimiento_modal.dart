@@ -336,8 +336,8 @@ class _EditMantenimientoModalState extends State<EditMantenimientoModal> {
         insetPadding:    const EdgeInsets.all(16),
         child: Container(
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-            maxWidth:  MediaQuery.of(context).size.width  * 0.9,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+            maxWidth:  MediaQuery.sizeOf(context).width  * 0.9,
           ),
           decoration: BoxDecoration(
               color: Colors.black, borderRadius: BorderRadius.circular(12)),
@@ -449,7 +449,7 @@ class _EditMantenimientoModalState extends State<EditMantenimientoModal> {
   // ═══════════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 768;
+    final isMobile = MediaQuery.sizeOf(context).width < 768;
 
     return BlocConsumer<MantenimientoBloc, MantenimientoState>(
       listener: (context, state) {
@@ -499,7 +499,7 @@ class _EditMantenimientoModalState extends State<EditMantenimientoModal> {
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth:  isMobile ? double.infinity : 720,
-              maxHeight: MediaQuery.of(context).size.height * 0.92,
+              maxHeight: MediaQuery.sizeOf(context).height * 0.92,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,

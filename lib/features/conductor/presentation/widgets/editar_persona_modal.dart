@@ -328,7 +328,7 @@ class _EditarPersonaModalState extends State<EditarPersonaModal> {
   // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final w = MediaQuery.of(context).size.width;
+    final w = MediaQuery.sizeOf(context).width;
     final isMobile = w < 700;
 
     return BlocListener<ConductorBloc, ConductorState>(
@@ -363,7 +363,7 @@ class _EditarPersonaModalState extends State<EditarPersonaModal> {
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: isMobile ? double.infinity : 960,
-            maxHeight: MediaQuery.of(context).size.height * 0.92,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.92,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
