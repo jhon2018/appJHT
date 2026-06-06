@@ -292,6 +292,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
 
     if (pickedDate != null) {
       // Luego seleccionar hora
+      if (!context.mounted) return;
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
         initialTime: const TimeOfDay(
@@ -315,6 +316,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
         pickedTime?.minute ?? 30, // Si no selecciona minuto, usar 30
       );
 
+      if (!mounted) return;
       setState(() {
         if (isInstalacion) {
           _fechaInstalacion = fechaCompleta;

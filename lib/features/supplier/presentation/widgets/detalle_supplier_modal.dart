@@ -52,9 +52,11 @@ class DetalleSupplierModal extends StatelessWidget {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
+        if (!context.mounted) return;
         _showSnack(context, 'No se puede abrir el enlace', isError: true);
       }
     } catch (e) {
+      if (!context.mounted) return;
       _showSnack(context, 'Error al abrir enlace', isError: true);
     }
   }

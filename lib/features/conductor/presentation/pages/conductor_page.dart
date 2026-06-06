@@ -802,19 +802,7 @@ class _ConductorPageState extends State<ConductorPage>
             ),
           ),
         ),
-        DataColumn(
-          label: SizedBox(
-            width: 90,
-            child: Text(
-              'Teléfono',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
+
         DataColumn(
           label: SizedBox(
             width: 110,
@@ -896,19 +884,7 @@ class _ConductorPageState extends State<ConductorPage>
             ),
           ),
         ),
-        DataColumn(
-          label: SizedBox(
-            width: 100,
-            child: Text(
-              'Teléfono',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
+
         DataColumn(
           label: SizedBox(
             width: 100,
@@ -973,12 +949,7 @@ class _ConductorPageState extends State<ConductorPage>
             style: const TextStyle(fontSize: 12),
           ),
         ),
-        DataCell(
-          Text(
-            persona.primerTelefono ?? 'No registrado',
-            style: const TextStyle(fontSize: 12),
-          ),
-        ),
+
         DataCell(
           Text(
             persona.fechaIngresoFormateada,

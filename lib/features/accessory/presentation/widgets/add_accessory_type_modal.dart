@@ -127,6 +127,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
       });
       
       // Mostrar error al usuario
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al cargar segmentos: $e'),
