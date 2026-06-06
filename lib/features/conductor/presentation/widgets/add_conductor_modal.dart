@@ -263,7 +263,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
             children: [
               Expanded(
                 child: _buildDialogButton(
-                  isMobile: MediaQuery.of(context).size.width < 768,
+                  isMobile: MediaQuery.sizeOf(context).width < 768,
                   text: 'CANCELAR',
                   backgroundColor: Colors.grey[300]!,
                   textColor: Colors.grey[700]!,
@@ -273,7 +273,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildDialogButton(
-                  isMobile: MediaQuery.of(context).size.width < 768,
+                  isMobile: MediaQuery.sizeOf(context).width < 768,
                   text: 'CONFIRMAR',
                   backgroundColor: const Color(0xFF303366),
                   textColor: Colors.white,
@@ -315,7 +315,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
         actions: [
           Center(
             child: _buildDialogButton(
-              isMobile: MediaQuery.of(context).size.width < 768,
+              isMobile: MediaQuery.sizeOf(context).width < 768,
               text: 'ENTENDIDO',
               backgroundColor: Colors.red,
               textColor: Colors.white,
@@ -572,7 +572,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 768;
+    final bool isMobile = MediaQuery.sizeOf(context).width < 768;
 
     return BlocListener<ConductorBloc, ConductorState>(
       listener: (context, state) {
@@ -623,7 +623,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
         child: Container(
           constraints: BoxConstraints(
             maxWidth: isMobile ? double.infinity : 800,
-            maxHeight: MediaQuery.of(context).size.height * 0.95,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.95,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

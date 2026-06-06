@@ -52,9 +52,11 @@ class DetalleSupplierModal extends StatelessWidget {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
+        if (!context.mounted) return;
         _showSnack(context, 'No se puede abrir el enlace', isError: true);
       }
     } catch (e) {
+      if (!context.mounted) return;
       _showSnack(context, 'Error al abrir enlace', isError: true);
     }
   }
@@ -100,7 +102,7 @@ class DetalleSupplierModal extends StatelessWidget {
   // ── build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 768;
+    final isMobile = MediaQuery.sizeOf(context).width < 768;
 
     return Dialog(
       backgroundColor: Colors.white,
@@ -112,7 +114,7 @@ class DetalleSupplierModal extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: 820,
-          maxHeight: MediaQuery.of(context).size.height * 0.9,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.9,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -20,7 +20,7 @@ void showDetalleAccesorioModal(
 
   final Color colorNombre = mostrarAlerta ? Colors.red.shade700 : const Color(0xFF303366);
 
-  final bool isMobile = MediaQuery.of(context).size.width < 600;
+  final bool isMobile = MediaQuery.sizeOf(context).width < 600;
 
   showDialog(
     context: context,
@@ -34,7 +34,7 @@ void showDetalleAccesorioModal(
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: isMobile ? 380 : 500,
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.85,
           ),
           child: SingleChildScrollView(
             child: Padding(

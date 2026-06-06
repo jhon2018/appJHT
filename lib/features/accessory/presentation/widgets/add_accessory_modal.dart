@@ -292,6 +292,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
 
     if (pickedDate != null) {
       // Luego seleccionar hora
+      if (!context.mounted) return;
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
         initialTime: const TimeOfDay(
@@ -315,6 +316,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
         pickedTime?.minute ?? 30, // Si no selecciona minuto, usar 30
       );
 
+      if (!mounted) return;
       setState(() {
         if (isInstalacion) {
           _fechaInstalacion = fechaCompleta;
@@ -328,7 +330,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 768;
+    final bool isMobile = MediaQuery.sizeOf(context).width < 768;
 
     return BlocListener<AccessoryBloc, AccessoryState>(
       listener: (context, state) {
@@ -406,8 +408,8 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxWidth: isMobile ? MediaQuery.of(context).size.width - 20 : 600,
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
+            maxWidth: isMobile ? MediaQuery.sizeOf(context).width - 20 : 600,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.85,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

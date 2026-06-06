@@ -446,7 +446,7 @@ class _ModalBodyState extends State<_ModalBody> {
   // ══════════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 768;
+    final isMobile = MediaQuery.sizeOf(context).width < 768;
 
     return BlocListener<RegistroMantenimientoBloc, RegistroMantenimientoState>(
       listenWhen: (prev, curr) =>
@@ -487,7 +487,7 @@ class _ModalBodyState extends State<_ModalBody> {
     child: ConstrainedBox(
       constraints: BoxConstraints(
         maxWidth: 860,
-        maxHeight: MediaQuery.of(context).size.height * 0.92,
+        maxHeight: MediaQuery.sizeOf(context).height * 0.92,
       ),
       child: Column(
         children: [

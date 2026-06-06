@@ -127,6 +127,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
       });
       
       // Mostrar error al usuario
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al cargar segmentos: $e'),
@@ -372,7 +373,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 768;
+    final bool isMobile = MediaQuery.sizeOf(context).width < 768;
 
     return BlocListener<AccessoryBloc, AccessoryState>(
       listener: (context, state) {
@@ -402,7 +403,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
         child: Container(
           constraints: BoxConstraints(
             maxWidth: isMobile ? double.infinity : 800,
-            maxHeight: MediaQuery.of(context).size.height * 0.95,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.95,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -729,7 +730,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
   }
 
   Widget _buildContenidoMantenimiento(int index) {
-    final bool isMobile = MediaQuery.of(context).size.width < 768;
+    final bool isMobile = MediaQuery.sizeOf(context).width < 768;
 
     return Column(
       children: [

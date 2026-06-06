@@ -20,7 +20,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     LoginButtonPressed event,
     Emitter<LoginState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true, error: null));
+    emit(const LoginState(isLoading: true));
     final stopwatch = Stopwatch()..start();
 
     try {

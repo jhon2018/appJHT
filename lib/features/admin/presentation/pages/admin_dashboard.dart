@@ -176,7 +176,7 @@ class _AdminDashboardState extends State<AdminDashboard>
     final isMobileLocal = isMobile(context);
     final crossAxisCount = isMobileLocal
         ? 1
-        : (MediaQuery.of(context).size.width < 1200 ? 2 : 4);
+        : (MediaQuery.sizeOf(context).width < 1200 ? 2 : 4);
 
     final vehiculosCount = _dashboardData?['vehiculos'] ?? 0;
     final conductoresCount = _dashboardData?['conductores'] ?? 0;
@@ -996,9 +996,9 @@ class _DashboardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width > 800;
-    final isMobileLocal = MediaQuery.of(context).size.width < 600;
-    final crossAxisCount = isMobileLocal ? 1 : (MediaQuery.of(context).size.width < 1200 ? 2 : 4);
+    final isDesktop = MediaQuery.sizeOf(context).width > 800;
+    final isMobileLocal = MediaQuery.sizeOf(context).width < 600;
+    final crossAxisCount = isMobileLocal ? 1 : (MediaQuery.sizeOf(context).width < 1200 ? 2 : 4);
 
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
