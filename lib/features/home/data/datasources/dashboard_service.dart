@@ -1,6 +1,7 @@
 // lib/features/home/data/datasources/dashboard_service.dart
 import 'dart:convert';
 import 'package:app_jht_front/core/network/base_remote_data_source.dart';
+import 'package:flutter/foundation.dart';
 
 class DashboardService extends BaseRemoteDataSource {
   
@@ -17,7 +18,7 @@ class DashboardService extends BaseRemoteDataSource {
       }
       return 0;
     } catch (e) {
-      print('Error al obtener vehículos para dashboard: $e');
+      debugPrint('Error al obtener vehículos para dashboard: $e');
       return 0;
     }
   }
@@ -40,7 +41,7 @@ class DashboardService extends BaseRemoteDataSource {
       }
       return {'count': 0, 'items': []};
     } catch (e) {
-      print('Error al obtener mantenimientos para dashboard: $e');
+      debugPrint('Error al obtener mantenimientos para dashboard: $e');
       return {'count': 0, 'items': []};
     }
   }
@@ -58,7 +59,7 @@ class DashboardService extends BaseRemoteDataSource {
       }
       return 0;
     } catch (e) {
-      print('Error al obtener conductores para dashboard: $e');
+      debugPrint('Error al obtener conductores para dashboard: $e');
       return 0;
     }
   }
@@ -76,7 +77,7 @@ class DashboardService extends BaseRemoteDataSource {
       }
       return 0;
     } catch (e) {
-      print('Error al obtener proveedores para dashboard: $e');
+      debugPrint('Error al obtener proveedores para dashboard: $e');
       return 0;
     }
   }
@@ -118,7 +119,7 @@ class DashboardService extends BaseRemoteDataSource {
       }
       return null;
     } catch (e) {
-      print('Error al obtener vehículo asignado: $e');
+      debugPrint('Error al obtener vehículo asignado: $e');
       return null;
     }
   }
@@ -133,5 +134,58 @@ class DashboardService extends BaseRemoteDataSource {
       'mantenimientosAlertas': mantenimientosData['items'],
       // Aquí se podrían agregar futuras métricas: viajes de hoy, alertas específicas, etc.
     };
+  }
+
+  // --- NUEVO: METODOS PARA REPORTE DE MANTENIMIENTO ---
+
+  Future<List<dynamic>> getVehiculosParaFiltro() async {
+    try {
+      final response = await protectedGet('/api/general/Listar-todos-vehiculos');
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data is Map && data.containsKey('data')) {
+          return data['data'] as List;
+        } else if (data is List) {
+          return data;
+        }
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error al obtener vehículos para filtro: $e');
+      return [];
+    }
+  }
+
+  Future<List<dynamic>> getReporteMantenimientos({
+    required DateTime fechaInicio,
+    required DateTime fechaFin,
+    int? vehiculoId,
+  }) async {
+    try {
+      final queryParams = {
+        'fechaInicio': fechaInicio.toIso8601String().split('T')[0],
+        'fechaFin': fechaFin.toIso8601String().split('T')[0],
+      };
+      
+      if (vehiculoId != null) {
+        queryParams['vehiculoId'] = vehiculoId.toString();
+      }
+
+      final response = await protectedGet(
+        '/api/general/reporte-mantenimientos',
+        queryParameters: queryParams,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data is Map && data.containsKey('data')) {
+          return data['data'] as List;
+        }
+      }
+      throw Exception('Error al generar el reporte: Código ${response.statusCode}');
+    } catch (e) {
+      debugPrint('Error al generar reporte de mantenimientos: $e');
+      rethrow;
+    }
   }
 }

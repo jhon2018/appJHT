@@ -4,6 +4,7 @@ import 'package:app_jht_front/features/shared/presentation/mixins/dashboard_resp
 import 'package:app_jht_front/features/shared/presentation/pages/base_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/features/home/data/datasources/dashboard_service.dart';
+import 'package:app_jht_front/features/home/presentation/widgets/download_report_modal.dart';
 import 'dart:ui';
 
 class AdminDashboard extends StatefulWidget {
@@ -148,23 +149,56 @@ class _AdminDashboardState extends State<AdminDashboard>
                 ),
               ],
             ),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF4834D4).withOpacity(0.1),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => const DownloadReportModal(),
+                    );
+                  },
+                  icon: const Icon(Icons.download_rounded, size: 20),
+                  label: const Text(
+                    'Reporte CSV',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                ],
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.sync_rounded, color: Color(0xFF4834D4)),
-                onPressed: _loadData,
-                tooltip: 'Actualizar datos',
-              ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4834D4),
+                    foregroundColor: Colors.white,
+                    elevation: 5,
+                    shadowColor: const Color(0xFF4834D4).withOpacity(0.5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF4834D4).withOpacity(0.1),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.sync_rounded, color: Color(0xFF4834D4)),
+                    onPressed: _loadData,
+                    tooltip: 'Actualizar datos',
+                  ),
+                ),
+              ],
             ),
           ],
         ),
