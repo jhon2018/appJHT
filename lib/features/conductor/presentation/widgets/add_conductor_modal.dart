@@ -12,6 +12,7 @@ import 'package:app_jht_front/features/conductor/data/models/conductor_registro_
 import 'package:app_jht_front/features/supplier/data/models/tipo_telefono_model.dart';
 import 'package:app_jht_front/features/config/environment_config.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 // ── Color tokens ──────────────────────────────────────────────────────────────
 const _primary = Color(0xFF303366);
@@ -111,7 +112,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
 
   Future<void> _cargarTiposTelefono() async {
     try {
-      print('🟡 Cargando tipos de teléfono...');
+      debugPrint('🟡 Cargando tipos de teléfono...');
 
       final String? token = await TokenService.getToken();
 
@@ -130,7 +131,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
         },
       );
 
-      print('🟡 Response status tipos teléfono: ${response.statusCode}');
+      debugPrint('🟡 Response status tipos teléfono: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -142,14 +143,14 @@ class _AddConductorModalState extends State<AddConductorModal> {
         setState(() {
           _tiposTelefonoList = tipos;
         });
-        print('🟢 Tipos de teléfono cargados: ${tipos.length}');
+        debugPrint('🟢 Tipos de teléfono cargados: ${tipos.length}');
       } else {
         throw Exception(
           'Error al obtener tipos de teléfono: ${response.statusCode}',
         );
       }
     } catch (e) {
-      print('❌ ERROR al cargar tipos de teléfono: $e');
+      debugPrint('❌ ERROR al cargar tipos de teléfono: $e');
       if (mounted)
         setState(() {
           _tiposTelefonoList = [
@@ -169,7 +170,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
     BuildContext context,
     TextEditingController controller,
   ) async {
-    print('🟡 Seleccionando fecha para: ${controller.hashCode}');
+    debugPrint('🟡 Seleccionando fecha para: ${controller.hashCode}');
 
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -200,10 +201,10 @@ class _AddConductorModalState extends State<AddConductorModal> {
       setState(() {
         controller.text = _formatDate(picked);
       });
-      print('🟢 Fecha seleccionada: $picked');
-      print('🔵 Controller text actualizado: ${controller.text}');
+      debugPrint('🟢 Fecha seleccionada: $picked');
+      debugPrint('🔵 Controller text actualizado: ${controller.text}');
     } else {
-      print('🔴 No se seleccionó fecha');
+      debugPrint('🔴 No se seleccionó fecha');
     }
   }
 

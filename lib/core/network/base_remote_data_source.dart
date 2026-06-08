@@ -5,7 +5,8 @@ import 'dart:convert';
 
 import '../utils/token_service.dart';
 import 'package:app_jht_front/core/utils/app_logger.dart';
-import 'dart:async'; // Para Stopwatch
+import 'dart:async';
+import 'package:flutter/foundation.dart'; // Para Stopwatch
 
 abstract class BaseRemoteDataSource {
   // Métodos protegidos que todas las clases pueden usar
@@ -225,7 +226,7 @@ abstract class BaseRemoteDataSource {
 
   // Método para manejar errores comunes
   String getErrorMessage(Map<String, dynamic> errorData) {
-    print('🔍 Error data: $errorData');
+    debugPrint('🔍 Error data: $errorData');
 
     if (errorData['mensaje'] != null) return errorData['mensaje'].toString();
     if (errorData['message'] != null) return errorData['message'].toString();

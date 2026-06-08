@@ -11,6 +11,7 @@ import '../bloc/login_event.dart';
 import '../bloc/login_state.dart';
 import '../../../admin/presentation/pages/admin_dashboard.dart';
 import '../../../conductor/presentation/pages/conductor_dashboard.dart';
+import 'package:flutter/foundation.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -54,10 +55,10 @@ class _LoginPageState extends State<LoginPage> {
 
   // MÉTODO DE NAVEGACIÓN COMÚN PARA WEB Y MÓVIL - ACTUALIZADO
   void _handleLoginSuccess(BuildContext context, LoginState state) {
-    print('✅ Login exitoso! Navegando...');
-    print('Estado actual: $state');
-    print('cargo: ${state.cargo}');
-    print('usuario: ${state.usuario}');
+    debugPrint('✅ Login exitoso! Navegando...');
+    debugPrint('Estado actual: $state');
+    debugPrint('cargo: ${state.cargo}');
+    debugPrint('usuario: ${state.usuario}');
 
     // Validar que tengamos los datos necesarios
     if (state.cargo == null || state.usuario == null) {
@@ -169,10 +170,10 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return BlocListener<LoginBloc, LoginState>(
       listener: (context, state) {
-        print(' 2 Estado actual: $state');
-        print('Cargo: ${state.cargo}');
-        print('usuario: ${state.usuario}');
-        print('error: ${state.error}');
+        debugPrint(' 2 Estado actual: $state');
+        debugPrint('Cargo: ${state.cargo}');
+        debugPrint('usuario: ${state.usuario}');
+        debugPrint('error: ${state.error}');
         if (state.isSuccess) {
           _handleLoginSuccess(context, state);
         }
@@ -238,7 +239,7 @@ class _LoginPageState extends State<LoginPage> {
                         onLoginSuccess: () {
                           _usernameController.clear();
                           _passwordController.clear();
-                          print('✅ Login web exitoso - Campos limpiados');
+                          debugPrint('✅ Login web exitoso - Campos limpiados');
                         },
                       ),
                     ),
@@ -710,7 +711,7 @@ class _WebLoginFormCard extends StatelessWidget {
     return BlocListener<LoginBloc, LoginState>(
       listener: (context, state) {
         if (state.isSuccess) {
-          print('Login exitoso en formulario web!');
+          debugPrint('Login exitoso en formulario web!');
           onLoginSuccess();
         }
         if (state.error != null) {

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/mantenimiento/data/repositories/mantenimiento_repository.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_event.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_state.dart';
+import 'package:flutter/foundation.dart';
 
 class MantenimientoBloc extends Bloc<MantenimientoEvent, MantenimientoState> {
   final MantenimientoRepository repository;
@@ -32,13 +33,13 @@ Future<void> _onRefreshMantenimientos(
   RefreshMantenimientosEvent event,
   Emitter<MantenimientoState> emit,
 ) async {
-  print('🔄 Recargando mantenimientos desde API...');
+  debugPrint('🔄 Recargando mantenimientos desde API...');
   try {
     final response = await repository.getMantenimientosPendientes();
     emit(MantenimientoSuccess(response.data));
-    print('✅ Mantenimientos recargados: ${response.data.length} registros');
+    debugPrint('✅ Mantenimientos recargados: ${response.data.length} registros');
   } catch (e) {
-    print('❌ Error al refrescar: $e');
+    debugPrint('❌ Error al refrescar: $e');
     emit(MantenimientoError(e.toString()));
   }
 }

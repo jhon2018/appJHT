@@ -15,6 +15,7 @@ import 'package:app_jht_front/features/config/environment_config.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:app_jht_front/core/network/base_remote_data_source.dart';
+import 'package:flutter/foundation.dart';
 
 abstract class SupplierRemoteDataSource {
   // Métodos existentes
@@ -39,7 +40,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
   @override
   Future<SupplierRegistroResponse> registrarProveedor(SupplierRegistroDto dto) async {
     try {
-      print('🔵 Iniciando registro de proveedor: ${dto.razonSocial}');
+      debugPrint('🔵 Iniciando registro de proveedor: ${dto.razonSocial}');
       
       final String? token = await TokenService.getToken();
       
@@ -47,7 +48,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         throw Exception('No hay token de autenticación.');
       }
       
-      print('🟡 Token obtenido: ${token.substring(0, 20)}...');
+      debugPrint('🟡 Token obtenido: ${token.substring(0, 20)}...');
 
       final response = await http.post(
         Uri.parse('${EnvironmentConfig.baseUrl}/api/general/insertar-proveedor'),
@@ -59,8 +60,8 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         body: json.encode(dto.toJson()),
       );
 
-      print('🟡 Response status: ${response.statusCode}');
-      print('🟡 Response body: ${response.body}');
+      debugPrint('🟡 Response status: ${response.statusCode}');
+      debugPrint('🟡 Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -74,7 +75,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         throw Exception(_getErrorMessage(errorData));
       }
     } catch (e) {
-      print('❌ ERROR en registro de proveedor: $e');
+      debugPrint('❌ ERROR en registro de proveedor: $e');
       rethrow;
     }
   }
@@ -82,7 +83,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
   @override
   Future<List<TipoTelefonoModel>> getTiposTelefono() async {
     try {
-      print('🟡 Obteniendo tipos de teléfono...');
+      debugPrint('🟡 Obteniendo tipos de teléfono...');
       
       final String? token = await TokenService.getToken();
       
@@ -98,7 +99,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         },
       );
 
-      print('🟡 Response status tipos teléfono: ${response.statusCode}');
+      debugPrint('🟡 Response status tipos teléfono: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -108,7 +109,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         throw Exception('Error al obtener tipos de teléfono: ${response.statusCode}');
       }
     } catch (e) {
-      print('❌ ERROR en getTiposTelefono: $e');
+      debugPrint('❌ ERROR en getTiposTelefono: $e');
       throw Exception('Error en getTiposTelefono: $e');
     }
   }
@@ -117,7 +118,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
   @override
   Future<SupplierListResponse> listarProveedores() async {
     try {
-      print('🔵 Listando proveedores...');
+      debugPrint('🔵 Listando proveedores...');
       
       final String? token = await TokenService.getToken();
       
@@ -133,7 +134,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         },
       );
 
-      print('🟡 Response status listar proveedores: ${response.statusCode}');
+      debugPrint('🟡 Response status listar proveedores: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -147,7 +148,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         throw Exception(_getErrorMessage(errorData));
       }
     } catch (e) {
-      print('❌ ERROR en listar proveedores: $e');
+      debugPrint('❌ ERROR en listar proveedores: $e');
       rethrow;
     }
   }
@@ -156,7 +157,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
   @override
   Future<SupplierDetailResponse> obtenerDetalleProveedor(int proveedorId) async {
     try {
-      print('🔵 Obteniendo detalle del proveedor ID: $proveedorId');
+      debugPrint('🔵 Obteniendo detalle del proveedor ID: $proveedorId');
       
       final String? token = await TokenService.getToken();
       
@@ -172,7 +173,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         },
       );
 
-      print('🟡 Response status detalle proveedor: ${response.statusCode}');
+      debugPrint('🟡 Response status detalle proveedor: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -188,7 +189,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         throw Exception(_getErrorMessage(errorData));
       }
     } catch (e) {
-      print('❌ ERROR en obtener detalle proveedor: $e');
+      debugPrint('❌ ERROR en obtener detalle proveedor: $e');
       rethrow;
     }
   }
@@ -196,14 +197,14 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
  @override
   Future<SupplierActualizarResponse> actualizarProveedor(SupplierActualizarDto dto) async {
     try {
-      print('🔵 Actualizando proveedor ID: ${dto.proveedorId}');
+      debugPrint('🔵 Actualizando proveedor ID: ${dto.proveedorId}');
       
       final String? token = await TokenService.getToken();
       
       if (token == null || token.isEmpty) {
         throw Exception('No hay token de autenticación.');
       }
-      print('📤 JSON enviado supplier_remote_data_source.dart:  ${json.encode(dto.toJson())}');
+      debugPrint('📤 JSON enviado supplier_remote_data_source.dart:  ${json.encode(dto.toJson())}');
       final response = await http.put(
         Uri.parse('${EnvironmentConfig.baseUrl}/api/general/actualizar-proveedor'),
         headers: {
@@ -214,8 +215,8 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         body: json.encode(dto.toJson()),
       );
 
-      print('🟡 Response status actualizar: ${response.statusCode}');
-      print('🟡 Response body: ${response.body}');
+      debugPrint('🟡 Response status actualizar: ${response.statusCode}');
+      debugPrint('🟡 Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -231,14 +232,14 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         throw Exception(_getErrorMessage(errorData));
       }
     } catch (e) {
-      print('❌ ERROR en actualizar proveedor: $e');
+      debugPrint('❌ ERROR en actualizar proveedor: $e');
       rethrow;
     }
   }
 
 
   String _getErrorMessage(Map<String, dynamic> errorData) {
-    print('🔍 Error data: $errorData');
+    debugPrint('🔍 Error data: $errorData');
 
     if (errorData['mensaje'] != null) return errorData['mensaje'].toString();
     if (errorData['message'] != null) return errorData['message'].toString();

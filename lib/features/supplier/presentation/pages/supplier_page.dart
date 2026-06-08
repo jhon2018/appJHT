@@ -18,6 +18,7 @@ import 'package:app_jht_front/features/supplier/data/repositories/supplier_repos
 import 'package:app_jht_front/features/supplier/data/datasources/supplier_remote_data_source.dart';
 import 'package:app_jht_front/features/supplier/data/models/supplier_list_model.dart';
 import 'package:app_jht_front/features/shared/presentation/mixins/navigation_helper_mixin.dart';
+import 'package:flutter/foundation.dart';
 
 class SupplierPage extends StatefulWidget {
   final String userName;
@@ -201,7 +202,7 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
 
   Color _getEstadoColor(String estado) {
     final estadoLower = estado.toLowerCase();
-    print(
+    debugPrint(
       '🔍 Estado recibido: "$estado" -> Lower: "$estadoLower"',
     ); // Para debug
 

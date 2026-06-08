@@ -9,6 +9,7 @@ import 'package:app_jht_front/features/vehicle/domain/usecases/registrar_vehicul
 import 'package:app_jht_front/features/vehicle/domain/usecases/listar_vehiculos_usecase.dart';
 import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter/foundation.dart';
 
 part 'vehicle_event.dart';
 part 'vehicle_state.dart';
@@ -62,18 +63,18 @@ Future<void> _onActualizarVehiculo(
   _ActualizarVehiculo event,
   Emitter<VehicleState> emit,
 ) async {
-  print('🔵 BLoC: Iniciando actualización de vehículo');
+  debugPrint('🔵 BLoC: Iniciando actualización de vehículo');
   emit(const VehicleState.loading());
   
   final result = await actualizarVehiculoUseCase(event.dto);
   
   result.fold(
     (failure) {
-      print('❌ BLoC: Error en actualización: ${failure.message}');
+      debugPrint('❌ BLoC: Error en actualización: ${failure.message}');
       emit(VehicleState.error(message: failure.message));
     },
     (response) {
-      print('✅ BLoC: Actualización exitosa: ${response.message}');
+      debugPrint('✅ BLoC: Actualización exitosa: ${response.message}');
       emit(VehicleState.actualizacionExitosa(response: response));
     },
   );

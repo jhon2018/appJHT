@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 // lib/features/accessory/data/models/accesorio_registro_dto.dart
 // description: DTO para el registro de un accesorio en un vehículo.
 // objetivo: Facilitar la transferencia de datos necesarios para registrar un accesorio en el sistema.
@@ -47,7 +49,7 @@ class AccesorioRegistroDto {
         30, // 30 minutos
         0, // 0 segundos
       );
-      print('🕒 Usando hora por defecto (10:30:00)');
+      debugPrint('🕒 Usando hora por defecto (10:30:00)');
     }
 
     final localDate = dateToSend.toLocal();

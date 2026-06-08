@@ -6,6 +6,7 @@ import 'package:app_jht_front/features/vehicle/domain/entities/vehicle_entity.da
 import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
 import 'package:app_jht_front/features/vehicle/presentation/widgets/vehicle_form_data.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
 
 class EditVehicleModal extends StatefulWidget {
   final VehicleEntity vehicle;
@@ -291,7 +292,7 @@ class _EditVehicleModalState extends State<EditVehicleModal> {
       estado: _selectedEstado,
     );
 
-    print('🔵 Dispatching actualizarVehiculo — id: ${dto.vehiculoId}');
+    debugPrint('🔵 Dispatching actualizarVehiculo — id: ${dto.vehiculoId}');
     context.read<VehicleBloc>().add(VehicleEvent.actualizarVehiculo(dto: dto));
     
   }

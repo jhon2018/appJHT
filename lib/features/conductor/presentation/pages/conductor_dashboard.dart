@@ -8,6 +8,7 @@ import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimi
 import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimiento_event.dart';
 import 'package:app_jht_front/features/mantenimiento/data/repositories/mantenimiento_repository.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/pages/mantenimiento_page.dart';
+import 'package:flutter/foundation.dart';
 
 class ConductorDashboard extends StatefulWidget {
   final String userName;
@@ -56,7 +57,7 @@ class _ConductorDashboardState extends State<ConductorDashboard>
       });
       _animController.forward(from: 0.0);
     } catch (e) {
-      print('Error al cargar datos del conductor: $e');
+      debugPrint('Error al cargar datos del conductor: $e');
       setState(() => _isLoading = false);
     }
   }

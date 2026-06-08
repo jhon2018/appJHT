@@ -37,6 +37,7 @@ import 'package:app_jht_front/features/vehicle/domain/usecases/registrar_vehicul
 import 'package:app_jht_front/features/admin/presentation/pages/admin_dashboard.dart';
 import 'package:app_jht_front/features/conductor/presentation/pages/conductor_dashboard.dart';
 import 'package:app_jht_front/features/shared/presentation/pages/help_page.dart';
+import 'package:flutter/foundation.dart';
 
 mixin NavigationHelperMixin<T extends StatefulWidget> on State<T> {
   void navigateToMenuPage(BuildContext context, String pageName, String userName, String userRole) {
@@ -144,7 +145,7 @@ mixin NavigationHelperMixin<T extends StatefulWidget> on State<T> {
         break;
       default:
         AppNotification.warning(context, '$pageName — Página en desarrollo.');
-        print('Navegación a $pageName no implementada.');
+        debugPrint('Navegación a $pageName no implementada.');
     }
   }
 }

@@ -11,6 +11,7 @@ import 'add_accessory_type_modal.dart';
 
 // Añade esta importación
 import 'package:app_jht_front/features/accessory/data/models/accesorio_registro_dto.dart';
+import 'package:flutter/foundation.dart';
 
 class AddAccessoryModal extends StatefulWidget {
   final Function()? onAccessoryAdded;
@@ -58,7 +59,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
   @override
   void initState() {
     super.initState();
-    print('🎯 INICIANDO MODAL - AddAccessoryModal');
+    debugPrint('🎯 INICIANDO MODAL - AddAccessoryModal');
 
     // Reset inmediato
     _resetForm();
@@ -88,7 +89,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
   }
 
   void _cargarDatosIniciales() {
-    print('🚀 Cargando datos iniciales...');
+    debugPrint('🚀 Cargando datos iniciales...');
     context.read<AccessoryBloc>().add(LoadSegmentosEvent());
     context.read<AccessoryBloc>().add(LoadVehiculosEvent());
   }
@@ -195,10 +196,10 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
     );
 
     // 3. Mostrar datos para debug
-    print('=== ENVIANDO ACCESORIO AL API ===');
-    print('DTO completo: ${dto.toString()}');
-    print('JSON a enviar: ${dto.toJson()}');
-    print('Fecha formateada: ${_formatDateForDebug(_fechaInstalacion!)}');
+    debugPrint('=== ENVIANDO ACCESORIO AL API ===');
+    debugPrint('DTO completo: ${dto.toString()}');
+    debugPrint('JSON a enviar: ${dto.toJson()}');
+    debugPrint('Fecha formateada: ${_formatDateForDebug(_fechaInstalacion!)}');
 
     // 4. Enviar al Bloc (o directamente al API si no tienes Bloc)
     _enviarAlApi(dto);
@@ -320,7 +321,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
       setState(() {
         if (isInstalacion) {
           _fechaInstalacion = fechaCompleta;
-          print('📅 Fecha instalación seleccionada: $_fechaInstalacion');
+          debugPrint('📅 Fecha instalación seleccionada: $_fechaInstalacion');
         } else {
           _fechaRetiro = fechaCompleta;
         }
@@ -334,11 +335,11 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
 
     return BlocListener<AccessoryBloc, AccessoryState>(
       listener: (context, state) {
-        print('🎧 Listener Principal - Estado: ${state.runtimeType}');
+        debugPrint('🎧 Listener Principal - Estado: ${state.runtimeType}');
 
         // ACTUALIZAR CACHE DE SEGMENTOS CUANDO SE CARGUEN
         if (state is SegmentosLoaded) {
-          print(
+          debugPrint(
             '💾 Actualizando cache de segmentos: ${state.segmentos.length}',
           );
           if (mounted) {
@@ -350,7 +351,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
 
         // ACTUALIZAR CACHE DE VEHÍCULOS CUANDO SE CARGUEN
         if (state is VehiculosLoaded) {
-          print('🚗 Vehículos cargados: ${state.vehiculos.length}');
+          debugPrint('🚗 Vehículos cargados: ${state.vehiculos.length}');
           // Forzar reconstrucción para mostrar vehículos
           if (mounted) {
             setState(() {});
@@ -722,7 +723,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
   // ========== DROPDOWNS ACTUALIZADOS ==========
 
   Widget _buildSegmentoDropdown() {
-    print(
+    debugPrint(
       '🔨 Construyendo SegmentoDropdown - Cache: ${_segmentosCache.length}',
     );
 
@@ -750,7 +751,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
   }
 
   Widget _buildSegmentosDropdown(List<SegmentoModel> segmentos) {
-    print('🎯 Construyendo dropdown con ${segmentos.length} segmentos');
+    debugPrint('🎯 Construyendo dropdown con ${segmentos.length} segmentos');
 
     return Container(
       decoration: BoxDecoration(
@@ -779,7 +780,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
             }).toList(),
           ],
           onChanged: (int? newId) {
-            print('🎯 Segmento seleccionado: $newId');
+            debugPrint('🎯 Segmento seleccionado: $newId');
             setState(() {
               _selectedSegmentoId = newId;
               _selectedTipoAccesorioId = null;
@@ -788,7 +789,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
             });
 
             if (newId != null) {
-              print('🚀 Cargando tipos de accesorio para segmento: $newId');
+              debugPrint('🚀 Cargando tipos de accesorio para segmento: $newId');
               context.read<AccessoryBloc>().add(
                 LoadTiposAccesorioEvent(segmentoId: newId),
               );
@@ -806,7 +807,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
         return current is TiposAccesorioLoaded || current is AccessoryLoading;
       },
       builder: (context, state) {
-        print('🔨 Builder TipoAccesorio - Estado: ${state.runtimeType}');
+        debugPrint('🔨 Builder TipoAccesorio - Estado: ${state.runtimeType}');
 
         List<TipoAccesorioModel> tiposAccesorio = [];
         bool isLoading = false;
@@ -815,10 +816,10 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
         if (state is TiposAccesorioLoaded) {
           tiposAccesorio = state.tiposAccesorio;
           hasData = true;
-          print('✅ Tipos accesorio cargados: ${tiposAccesorio.length}');
+          debugPrint('✅ Tipos accesorio cargados: ${tiposAccesorio.length}');
         } else if (state is AccessoryLoading) {
           isLoading = true;
-          print('⏳ Cargando tipos de accesorio...');
+          debugPrint('⏳ Cargando tipos de accesorio...');
         }
 
         return Column(
@@ -873,7 +874,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
                       (_selectedSegmentoId == null || isLoading || !hasData)
                       ? null
                       : (int? newId) {
-                          print('🎯 Tipo accesorio seleccionado: $newId');
+                          debugPrint('🎯 Tipo accesorio seleccionado: $newId');
 
                           final selectedTipo = newId != null
                               ? tiposAccesorio.firstWhere(
@@ -909,7 +910,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
   Widget _buildVehiculoDropdown() {
     return BlocListener<AccessoryBloc, AccessoryState>(
       listener: (context, state) {
-        print('🎧 Listener Vehículo - Estado: ${state.runtimeType}');
+        debugPrint('🎧 Listener Vehículo - Estado: ${state.runtimeType}');
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -939,19 +940,19 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
             current is AccessoryLoading;
       },
       builder: (context, state) {
-        print('🚗 Builder Vehículos - Estado: ${state.runtimeType}');
+        debugPrint('🚗 Builder Vehículos - Estado: ${state.runtimeType}');
 
         List<VehiculoModel> vehiculos = [];
         bool isLoading = false;
 
         if (state is VehiculosLoaded) {
           vehiculos = state.vehiculos;
-          print('✅ Vehículos cargados: ${vehiculos.length}');
+          debugPrint('✅ Vehículos cargados: ${vehiculos.length}');
         } else if (state is AccessoryLoading) {
           isLoading = true;
-          print('⏳ Cargando vehículos...');
+          debugPrint('⏳ Cargando vehículos...');
         } else if (state is AccessoryError) {
-          print('❌ Error cargando vehículos: ${state.message}');
+          debugPrint('❌ Error cargando vehículos: ${state.message}');
         }
 
         // Si está cargando y no hay vehículos
@@ -1018,7 +1019,7 @@ class _AddAccessoryModalState extends State<AddAccessoryModal> {
                 }).toList(),
               ],
               onChanged: (int? newId) {
-                print('🎯 Vehículo seleccionado: $newId');
+                debugPrint('🎯 Vehículo seleccionado: $newId');
 
                 final selectedVehiculo = newId != null
                     ? vehiculos.firstWhere(

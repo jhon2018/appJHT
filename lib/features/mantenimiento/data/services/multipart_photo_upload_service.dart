@@ -5,6 +5,7 @@ import 'package:app_jht_front/core/utils/token_service.dart';
 import 'package:app_jht_front/features/config/environment_config.dart';
 import 'package:app_jht_front/core/utils/app_logger.dart';
 import 'photo_upload_service.dart';
+import 'package:flutter/foundation.dart';
 
 final _emptyPng = Uint8List.fromList([
   0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
@@ -119,6 +120,6 @@ class MultipartPhotoUploadService implements IPhotoUploadService {
 
   void _debugLog(http.MultipartRequest request, String historicoJson) {
     // Mantengo el print local para desarrollo rápido, pero el AppLogger es el que va a Render
-    print('📡 Multipart request ready: ${request.files.length} files');
+    debugPrint('📡 Multipart request ready: ${request.files.length} files');
   }
 }
