@@ -330,7 +330,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
 
   String _limpiarMensajeError(String message) {
     if (message.contains('DNI debe ser mayor que 0')) {
-      return 'La identificación (DNI o Carné) debe ser numérica y mayor que 0.';
+      return 'El DNI debe ser numérico y mayor que 0.';
     } else if (message.contains('Ocurrió un error al registrar')) {
       final partes = message.split(':');
       if (partes.length > 1) {
@@ -346,19 +346,13 @@ class _AddConductorModalState extends State<AddConductorModal> {
 
     if (dniText.isEmpty) {
       setState(() => _dniError = 'El DNI es requerido');
-      _mostrarSnackBarError('Complete el campo DNI / Carné');
+      _mostrarSnackBarError('Complete el campo DNI');
       return;
     }
 
-    if (dniText.length < 8 || dniText.length > 9) {
-      setState(() => _dniError =
-          dniText.length < 8
-              ? 'Faltan ${8 - dniText.length} dígitos (mínimo 8)'
-              : 'Máximo 9 dígitos permitidos');
-      _mostrarSnackBarError(
-          dniText.length < 8
-              ? 'Documento incompleto: faltan ${8 - dniText.length} dígitos (mínimo 8)'
-              : 'El documento debe tener entre 8 y 9 dígitos');
+    if (dniText.length != 8) {
+      setState(() => _dniError = 'El DNI debe tener exactamente 8 dígitos');
+      _mostrarSnackBarError('El DNI debe tener exactamente 8 dígitos');
       return;
     }
 
@@ -501,8 +495,8 @@ class _AddConductorModalState extends State<AddConductorModal> {
     // Limpiar error inline cuando el usuario corrige el campo
     setState(() {
       _dniDuplicado = dup;
-      // Si el usuario escribe y tiene 8 o 9 dígitos → limpiar el error
-      if (v.length == 8 || v.length == 9) _dniError = null;
+      // Si el usuario escribe y tiene 8 dígitos → limpiar el error
+      if (v.length == 8) _dniError = null;
     });
   }
 
@@ -1340,23 +1334,19 @@ class _AddConductorModalState extends State<AddConductorModal> {
       lengthMessage = 'Faltan ${8 - dniLength} dígitos para DNI';
       lengthColor = _primary; // Color primario para progreso
     } else if (dniLength == 8) {
-      lengthMessage = 'DNI válido (8). Digite 1 más si es Carné';
-      lengthColor = const Color(0xFF4CAF50); // Verde para éxito
-      lengthIcon = Icons.check_circle_outline;
-    } else if (dniLength == 9) {
-      lengthMessage = 'Carné válido (9 dígitos)';
+      lengthMessage = 'DNI válido (8 dígitos)';
       lengthColor = const Color(0xFF4CAF50); // Verde para éxito
       lengthIcon = Icons.check_circle_outline;
     }
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
-        const Text('DNI / Carné *',
+        const Text('DNI *',
             style: TextStyle(
                 fontSize: 12, fontWeight: FontWeight.w600, color: _textPri)),
         const SizedBox(width: 4),
         Tooltip(
-          message: 'DNI peruano: 8 dígitos\nCarné de extranjería: 9 dígitos',
+          message: 'DNI peruano: 8 dígitos',
           triggerMode: TooltipTriggerMode.tap,
           child: const Icon(Icons.info_outline, size: 13, color: _textSec),
         ),
@@ -1368,7 +1358,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
         style: const TextStyle(fontSize: 13),
         inputFormatters: [
           FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(9),
+          LengthLimitingTextInputFormatter(8),
         ],
         onChanged: _onDniChanged,
         decoration: InputDecoration(
