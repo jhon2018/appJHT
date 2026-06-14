@@ -87,6 +87,10 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
   // ✅ BUG FIX #2: normalizado a MAYÚSCULAS
   String? _estadoValue;
 
+  // Sugerencias de correo
+  final List<String> _dominios = ['gmail.com', 'hotmail.com', 'yahoo.com', 'outlook.com'];
+  bool _mostrarDominios = false;
+
   // Banco select
   String? _bancoSeleccionado;
   bool _bancoEsOtro = false;
@@ -329,11 +333,15 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
       listener: (ctx, state) {
         state.whenOrNull(
           updateSuccess: (response) {
+            if (!mounted) return;
             Navigator.of(ctx).pop();
             _showSnack(response.message);
             widget.onEditComplete();
           },
-          error: (msg) => _showSnack('Error: $msg', isError: true),
+          error: (msg) {
+            if (!mounted) return;
+            _showSnack('Error: $msg', isError: true);
+          },
         );
       },
       child: Dialog(
@@ -391,13 +399,7 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
                           _field('N° Cuenta *', _numeroCuentaCtrl,
                               keyboard: TextInputType.number,
                               validator: (v) => v!.isEmpty ? 'Requerido' : null),
-                          _field('Correo *', _correoCtrl,
-                              keyboard: TextInputType.emailAddress,
-                              validator: (v) {
-                                if (v!.isEmpty) return 'Requerido';
-                                if (!v.contains('@')) return 'Correo inválido';
-                                return null;
-                              }),
+                          _correoField(),
                         ),
                         _field('Link Ubicación', _ubicacionLinkCtrl),
                         _estadoDropdown(),
@@ -629,6 +631,69 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
                 borderSide: const BorderSide(color: _kError)),
           ),
         ),
+      ]),
+    );
+  }
+
+  // ── Correo sugerencias ────────────────────────────────────────────────────
+  Widget _correoField() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Correo *',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kPrimary)),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: _correoCtrl,
+          keyboardType: TextInputType.emailAddress,
+          style: const TextStyle(fontSize: 14),
+          onChanged: (v) {
+            setState(() {
+              _mostrarDominios = v.contains('@') && !v.split('@').last.contains('.');
+            });
+          },
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.grey[50],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kError)),
+          ),
+          validator: (v) {
+            if (v == null || v.isEmpty) return 'Requerido';
+            if (!v.contains('@')) return 'Correo inválido';
+            return null;
+          },
+        ),
+        if (_mostrarDominios) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _dominios.map((d) {
+              return ActionChip(
+                label: Text(d, style: const TextStyle(fontSize: 12, color: _kPrimary, fontWeight: FontWeight.w600)),
+                backgroundColor: _kPrimaryBg,
+                side: BorderSide.none,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                onPressed: () {
+                  final partes = _correoCtrl.text.split('@');
+                  if (partes.isNotEmpty) {
+                    _correoCtrl.text = '${partes[0]}@$d';
+                    _correoCtrl.selection = TextSelection.collapsed(offset: _correoCtrl.text.length);
+                    setState(() => _mostrarDominios = false);
+                  }
+                },
+              );
+            }).toList(),
+          ),
+        ],
       ]),
     );
   }

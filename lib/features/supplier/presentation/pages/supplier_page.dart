@@ -300,45 +300,45 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
         state.when(
           initial: () {},
           loading: () {
-            _showLoadingDialog('Cargando proveedores...');
+            if (mounted) setState(() => _isLoading = true);
           },
-          success: (response) {},
+          success: (response) {
+            if (mounted) setState(() => _isLoading = false);
+          },
           listLoaded: (response) {
-            if (Navigator.canPop(context)) Navigator.pop(context);
             if (mounted) {
               setState(() {
+                _isLoading = false;
                 _proveedores = response.data;
                 _filteredProveedores = response.data;
                 _actualizarPagina();
               });
             }
           },
-          // En supplier_page.dart, en el BlocListener:
           detailLoaded: (response) {
-            if (Navigator.canPop(context)) Navigator.pop(context);
             if (mounted) {
-              // ✅ Obtener el BLoC ANTES de mostrar el diálogo
+              setState(() => _isLoading = false);
               final supplierBloc = BlocProvider.of<SupplierBloc>(context);
 
               showDialog(
                 context: context,
                 builder: (context) => DetalleSupplierModal(
                   proveedor: response.data,
-                  supplierBloc: supplierBloc, // ✅ PASAR EL BLOC COMO PARÁMETRO
+                  supplierBloc: supplierBloc,
                 ),
               );
             }
           },
           updateSuccess: (response) {
-            if (Navigator.canPop(context)) Navigator.pop(context);
             if (mounted) {
-              AppNotification.success(context, response.message);
+              setState(() => _isLoading = false);
+              // AppNotification is handled by the modal for updates
               _cargarProveedores();
             }
           },
           error: (message) {
-            if (Navigator.canPop(context)) Navigator.pop(context);
             if (mounted) {
+              setState(() => _isLoading = false);
               AppNotification.error(context, 'Error: $message');
             }
           },
@@ -804,6 +804,10 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
 
   // ✅ TABLA SIN SCROLLBAR - EVITA ERROR EN DESKTOP
   Widget _buildResponsiveTable() {
+    if (_isLoading) {
+      return _buildLoadingSupplier();
+    }
+
     if (_filteredProveedores.isEmpty) {
       return Container(
         height: 200,
