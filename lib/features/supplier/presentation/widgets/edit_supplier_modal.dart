@@ -202,7 +202,10 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
   }
 
   void _submitForm() {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      _showSnack('Por favor, revisa los campos en rojo. Faltan datos obligatorios.', isError: true);
+      return;
+    }
     if (_estadoValue == null) {
       _showSnack('Seleccione el estado del proveedor', isError: true);
       return;

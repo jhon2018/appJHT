@@ -241,25 +241,46 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
   String _getErrorMessage(Map<String, dynamic> errorData) {
     debugPrint('🔍 Error data: $errorData');
 
-    if (errorData['mensaje'] != null) return errorData['mensaje'].toString();
-    if (errorData['message'] != null) return errorData['message'].toString();
-
     if (errorData['errors'] != null) {
       final errors = errorData['errors'] as Map<String, dynamic>;
       if (errors.isNotEmpty) {
-        final firstKey = errors.keys.first;
-        final firstError = errors[firstKey];
-        if (firstError is List && firstError.isNotEmpty) {
-          return firstError.first.toString();
-        } else if (firstError is String) {
-          return firstError;
+        List<String> mensajes = [];
+        errors.forEach((key, value) {
+          if (value is List && value.isNotEmpty) {
+            mensajes.add('• $key: ${value.join(', ')}');
+          } else if (value is String) {
+            mensajes.add('• $key: $value');
+          }
+        });
+        if (mensajes.isNotEmpty) {
+          return 'Campos inválidos:\n' + mensajes.join('\n');
         }
       }
     }
 
-    if (errorData['title'] != null) return errorData['title'].toString();
+    String detalle = '';
+    if (errorData['error'] != null && errorData['error'] is String) {
+      detalle = errorData['error'].toString();
+    } else if (errorData['detalle'] != null) {
+      detalle = errorData['detalle'].toString();
+    }
 
-    return 'Error en el registro del proveedor';
+    String general = '';
+    if (errorData['mensaje'] != null) general = errorData['mensaje'].toString();
+    else if (errorData['message'] != null) general = errorData['message'].toString();
+    else if (errorData['title'] != null) general = errorData['title'].toString();
+
+    if (detalle.isNotEmpty && general.isNotEmpty) {
+      // Evitar redundancia si el mensaje general es igual al detalle
+      if (general == detalle) return general;
+      return '$general\n\nDetalle: $detalle';
+    } else if (detalle.isNotEmpty) {
+      return detalle;
+    } else if (general.isNotEmpty) {
+      return general;
+    }
+
+    return 'Error en la operación del proveedor';
   }
 
 }

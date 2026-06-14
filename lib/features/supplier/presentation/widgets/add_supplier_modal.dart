@@ -187,7 +187,10 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
 
   // ── Submit ────────────────────────────────────────────────────────────────
   void _submitForm() {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      AppNotification.warning(context, 'Por favor, revisa los campos en rojo. Faltan datos obligatorios.', isModal: true);
+      return;
+    }
     if (_estadoValue == null) {
       AppNotification.warning(context, 'Seleccione el estado del proveedor.', isModal: true);
       return;
