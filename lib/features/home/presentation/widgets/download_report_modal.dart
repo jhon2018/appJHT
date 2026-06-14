@@ -162,16 +162,25 @@ class _DownloadReportModalState extends State<DownloadReportModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isMobileScreen = screenWidth < 600;
+
+    return Dialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isMobileScreen ? 16 : 40,
+        vertical: 24,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
       ),
-      child: SafeArea(
-        child: Padding(
+      backgroundColor: Colors.white,
+      elevation: 8,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 500,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+        ),
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -181,19 +190,24 @@ class _DownloadReportModalState extends State<DownloadReportModal> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.download_rounded, color: Color(0xFF303366), size: 28),
-                      SizedBox(width: 12),
-                      Text(
-                        'Descargar Reporte CSV',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.download_rounded, color: Color(0xFF303366), size: 28),
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: Text(
+                            'Descargar Reporte CSV',
+                            style: TextStyle(
+                              fontSize: isMobileScreen ? 18 : 20,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF1E293B),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close_rounded, color: Colors.grey),
@@ -264,7 +278,6 @@ class _DownloadReportModalState extends State<DownloadReportModal> {
                           label: 'Todos los vehículos',
                         ),
                         ..._vehiculos.map((v) {
-                          // Adaptar los campos según el modelo de la API
                           final id = v['veh_iid'] ?? v['id'];
                           final placa = v['veh_vplaca'] ?? v['placa'] ?? 'Sin placa';
                           return DropdownMenuEntry<int?>(

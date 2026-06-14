@@ -137,7 +137,7 @@ class _BaseDashboardState extends State<BaseDashboard>
                     _buildHeader(isDesktopDevice),
                     Expanded(
                       child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
+                        physics: const AlwaysScrollableScrollPhysics(),
                         padding: EdgeInsets.all(isDesktopDevice ? 24 : 16),
                         child: widget.contentBuilder != null
                             ? widget.contentBuilder!(context, isDesktopDevice)
