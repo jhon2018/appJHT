@@ -2,6 +2,10 @@
 //descripción: Página de login con diseño responsivo para web y móvil logrando una experiencia de usuario óptima en ambas plataformas.
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/core/widgets/app_notification.dart';
+// ruta: lib/features/login/presentation/pages/login_page.dart
+//descripción: Página de login con diseño responsivo para web y móvil logrando una experiencia de usuario óptima en ambas plataformas.
+import 'package:flutter/material.dart';
+import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 // Importamos el clipper
 import '../widgets/login_wave_clipper.dart';
@@ -9,13 +13,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/login_bloc.dart';
 import '../bloc/login_event.dart';
 import '../bloc/login_state.dart';
+import 'package:go_router/go_router.dart';
 import '../../../admin/presentation/pages/admin_dashboard.dart';
 import '../../../conductor/presentation/pages/conductor_dashboard.dart';
-import 'package:flutter/foundation.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
-
   // Colores definidos para el login, basados en el diseño web (Azul Oscuro/Blue Background).
   static const Color primaryColor = Color.fromARGB(
     255,
@@ -71,27 +74,9 @@ class _LoginPageState extends State<LoginPage> {
 
     // Usar WidgetsBinding para asegurar que el contexto esté disponible
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Navegación por rol
-      if (state.cargo == 'Root' || state.cargo == 'Administrador') {
-        // Admin - ✅ CORREGIDO: Usamos el operador ! porque ya validamos que no es null
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => AdminDashboard(
-              userName: state.usuario!,
-              userRole: state.cargo!,
-            ),
-          ),
-        );
-      } else if (state.cargo == 'Conductor') {
-        // Conductor - ✅ CORREGIDO: Usamos el operador ! porque ya validamos que no es null
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => ConductorDashboard(
-              userName: state.usuario!,
-              userRole: state.cargo!,
-            ),
-          ),
-        );
+      // Navegación con go_router
+      if (state.cargo == 'Root' || state.cargo == 'Administrador' || state.cargo == 'Conductor') {
+        context.go('/dashboard');
       } else {
         // Rol no reconocido
         AppNotification.warning(

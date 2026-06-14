@@ -8,6 +8,7 @@ import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
+import 'package:app_jht_front/features/shared/presentation/widgets/scaffold_with_menu.dart';
 import 'package:app_jht_front/features/conductor/presentation/widgets/add_conductor_modal.dart';
 import 'package:app_jht_front/features/conductor/presentation/widgets/persona_detalle_modal.dart';
 import 'package:app_jht_front/features/conductor/presentation/bloc/conductor_bloc.dart';
@@ -200,14 +201,7 @@ class _ConductorPageState extends State<ConductorPage>
       ),
       listener: (context, state) {
         state.whenOrNull(
-          personasCargando: () {
-            _showLoadingDialog('Cargando colaboradores...');
-          },
-          personasCargadas: (_) {
-            if (Navigator.canPop(context)) Navigator.of(context).pop();
-          },
           error: (message) {
-            if (Navigator.canPop(context)) Navigator.of(context).pop();
             AppNotification.error(context, message);
           },
           personaDetalleCargado: (personaDetalle) {
@@ -316,14 +310,6 @@ class _ConductorPageState extends State<ConductorPage>
       },
       child: Scaffold(
         key: _scaffoldKey,
-        endDrawer: Drawer(
-          child: SideMenu(
-            userName: widget.userName,
-            userRole: widget.userRole,
-            onClose: () => Navigator.pop(context),
-            onItemSelected: _handleMenuSelection,
-          ),
-        ),
         backgroundColor: Colors.white,
         body: Column(
           children: [
@@ -331,6 +317,15 @@ class _ConductorPageState extends State<ConductorPage>
               child: CustomScrollView(
                 slivers: [
                   SliverAppBar(
+                    automaticallyImplyLeading: false,
+                    leading: isMobile
+                        ? IconButton(
+                            icon: const Icon(Icons.menu_rounded, color: Color(0xFF303366)),
+                            onPressed: () {
+                              context.findAncestorStateOfType<ScaffoldWithMenuState>()?.openMobileMenu();
+                            },
+                          )
+                        : null,
                     backgroundColor: Colors.white,
                     elevation: 1,
                     pinned: true,
@@ -342,7 +337,7 @@ class _ConductorPageState extends State<ConductorPage>
                         color: Color(0xFF303366),
                       ),
                     ),
-                    actions: [_buildMenuButton()],
+                    actions: const [],
                   ),
                   SliverList(
                     delegate: SliverChildListDelegate([
@@ -371,48 +366,7 @@ class _ConductorPageState extends State<ConductorPage>
     );
   }
 
-  Widget _buildMenuButton() {
-    return InkWell(
-      onTap: () {
-        _scaffoldKey.currentState?.openEndDrawer();
-      },
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 40,
-        height: 40,
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-            ),
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-            ),
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildHeaderWithAddButton(bool isMobile) {
     return Column(

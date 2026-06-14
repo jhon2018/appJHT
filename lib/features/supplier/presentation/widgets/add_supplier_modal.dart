@@ -739,59 +739,96 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
         const Text('Correo *',
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kPrimary)),
         const SizedBox(height: 6),
-        TextFormField(
-          controller: _correoCtrl,
-          keyboardType: TextInputType.emailAddress,
-          style: const TextStyle(fontSize: 14),
-          onChanged: (v) {
-            setState(() {
-              _mostrarDominios = v.contains('@') && !v.split('@').last.contains('.');
-            });
+        Autocomplete<String>(
+          optionsBuilder: (TextEditingValue textEditingValue) {
+            final v = textEditingValue.text;
+            if (!v.contains('@') || v.split('@').last.contains('.')) {
+              return const Iterable<String>.empty();
+            }
+            final partes = v.split('@');
+            final prefijo = partes[0];
+            final dominioTipeado = partes[1].toLowerCase();
+            
+            return _dominios
+                .where((d) => d.startsWith(dominioTipeado))
+                .map((d) => '$prefijo@$d');
           },
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.grey[50],
-            hintText: 'ejemplo@correo.com',
-            hintStyle: const TextStyle(fontSize: 13, color: _kTextSub),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: _kBorder)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: _kBorder)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
-            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: _kError)),
-          ),
-          validator: (v) {
-            if (v == null || v.isEmpty) return 'Requerido';
-            if (!v.contains('@')) return 'Correo inválido';
-            return null;
+          onSelected: (String selection) {
+            _correoCtrl.text = selection;
+            _correoCtrl.selection = TextSelection.collapsed(offset: selection.length);
+            // Validar form despues de seleccionar
+            _formKey.currentState?.validate();
+          },
+          optionsViewBuilder: (context, onSelected, options) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 150, maxWidth: 300),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final option = options.elementAt(index);
+                      return InkWell(
+                        onTap: () => onSelected(option),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          child: Text(option, style: const TextStyle(fontSize: 13, color: _kTextSub)),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+          fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+            // Sincronizar controladores
+            textEditingController.text = _correoCtrl.text;
+            textEditingController.addListener(() {
+              if (_correoCtrl.text != textEditingController.text) {
+                _correoCtrl.text = textEditingController.text;
+              }
+            });
+            _correoCtrl.addListener(() {
+              if (textEditingController.text != _correoCtrl.text) {
+                textEditingController.text = _correoCtrl.text;
+              }
+            });
+
+            return TextFormField(
+              controller: textEditingController,
+              focusNode: focusNode,
+              keyboardType: TextInputType.emailAddress,
+              style: const TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.grey[50],
+                hintText: 'ejemplo@correo.com',
+                hintStyle: const TextStyle(fontSize: 13, color: _kTextSub),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kBorder)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kBorder)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+                errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kError)),
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Requerido';
+                if (!v.contains('@')) return 'Correo inválido';
+                return null;
+              },
+            );
           },
         ),
-        if (_mostrarDominios) ...[
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _dominios.map((d) {
-              return ActionChip(
-                label: Text(d, style: const TextStyle(fontSize: 12, color: _kPrimary, fontWeight: FontWeight.w600)),
-                backgroundColor: _kPrimaryBg,
-                side: BorderSide.none,
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                onPressed: () {
-                  final partes = _correoCtrl.text.split('@');
-                  if (partes.isNotEmpty) {
-                    _correoCtrl.text = '${partes[0]}@$d';
-                    _correoCtrl.selection = TextSelection.collapsed(offset: _correoCtrl.text.length);
-                    setState(() => _mostrarDominios = false);
-                  }
-                },
-              );
-            }).toList(),
-          ),
-        ],
       ]),
     );
   }

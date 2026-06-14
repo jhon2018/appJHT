@@ -1412,14 +1412,14 @@ class _AddConductorModalState extends State<AddConductorModal> {
                       child: const Icon(Icons.warning_amber_rounded,
                           color: _yellow, size: 18),
                     )
-                  : (dniLength == 8 || dniLength == 9)
+                  : (dniLength == 8)
                       ? const Icon(Icons.check_circle_outline,
                           color: Color(0xFF4CAF50), size: 18)
                       : null,
         ),
         validator: (v) {
           if (v == null || v.isEmpty) return 'Obligatorio';
-          if (v.length < 8 || v.length > 9) return 'Debe tener 8 o 9 dígitos';
+          if (v.length != 8) return 'Debe tener exactamente 8 dígitos';
           if (_dniDuplicado) return 'DNI ya registrado';
           return null;
         },

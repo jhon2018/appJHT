@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
+import 'package:app_jht_front/features/shared/presentation/widgets/scaffold_with_menu.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/widgets/add_mantenimiento_modal.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/widgets/edit_mantenimiento_modal.dart';
 import 'package:app_jht_front/features/mantenimiento/data/models/mantenimiento_model.dart';
@@ -168,27 +169,10 @@ class _MantenimientoPageState extends State<MantenimientoPage>
 
     return Scaffold(
       key: _scaffoldKey,
-      endDrawer: Drawer(
-        child: SideMenu(
-          userName: widget.userName,
-          userRole: widget.userRole,
-          onClose: () => Navigator.pop(context),
-          onItemSelected: (itemTitle) {
-            navigateToMenuPage(
-              context,
-              itemTitle,
-              widget.userName,
-              widget.userRole,
-            );
-          },
-        ),
-      ),
       backgroundColor: const Color(0xFFF7F8FC),
       body: BlocListener<MantenimientoBloc, MantenimientoState>(
         listener: (context, state) {
-          if (state is MantenimientoLoading && _cachedMantenimientos == null) {
-            _showLoadingDialog('Cargando mantenimientos...');
-          } else if (state is MantenimientoSuccess) {
+          if (state is MantenimientoSuccess) {
             if (_isLoadingDialogVisible && Navigator.canPop(context)) {
               Navigator.pop(context);
               _isLoadingDialogVisible = false;
@@ -208,6 +192,15 @@ class _MantenimientoPageState extends State<MantenimientoPage>
                 slivers: [
                   // ── AppBar ────────────────────────────────────────────────
                   SliverAppBar(
+                    automaticallyImplyLeading: false,
+                    leading: isMobile
+                        ? IconButton(
+                            icon: const Icon(Icons.menu_rounded, color: Color(0xFF303366)),
+                            onPressed: () {
+                              context.findAncestorStateOfType<ScaffoldWithMenuState>()?.openMobileMenu();
+                            },
+                          )
+                        : null,
                     backgroundColor: Colors.white,
                     elevation: 1,
                     pinned: true,
@@ -219,7 +212,7 @@ class _MantenimientoPageState extends State<MantenimientoPage>
                         color: Color(0xFF303366),
                       ),
                     ),
-                    actions: [_buildMenuButton()],
+                    actions: const [],
                   ),
 
                   SliverPadding(
@@ -244,31 +237,7 @@ class _MantenimientoPageState extends State<MantenimientoPage>
     );
   }
 
-  // ── AppBar menu button ───────────────────────────────────────────────────
 
-  Widget _buildMenuButton() {
-    return InkWell(
-      onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-      borderRadius: BorderRadius.circular(20),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: List.generate(
-            3,
-            (_) => Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   // ── Header + botón agregar ───────────────────────────────────────────────
 
@@ -398,10 +367,24 @@ class _MantenimientoPageState extends State<MantenimientoPage>
           _cachedMantenimientos = state.mantenimientos;
         }
 
-        // Skeleton loader ya no se usa, usamos el dialog
-        // if (state is MantenimientoLoading && _cachedMantenimientos == null) {
-        //   return _buildSkeletonLoader();
-        // }
+        // Mostrar indicador de carga inline en lugar de dialog
+        if (state is MantenimientoLoading && _cachedMantenimientos == null) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(40),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF303366)),
+                  ),
+                  SizedBox(height: 16),
+                  Text('Cargando mantenimientos...'),
+                ],
+              ),
+            ),
+          );
+        }
 
         // Error solo si no hay datos previos
         if (state is MantenimientoError && _cachedMantenimientos == null) {

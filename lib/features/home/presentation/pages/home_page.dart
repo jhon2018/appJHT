@@ -485,10 +485,9 @@ class _HomePageState extends State<HomePage> {
                   title: 'Reporte Mant. (CSV)',
                   color: Colors.teal,
                   onTap: () {
-                    showModalBottomSheet(
+                    showDialog(
                       context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
+                      barrierDismissible: true,
                       builder: (context) => const DownloadReportModal(),
                     );
                   },

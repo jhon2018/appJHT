@@ -2,6 +2,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
+import 'package:go_router/go_router.dart';
 import 'menu_config.dart';
 import 'permission_service.dart';
 
@@ -247,7 +248,11 @@ class SideMenu extends StatelessWidget {
             item: item,
             index: index,
             onTap: () {
-              onClose();
+              // Solo cerrar si estamos dentro de un Drawer (móvil)
+              final isInsideDrawer = ModalRoute.of(context)?.canPop ?? false;
+              if (isInsideDrawer) {
+                onClose();
+              }
               onItemSelected(item.title);
             },
           ),
@@ -346,7 +351,7 @@ class SideMenu extends StatelessWidget {
       PermissionService().updateRole(null);
       
       if (context.mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        context.go('/login');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Sesión cerrada correctamente'),

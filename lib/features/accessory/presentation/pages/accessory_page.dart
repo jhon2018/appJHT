@@ -11,6 +11,7 @@ import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
+import 'package:app_jht_front/features/shared/presentation/widgets/scaffold_with_menu.dart';
 import 'package:app_jht_front/features/accessory/presentation/widgets/add_accessory_modal.dart';
 import 'package:app_jht_front/features/accessory/presentation/widgets/detalle_accessory_modal.dart';
 import 'package:app_jht_front/features/accessory/presentation/widgets/edit_accessory_modal.dart';
@@ -56,6 +57,9 @@ class _AccessoryPageState extends State<AccessoryPage>
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   Timer? _debounceTimer;
+
+  bool _isVehiclesLoading = true;
+  bool _hasVehiclesError = false;
 
   @override
   void initState() {
@@ -202,24 +206,24 @@ class _AccessoryPageState extends State<AccessoryPage>
       listener: (context, state) {
         // Vehículos
         if (state is VehiculosLoading) {
-          _showLoadingDialog('Cargando lista de vehículos...');
+          setState(() {
+            _isVehiclesLoading = true;
+            _hasVehiclesError = false;
+          });
         } else if (state is VehiculosLoaded) {
-          if (Navigator.canPop(context)) Navigator.pop(context);
-          setState(() => _vehiclesList = state.vehiculos);
-
-          // Accesorios por vehículo
-        } else if (state is AccesoriosByVehiculoLoading) {
-          _showLoadingDialog(
-            _selectedVehicle != null
-                ? 'Cargando accesorios del vehículo ${_selectedVehicle!.placa}...'
-                : 'Cargando accesorios...',
-          );
-        } else if (state is AccesoriosByVehiculoLoaded) {
-          if (Navigator.canPop(context)) Navigator.pop(context);
-
-          // Error general
-        } else if (state is AccessoryError) {
-          if (Navigator.canPop(context)) Navigator.pop(context);
+          setState(() {
+            _vehiclesList = state.vehiculos;
+            _isVehiclesLoading = false;
+            _hasVehiclesError = false;
+          });
+        }
+        
+        // Error general (al cargar listas)
+        if (state is AccessoryError) {
+          setState(() {
+            _isVehiclesLoading = false;
+            _hasVehiclesError = true;
+          });
           AppNotification.error(context, state.message);
         }
 
@@ -265,14 +269,6 @@ class _AccessoryPageState extends State<AccessoryPage>
       },
       child: Scaffold(
         key: _scaffoldKey,
-        endDrawer: Drawer(
-          child: SideMenu(
-            userName: widget.userName,
-            userRole: widget.userRole,
-            onClose: () => Navigator.pop(context),
-            onItemSelected: _handleMenuSelection,
-          ),
-        ),
         backgroundColor: Colors.white,
         body: Column(
           children: [
@@ -280,6 +276,15 @@ class _AccessoryPageState extends State<AccessoryPage>
               child: CustomScrollView(
                 slivers: [
                   SliverAppBar(
+                    automaticallyImplyLeading: false,
+                    leading: isMobile
+                        ? IconButton(
+                            icon: const Icon(Icons.menu_rounded, color: Color(0xFF303366)),
+                            onPressed: () {
+                              context.findAncestorStateOfType<ScaffoldWithMenuState>()?.openMobileMenu();
+                            },
+                          )
+                        : null,
                     backgroundColor: Colors.white,
                     elevation: 1,
                     pinned: true,
@@ -291,7 +296,7 @@ class _AccessoryPageState extends State<AccessoryPage>
                         color: Color(0xFF303366),
                       ),
                     ),
-                    actions: [_buildMenuButton()],
+                    actions: const [],
                   ),
                   SliverList(
                     delegate: SliverChildListDelegate([
@@ -320,31 +325,7 @@ class _AccessoryPageState extends State<AccessoryPage>
     );
   }
 
-  // ── Menú ──────────────────────────────────────────────────────────────────
-  Widget _buildMenuButton() {
-    return InkWell(
-      onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 40,
-        height: 40,
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [_dot(), _dot(), _dot()],
-        ),
-      ),
-    );
-  }
 
-  Widget _dot() => Container(
-    width: 4,
-    height: 4,
-    decoration: const BoxDecoration(
-      color: Colors.black87,
-      shape: BoxShape.circle,
-    ),
-  );
 
   // ── Header con botón agregar + dropdown vehículo ──────────────────────────
   Widget _buildHeaderWithAddButton(bool isMobile) {
@@ -484,7 +465,7 @@ class _AccessoryPageState extends State<AccessoryPage>
               value: _selectedVehicle,
               isExpanded: true,
               icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF303366)),
-              hint: _vehiclesList.isEmpty
+              hint: _isVehiclesLoading
                   ? const Row(
                       children: [
                         SizedBox(width: 4),
@@ -500,7 +481,11 @@ class _AccessoryPageState extends State<AccessoryPage>
                         ),
                       ],
                     )
-                  : const Text('Seleccione vehículo'),
+                  : _hasVehiclesError
+                      ? const Text('Error al cargar vehículos', style: TextStyle(color: Colors.red))
+                      : _vehiclesList.isEmpty
+                          ? const Text('No hay vehículos')
+                          : const Text('Seleccione vehículo'),
               items: _vehiclesList
                   .map(
                     (v) => DropdownMenuItem<VehiculoModel>(

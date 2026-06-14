@@ -1,6 +1,7 @@
 // lib/features/shared/presentation/mixins/navigation_helper_mixin.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:app_jht_front/core/network/http_client.dart';
 import 'package:app_jht_front/core/widgets/app_notification.dart';
 
@@ -41,111 +42,23 @@ import 'package:flutter/foundation.dart';
 
 mixin NavigationHelperMixin<T extends StatefulWidget> on State<T> {
   void navigateToMenuPage(BuildContext context, String pageName, String userName, String userRole) {
-    switch (pageName) {
-      case 'Panel':
-        if (userRole == 'Root' || userRole == 'Administrador') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => AdminDashboard(userName: userName, userRole: userRole),
-            ),
-          );
-        } else if (userRole == 'Conductor') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ConductorDashboard(userName: userName, userRole: userRole),
-            ),
-          );
-        }
-        break;
-      case 'Vehículo':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => BlocProvider(
-              create: (context) {
-                final vehicleDataSource = VehicleRemoteDataSourceImpl(httpClient: HttpClient());
-                final vehicleRepository = VehicleRepositoryImpl(remoteDataSource: vehicleDataSource);
-                return VehicleBloc(
-                  registrarVehiculoUseCase: RegistrarVehiculoUseCase(vehicleRepository),
-                  listarVehiculosUseCase: ListarVehiculosUseCase(vehicleRepository),
-                  actualizarVehiculoUseCase: ActualizarVehiculoUseCase(vehicleRepository),
-                );
-              },
-              child: VehiclePage(userName: userName, userRole: userRole),
-            ),
-          ),
-        );
-        break;
-      case 'Mantenimiento':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => BlocProvider(
-              create: (context) => MantenimientoBloc(repository: MantenimientoRepository())
-                ..add(LoadMantenimientosEvent()),
-              child: MantenimientoPage(userName: userName, userRole: userRole),
-            ),
-          ),
-        );
-        break;
-      case 'Proveedor':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => SupplierPage(userName: userName, userRole: userRole),
-          ),
-        );
-        break;
-      case 'Colaboradores':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) {
-              final remoteDataSource = ConductorRemoteDataSourceImpl();
-              final repository = ConductorRepositoryImpl(remoteDataSource: remoteDataSource);
-
-              return BlocProvider(
-                create: (context) => ConductorBloc(
-                  registrarConductorUseCase: RegistrarConductorUseCase(repository: repository),
-                  listarPersonasUseCase: ListarPersonasUseCase(repository: repository),
-                  obtenerPersonaDetalleUseCase: ObtenerPersonaDetalleUseCase(repository: repository),
-                  actualizarPersonaUseCase: ActualizarPersonaUseCase(repository: repository),
-                  conductorRepository: repository,
-                )..add(const ConductorEvent.listarPersonas()),
-                child: ConductorPage(userName: userName, userRole: userRole, dataSource: remoteDataSource),
-              );
-            },
-          ),
-        );
-        break;
-      case 'Accesorios':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => BlocProvider(
-              create: (context) {
-                final accessoryDataSource = AccessoryRemoteDataSourceImpl(httpClient: HttpClient());
-                final accessoryRepository = AccessoryRepositoryImpl(remoteDataSource: accessoryDataSource);
-                return AccessoryBloc(repository: accessoryRepository);
-              },
-              child: AccessoryPage(userName: userName, userRole: userRole),
-            ),
-          ),
-        );
-        break;
-      case 'Ayuda':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => HelpPage(userName: userName, userRole: userRole),
-          ),
-        );
-        break;
-      default:
-        AppNotification.warning(context, '$pageName — Página en desarrollo.');
-        debugPrint('Navegación a $pageName no implementada.');
+    if (pageName == 'Panel') {
+      context.go('/dashboard');
+    } else if (pageName == 'Vehículo') {
+      context.go('/vehiculos');
+    } else if (pageName == 'Mantenimiento') {
+      context.go('/mantenimiento');
+    } else if (pageName == 'Proveedor') {
+      context.go('/proveedores');
+    } else if (pageName == 'Colaboradores') {
+      context.go('/colaboradores');
+    } else if (pageName == 'Accesorios') {
+      context.go('/accesorios');
+    } else if (pageName == 'Ayuda') {
+      context.go('/ayuda');
+    } else {
+      AppNotification.warning(context, '$pageName — Página en desarrollo.');
+      debugPrint('Navegación a $pageName no implementada.');
     }
   }
 }

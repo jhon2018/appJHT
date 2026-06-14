@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
+import 'package:app_jht_front/features/shared/presentation/widgets/scaffold_with_menu.dart';
 import 'package:app_jht_front/features/supplier/presentation/widgets/add_supplier_modal.dart';
 import 'package:app_jht_front/features/supplier/presentation/widgets/detalle_supplier_modal.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -229,23 +230,18 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
   void _openAddSupplierModal() {
     if (!mounted) return;
     final supplierBloc = BlocProvider.of<SupplierBloc>(context);
+    final outerContext = context;
 
     showDialog(
-      context: context,
+      context: outerContext,
       barrierDismissible: false,
-      builder: (context) {
+      builder: (dialogContext) {
         return BlocProvider.value(
           value: supplierBloc,
           child: AddSupplierModal(
-            parentContext: context,
+            parentContext: outerContext,
             onSupplierAdded: () {
               _cargarProveedores();
-              if (mounted) {
-                AppNotification.success(
-                  context,
-                  'Proveedor agregado correctamente.',
-                );
-              }
             },
           ),
         );
@@ -346,14 +342,6 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
       },
       child: Scaffold(
         key: _scaffoldKey,
-        endDrawer: Drawer(
-          child: SideMenu(
-            userName: widget.userName,
-            userRole: widget.userRole,
-            onClose: () => Navigator.pop(context),
-            onItemSelected: _handleMenuSelection,
-          ),
-        ),
         backgroundColor: Colors.white,
         body: Column(
           children: [
@@ -361,6 +349,15 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
               child: CustomScrollView(
                 slivers: [
                   SliverAppBar(
+                    automaticallyImplyLeading: false,
+                    leading: _isMobile
+                        ? IconButton(
+                            icon: const Icon(Icons.menu_rounded, color: Color(0xFF303366)),
+                            onPressed: () {
+                              context.findAncestorStateOfType<ScaffoldWithMenuState>()?.openMobileMenu();
+                            },
+                          )
+                        : null,
                     backgroundColor: Colors.white,
                     elevation: 1,
                     pinned: true,
@@ -372,7 +369,6 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
                         color: Color(0xFF303366),
                       ),
                     ),
-                    actions: [_buildMenuButton()],
                   ),
                   SliverList(
                     delegate: SliverChildListDelegate([
@@ -465,46 +461,6 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
     );
   }
 
-  Widget _buildMenuButton() {
-    return InkWell(
-      onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 40,
-        height: 40,
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-            ),
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-            ),
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   DataRow _buildDataRow(SupplierListModel proveedor, int index) {
     final globalIndex = ((_currentPage - 1) * _itemsPerPage) + index + 1;
