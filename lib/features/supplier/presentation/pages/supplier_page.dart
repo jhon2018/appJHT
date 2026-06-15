@@ -18,6 +18,8 @@ import 'package:app_jht_front/features/supplier/domain/usecases/obtener_detalle_
 import 'package:app_jht_front/features/supplier/data/repositories/supplier_repository_impl.dart';
 import 'package:app_jht_front/features/supplier/data/datasources/supplier_remote_data_source.dart';
 import 'package:app_jht_front/features/supplier/data/models/supplier_list_model.dart';
+import 'package:app_jht_front/features/supplier/data/models/supplier_detail_model.dart';
+import 'package:app_jht_front/features/supplier/data/models/telefono_detail_model.dart';
 import 'package:app_jht_front/features/shared/presentation/mixins/navigation_helper_mixin.dart';
 import 'package:flutter/foundation.dart';
 
@@ -315,11 +317,27 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
             if (mounted) {
               setState(() => _isLoading = false);
               final supplierBloc = BlocProvider.of<SupplierBloc>(context);
+              
+              final SupplierDetailModel detail = response.data;
+              
+              // FALLBACK: Inyectar teléfono de la lista si el detalle vino sin teléfonos
+              if (detail.telefonos.isEmpty) {
+                 final matchingList = _proveedores.where((p) => p.proveedorId == detail.proveedorId).toList();
+                 if (matchingList.isNotEmpty && matchingList.first.telefono.trim().isNotEmpty) {
+                    detail.telefonos.add(TelefonoDetailModel(
+                      telefonoId: 0,
+                      numero: matchingList.first.telefono.trim(),
+                      tipoId: 0,
+                      tipo: 'Principal',
+                      uso: 'General',
+                    ));
+                 }
+              }
 
               showDialog(
                 context: context,
                 builder: (context) => DetalleSupplierModal(
-                  proveedor: response.data,
+                  proveedor: detail,
                   supplierBloc: supplierBloc,
                 ),
               );

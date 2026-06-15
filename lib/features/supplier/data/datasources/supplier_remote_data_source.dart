@@ -14,6 +14,7 @@ import 'package:app_jht_front/features/config/environment_config.dart';
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
 import 'package:app_jht_front/core/network/base_remote_data_source.dart';
 import 'package:flutter/foundation.dart';
 
@@ -177,6 +178,12 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
+        try {
+          // DEBUG: Escribir json en archivo
+          // Usamos la ruta absoluta de Windows del workspace para guardar el JSON
+          File('d:\\JONATHAN\\Proyectos\\Jht_Transport Company\\Software\\Front_jht\\app_jht_front\\api_detalle_proveedor_debug.json').writeAsStringSync(response.body);
+        } catch (e) {}
+        
         return SupplierDetailResponse.fromJson(responseData);
       } else if (response.statusCode == 401) {
         throw Exception('No autorizado. Token inválido o expirado.');

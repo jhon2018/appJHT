@@ -150,7 +150,7 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
 
     for (final tel in p.telefonos) {
       _telControllers.add(TextEditingController(text: tel.numero));
-      _telTipoIds.add(tel.tipoId == 0 ? null : tel.tipoId);
+      _telTipoIds.add(tel.tipoId); // ✅ Keep 0 if it's the fallback
       _telIds.add(tel.telefonoId);
     }
 
@@ -176,6 +176,7 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
         if (mounted) {
           setState(() {
             _tiposTelefono = data.map((e) => TipoTelefonoModel.fromJson(e)).toList();
+            
             _cargandoTipos = false;
           });
         }
@@ -561,10 +562,6 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
                     color: Colors.white, fontSize: 16,
                     fontWeight: FontWeight.w700, letterSpacing: 0.5)),
           ),
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
         ],
       ),
     );
@@ -788,12 +785,16 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
   }
 
   Widget _tipoDrop(int index) {
+    // Protección contra error de aserción (value not found in items)
+    final val = _telTipoIds[index];
+    final validValue = val == null ? null : (_tiposTelefono.any((t) => t.id == val) ? val : null);
+
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Text('Tipo *',
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kTextSub)),
       const SizedBox(height: 4),
       DropdownButtonFormField<int?>(
-        value: _telTipoIds[index],
+        value: validValue,
         style: const TextStyle(fontSize: 13, color: Color(0xFF212121)),
         decoration: InputDecoration(
           filled: true,
