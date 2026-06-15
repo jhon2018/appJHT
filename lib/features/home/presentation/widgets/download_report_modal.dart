@@ -112,11 +112,15 @@ class _DownloadReportModalState extends State<DownloadReportModal> {
 
       // Preparar estructura para CSV
       List<List<dynamic>> csvData = [
-        // Cabeceras (ajustadas según el DTO MantenimientoReporteDTO)
+        // Cabeceras (ajustadas según el JSON de respuesta)
         [
-          'ID Bitácora', 'Fecha Registro', 'Kilometraje', 'Vehículo Placa', 'Vehículo Marca', 
-          'Proveedor', 'Accesorio Tipo', 'Accesorio Segmento', 'Diccionario', 'Tipo',
-          'Estado Histórico', 'Próx. Kilometraje', 'Fecha Instalación'
+          'ID Bitácora', 'Fecha Registro Bitácora', 'Kilometraje Bitácora', 'Cantidad', 
+          'ID Vehículo', 'Placa', 'Marca', 'Número VIN', 'Kilometraje Vehículo', 
+          'Proveedor', 'Código Fabricante', 'Fecha Instalación', 'Kilometraje Instalación', 
+          'Fecha Retiro', 'Kilometraje Retiro', 'Accesorio Tipo', 'Accesorio Segmento', 
+          'Diccionario', 'Tipo', 'Frecuencia Km', 'Frecuencia Tiempo (días)', 
+          'Descripción Histórico', 'Próx. Kilometraje', 'Próxima Fecha', 'Estado Histórico', 
+          'Link Foto', 'Fecha Registro Histórico'
         ],
       ];
 
@@ -126,16 +130,30 @@ class _DownloadReportModalState extends State<DownloadReportModal> {
           item['bitacoraId'] ?? '',
           item['bitacoraFechaRegistro'] ?? '',
           item['bitacoraKilometraje'] ?? '',
+          item['bitacoraCantidad'] ?? '',
+          item['vehiculoId'] ?? '',
           item['placa'] ?? '',
           item['marca'] ?? '',
+          item['numeroVin'] ?? '',
+          item['kilometrajeVehiculo'] ?? '',
           item['proveedorRazonSocial'] ?? '',
+          item['codigoFabricante'] ?? '',
+          item['fechaInstalacion'] ?? '',
+          item['kilometrajeInstalacion'] ?? '',
+          item['fechaRetiro'] ?? '',
+          item['kilometrajeRetiro'] ?? '',
           item['tipoAccesorioNombre'] ?? '',
           item['segmentoNombre'] ?? '',
           item['diccionarioNombre'] ?? '',
           item['diccionarioTipo'] ?? '',
-          item['historicoEstado'] ?? '',
+          item['frecuenciaKilometros'] ?? '',
+          item['frecuenciaTiempo'] ?? '',
+          item['historicoDescripcion'] ?? '',
           item['historicoProximoKilometraje'] ?? '',
-          item['fechaInstalacion'] ?? '',
+          item['historicoProximaFecha'] ?? '',
+          item['historicoEstado'] ?? '',
+          item['historicoLinkFoto'] ?? '',
+          item['historicoFechaRegistro'] ?? '',
         ]);
       }
 
