@@ -115,32 +115,39 @@ class _AccessoryPageState extends State<AccessoryPage>
   }
 
   // ── Loading dialog ────────────────────────────────────────────────────────
+  bool _isLoadingDialogVisible = false;
+
   void _showLoadingDialog(String message) {
+    if (_isLoadingDialogVisible) return;
+    _isLoadingDialogVisible = true;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        backgroundColor: const Color(0xFF303366),
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(color: Colors.white),
-            const SizedBox(height: 20),
-            Text(
-              message,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: const Color(0xFF303366),
+          contentPadding: const EdgeInsets.all(24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: Colors.white),
+              const SizedBox(height: 20),
+              Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    );
+    ).then((_) => _isLoadingDialogVisible = false);
   }
 
   // ── Agregar accesorio ─────────────────────────────────────────────────────
@@ -234,7 +241,9 @@ class _AccessoryPageState extends State<AccessoryPage>
 
         // Detalle listo → decide qué modal abrir
         if (state is DetalleAccesorioLoaded) {
-          if (Navigator.canPop(context)) Navigator.pop(context);
+          if (_isLoadingDialogVisible) {
+            Navigator.of(context, rootNavigator: true).pop();
+          }
           if (_pendingAction == _PendingAction.verDetalle) {
             _pendingAction = _PendingAction.none;
             showDetalleAccesorioModal(context, state.detalle, 0.0);
@@ -251,7 +260,9 @@ class _AccessoryPageState extends State<AccessoryPage>
 
         // Actualizado OK
         if (state is AccesorioActualizado) {
-          if (Navigator.canPop(context)) Navigator.pop(context);
+          if (_isLoadingDialogVisible) {
+            Navigator.of(context, rootNavigator: true).pop();
+          }
           context.read<AccessoryBloc>().add(
             OnFetchAccesoriosByVehiculo(state.vehiculoId),
           );
@@ -263,7 +274,9 @@ class _AccessoryPageState extends State<AccessoryPage>
 
         // Error de actualización
         if (state is ActualizacionError) {
-          if (Navigator.canPop(context)) Navigator.pop(context);
+          if (_isLoadingDialogVisible) {
+            Navigator.of(context, rootNavigator: true).pop();
+          }
           AppNotification.error(context, state.message);
         }
       },

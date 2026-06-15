@@ -127,33 +127,39 @@ class _ConductorPageState extends State<ConductorPage>
   void _handleMenuSelection(String itemTitle) {
     navigateToMenuPage(context, itemTitle, widget.userName, widget.userRole);
   }
+  bool _isLoadingDialogVisible = false;
 
   void _showLoadingDialog([String message = 'Cargando...']) {
+    if (_isLoadingDialogVisible) return;
+    _isLoadingDialogVisible = true;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        backgroundColor: const Color(0xFF303366),
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(color: Colors.white),
-            const SizedBox(height: 20),
-            Text(
-              message,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: const Color(0xFF303366),
+          contentPadding: const EdgeInsets.all(24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: Colors.white),
+              const SizedBox(height: 20),
+              Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    );
+    ).then((_) => _isLoadingDialogVisible = false);
   }
 
   void _openPersonaDetalleModal(PersonaModel persona) {
@@ -205,8 +211,9 @@ class _ConductorPageState extends State<ConductorPage>
             AppNotification.error(context, message);
           },
           personaDetalleCargado: (personaDetalle) {
-            if (Navigator.canPop(context))
-              Navigator.of(context).pop(); // Cierra el loading
+            if (_isLoadingDialogVisible) {
+              Navigator.of(context, rootNavigator: true).pop();
+            }
 
             // Mezclamos el detalle de la API con el usuario/contraseña de la lista
             PersonaModel mergedPersona = personaDetalle;
@@ -302,8 +309,9 @@ class _ConductorPageState extends State<ConductorPage>
             }
           },
           personaDetalleError: (mensaje) {
-            if (Navigator.canPop(context))
-              Navigator.of(context).pop(); // Cierra el loading
+            if (_isLoadingDialogVisible) {
+              Navigator.of(context, rootNavigator: true).pop();
+            }
             AppNotification.error(context, 'Error: $mensaje');
           },
         );

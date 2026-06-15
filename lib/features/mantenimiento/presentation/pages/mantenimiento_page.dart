@@ -133,32 +133,36 @@ class _MantenimientoPageState extends State<MantenimientoPage>
   }
 
   void _showLoadingDialog([String message = 'Cargando...']) {
+    if (_isLoadingDialogVisible) return;
     _isLoadingDialogVisible = true;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        backgroundColor: const Color(0xFF303366),
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(color: Colors.white),
-            const SizedBox(height: 20),
-            Text(
-              message,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: const Color(0xFF303366),
+          contentPadding: const EdgeInsets.all(24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: Colors.white),
+              const SizedBox(height: 20),
+              Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    );
+    ).then((_) => _isLoadingDialogVisible = false);
   }
 
   // ── Build principal ──────────────────────────────────────────────────────
@@ -173,13 +177,13 @@ class _MantenimientoPageState extends State<MantenimientoPage>
       body: BlocListener<MantenimientoBloc, MantenimientoState>(
         listener: (context, state) {
           if (state is MantenimientoSuccess) {
-            if (_isLoadingDialogVisible && Navigator.canPop(context)) {
-              Navigator.pop(context);
+            if (_isLoadingDialogVisible) {
+              Navigator.of(context, rootNavigator: true).pop();
               _isLoadingDialogVisible = false;
             }
           } else if (state is MantenimientoError) {
-            if (_isLoadingDialogVisible && Navigator.canPop(context)) {
-              Navigator.pop(context);
+            if (_isLoadingDialogVisible) {
+              Navigator.of(context, rootNavigator: true).pop();
               _isLoadingDialogVisible = false;
             }
             AppNotification.error(context, state.message);
