@@ -89,6 +89,10 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
   // Estado
   String? _estadoValue;
 
+  // Sugerencias de correo
+  final List<String> _dominios = ['gmail.com', 'hotmail.com', 'yahoo.com', 'outlook.com'];
+  bool _mostrarDominios = false;
+
   // Teléfonos
   final List<TextEditingController> _telControllers = [TextEditingController()];
   final List<String?> _telTipos = [null];
@@ -183,7 +187,10 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
 
   // ── Submit ────────────────────────────────────────────────────────────────
   void _submitForm() {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      AppNotification.warning(context, 'Por favor, revisa los campos en rojo. Faltan datos obligatorios.', isModal: true);
+      return;
+    }
     if (_estadoValue == null) {
       AppNotification.warning(context, 'Seleccione el estado del proveedor.', isModal: true);
       return;
@@ -194,39 +201,7 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
         return;
       }
     }
-    _showConfirmDialog();
-  }
-
-  void _showConfirmDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: Row(children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: _kPrimaryBg, borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.store_outlined, color: _kPrimary, size: 20),
-          ),
-          const SizedBox(width: 12),
-          const Text('Confirmar registro',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _kPrimary)),
-        ]),
-        content: const Text('¿Desea registrar este proveedor?',
-            style: TextStyle(fontSize: 14)),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [Row(children: [
-          Expanded(child: _dialogBtn('CANCELAR', Colors.grey[100]!, Colors.grey[700]!,
-              () => Navigator.of(context).pop())),
-          const SizedBox(width: 12),
-          Expanded(child: _dialogBtn('CONFIRMAR', _kPrimary, Colors.white, () {
-            Navigator.of(context).pop();
-            _registrar();
-          })),
-        ])],
-      ),
-    );
+    _registrar();
   }
 
   void _registrar() {
@@ -291,12 +266,14 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
           detailLoaded:  (_) {},
           updateSuccess: (_) {},
           success: (response) {
+            if (!mounted) return;
             setState(() => _isSubmitting = false);
             Navigator.of(context).pop();
             AppNotification.success(widget.parentContext, response.message);
             widget.onSupplierAdded?.call();
           },
           error: (message) {
+            if (!mounted) return;
             setState(() => _isSubmitting = false);
             AppNotification.error(context, message, isModal: true);
           },
@@ -346,13 +323,7 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
                     _field('Encargado *', _encargadoCtrl,
                         validator: (v) => v!.isEmpty ? 'Requerido' : null),
                   ),
-                  _field('Correo *', _correoCtrl,
-                      keyboard: TextInputType.emailAddress,
-                      validator: (v) {
-                        if (v!.isEmpty) return 'Requerido';
-                        if (!v.contains('@')) return 'Correo inválido';
-                        return null;
-                      }),
+                  _correoField(),
 
                   // Opcionales (E)
                   _field('Link de Ubicación', _ubicacionLinkCtrl,
@@ -429,10 +400,6 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
           child: Text('AGREGAR PROVEEDOR',
               style: TextStyle(color: Colors.white, fontSize: 16,
                   fontWeight: FontWeight.w700, letterSpacing: 0.5)),
-        ),
-        IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
         ),
       ]),
     );
@@ -762,6 +729,108 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
         },
       ),
     ]);
+  }
+
+  // ── Correo con sugerencia de dominios ──────────────────────────────────────
+  Widget _correoField() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Correo *',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kPrimary)),
+        const SizedBox(height: 6),
+        Autocomplete<String>(
+          optionsBuilder: (TextEditingValue textEditingValue) {
+            final v = textEditingValue.text;
+            if (!v.contains('@') || v.split('@').last.contains('.')) {
+              return const Iterable<String>.empty();
+            }
+            final partes = v.split('@');
+            final prefijo = partes[0];
+            final dominioTipeado = partes[1].toLowerCase();
+            
+            return _dominios
+                .where((d) => d.startsWith(dominioTipeado))
+                .map((d) => '$prefijo@$d');
+          },
+          onSelected: (String selection) {
+            _correoCtrl.text = selection;
+            _correoCtrl.selection = TextSelection.collapsed(offset: selection.length);
+            // Validar form despues de seleccionar
+            _formKey.currentState?.validate();
+          },
+          optionsViewBuilder: (context, onSelected, options) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 150, maxWidth: 300),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final option = options.elementAt(index);
+                      return InkWell(
+                        onTap: () => onSelected(option),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          child: Text(option, style: const TextStyle(fontSize: 13, color: _kTextSub)),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+          fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+            // Sincronizar controladores
+            textEditingController.text = _correoCtrl.text;
+            textEditingController.addListener(() {
+              if (_correoCtrl.text != textEditingController.text) {
+                _correoCtrl.text = textEditingController.text;
+              }
+            });
+            _correoCtrl.addListener(() {
+              if (textEditingController.text != _correoCtrl.text) {
+                textEditingController.text = _correoCtrl.text;
+              }
+            });
+
+            return TextFormField(
+              controller: textEditingController,
+              focusNode: focusNode,
+              keyboardType: TextInputType.emailAddress,
+              style: const TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.grey[50],
+                hintText: 'ejemplo@correo.com',
+                hintStyle: const TextStyle(fontSize: 13, color: _kTextSub),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kBorder)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kBorder)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+                errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kError)),
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Requerido';
+                if (!v.contains('@')) return 'Correo inválido';
+                return null;
+              },
+            );
+          },
+        ),
+      ]),
+    );
   }
 
   // ── Estado dropdown ───────────────────────────────────────────────────────

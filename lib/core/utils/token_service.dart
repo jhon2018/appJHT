@@ -1,7 +1,9 @@
 // lib/core/utils/token_service.dart
 //OBJETIVO: Servicio para manejar el almacenamiento seguro de tokens, datos de usuario y roles, con métodos específicos para cada tipo de dato y una función mejorada de logout que borra toda la información relevante.
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:app_jht_front/features/config/environment_config.dart';
 class TokenService {
   static final FlutterSecureStorage _storage = FlutterSecureStorage();
 
@@ -52,6 +54,86 @@ class TokenService {
       return {'usuario': parts[0], 'cargo': parts[1]};
     }
     return null;
+  }
+
+  static Future<Map<String, dynamic>?> getResolvedUserData() async {
+    final data = await getUserData();
+    if (data == null) return null;
+
+    String userName = data['usuario'];
+    final userRole = data['cargo'];
+
+    if (userName.isNotEmpty && !userName.contains(' ')) {
+      try {
+        final token = await getToken();
+        if (token != null) {
+          final parts = token.split('.');
+          if (parts.length == 3) {
+            final payload = json.decode(
+              utf8.decode(base64Url.decode(base64Url.normalize(parts[1])))
+            );
+            final userId = payload['UserId'];
+            if (userId != null) {
+              var response = await http.get(
+                Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/persona/$userId'),
+                headers: {
+                  'Authorization': 'Bearer $token',
+                  'Content-Type': 'application/json',
+                },
+              );
+              
+              if (response.statusCode == 200) {
+                final responseData = json.decode(response.body);
+                if (responseData['data'] != null) {
+                  final primerNombre = responseData['data']['primerNombre'] ?? '';
+                  final apellidoPaterno = responseData['data']['apellidoPaterno'] ?? '';
+                  final fullName = '$primerNombre $apellidoPaterno'.trim();
+                  
+                  if (fullName.isNotEmpty) {
+                    userName = fullName;
+                    await saveUserData(fullName, userRole);
+                  }
+                }
+              } else {
+                // Si falla (ej. 401/403 para Conductor), buscamos en datos-iniciales
+                final resDatos = await http.get(
+                  Uri.parse('${EnvironmentConfig.baseUrl}/api/general/datos-iniciales'),
+                  headers: {
+                    'Authorization': 'Bearer $token',
+                    'Content-Type': 'application/json',
+                  },
+                );
+                
+                if (resDatos.statusCode == 200) {
+                  final jsonDatos = json.decode(resDatos.body);
+                  final personas = jsonDatos['data']?['personas'] as List? ?? [];
+                  for (var p in personas) {
+                    final idMatches = p['id'].toString() == userId.toString();
+                    final nombreMatches = (p['primerNombre'] ?? '').toString().toLowerCase() == userName.toLowerCase();
+                    
+                    if (idMatches || nombreMatches) {
+                      final primerNombre = p['primerNombre'] ?? '';
+                      final apellidoPaterno = p['apellidoPaterno'] ?? '';
+                      final fullName = '$primerNombre $apellidoPaterno'.trim();
+                      
+                      if (fullName.isNotEmpty) {
+                        userName = fullName;
+                        await saveUserData(fullName, userRole);
+                      }
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        // Fallback silent
+      }
+    }
+
+    return {'usuario': userName, 'cargo': userRole};
   }
 
   // Método mejorado para logout

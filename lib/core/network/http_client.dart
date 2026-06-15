@@ -4,6 +4,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:app_jht_front/features/config/environment_config.dart';
+import 'package:flutter/foundation.dart';
 
 class HttpClient {
   final String _baseUrl;
@@ -15,7 +16,7 @@ class HttpClient {
       {Map<String, String>? headers}) async {
     
     final url = '$_baseUrl$endpoint';
-    print('GET: $url'); // Debug
+    debugPrint('GET: $url'); // Debug
     
     final defaultHeaders = {
       'Content-Type': 'application/json',
@@ -37,7 +38,7 @@ class HttpClient {
       Map<String, String>? headers}) async {
     
     final url = '$_baseUrl$endpoint';
-    print('POST: $url'); // Debug
+    debugPrint('POST: $url'); // Debug
     
     final defaultHeaders = {
       'Content-Type': 'application/json',

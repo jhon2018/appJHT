@@ -4,6 +4,7 @@ import 'package:app_jht_front/features/shared/presentation/mixins/dashboard_resp
 import 'package:app_jht_front/features/shared/presentation/pages/base_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/features/home/data/datasources/dashboard_service.dart';
+import 'package:app_jht_front/features/home/presentation/widgets/download_report_modal.dart';
 import 'dart:ui';
 
 class AdminDashboard extends StatefulWidget {
@@ -72,40 +73,29 @@ class _AdminDashboardState extends State<AdminDashboard>
           return const _DashboardSkeleton();
         }
 
-        return RefreshIndicator(
-          onRefresh: _loadData,
-          color: const Color(0xFF4834D4),
-          backgroundColor: Colors.white,
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            padding: getResponsivePadding(context),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context),
-                const SizedBox(height: 32),
+        // BaseDashboard ya tiene un SingleChildScrollView.
+        // Solo necesitamos retornar la columna para evitar scroll anidado infinito.
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(context, isDesktop),
+            const SizedBox(height: 32),
 
-                _buildStatsGrid(context),
-                const SizedBox(height: 32),
+            _buildStatsGrid(context),
+            const SizedBox(height: 32),
 
-                _buildChartsAndActivities(context, isDesktop),
-                const SizedBox(height: 32),
+            _buildChartsAndActivities(context, isDesktop),
+            const SizedBox(height: 32),
 
-                _buildRecentDataTable(context, isDesktop),
-                const SizedBox(height: 40),
-
-                _buildFooter(context),
-              ],
-            ),
-          ),
+            _buildRecentDataTable(context, isDesktop),
+            const SizedBox(height: 40),
+          ],
         );
       },
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, bool isDesktop) {
     return FadeTransition(
       opacity: Tween<double>(begin: 0, end: 1).animate(
         CurvedAnimation(
@@ -121,54 +111,105 @@ class _AdminDashboardState extends State<AdminDashboard>
                 curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
               ),
             ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Panel Administrativo',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF1E293B),
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Hola ${widget.userName}, aquí tienes el resumen operativo.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: const Color(0xFF64748B),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF4834D4).withOpacity(0.1),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
+        child: isDesktop
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(child: _buildHeaderTitle()),
+                  _buildHeaderActions(isDesktop),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeaderTitle(),
+                  const SizedBox(height: 16),
+                  _buildHeaderActions(isDesktop),
                 ],
               ),
-              child: IconButton(
-                icon: const Icon(Icons.sync_rounded, color: Color(0xFF4834D4)),
-                onPressed: _loadData,
-                tooltip: 'Actualizar datos',
-              ),
-            ),
-          ],
-        ),
       ),
+    );
+  }
+
+  Widget _buildHeaderTitle() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Panel Administrativo',
+          style: TextStyle(
+            fontSize: isMobile(context) ? 22 : 32,
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFF1E293B),
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Hola ${widget.userName}, aquí tienes el resumen operativo.',
+          style: TextStyle(
+            fontSize: isMobile(context) ? 13 : 16,
+            color: const Color(0xFF64748B),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeaderActions(bool isDesktop) {
+    return Row(
+      mainAxisAlignment: isDesktop ? MainAxisAlignment.end : MainAxisAlignment.start,
+      children: [
+        ElevatedButton.icon(
+          onPressed: () {
+            showDialog(
+              context: context,
+              barrierDismissible: true,
+              barrierColor: Colors.black54,
+              builder: (context) => const DownloadReportModal(),
+            );
+          },
+          icon: const Icon(Icons.download_rounded, size: 20),
+          label: Text(
+            isDesktop ? 'Reporte CSV' : 'Descargar CSV',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF4834D4),
+            foregroundColor: Colors.white,
+            elevation: 5,
+            shadowColor: const Color(0xFF4834D4).withOpacity(0.5),
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 20 : 16,
+              vertical: 14,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF4834D4).withOpacity(0.1),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.sync_rounded, color: Color(0xFF4834D4)),
+            onPressed: _loadData,
+            tooltip: 'Actualizar datos',
+          ),
+        ),
+      ],
     );
   }
 
@@ -827,7 +868,7 @@ class _StatCardPremiumState extends State<_StatCardPremium> {
               ),
               // Contenido principal
               Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -835,13 +876,17 @@ class _StatCardPremiumState extends State<_StatCardPremium> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          widget.title,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
+                        Expanded(
+                          child: Text(
+                            widget.title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Container(
@@ -858,27 +903,34 @@ class _StatCardPremiumState extends State<_StatCardPremium> {
                         ),
                       ],
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.value,
-                          style: const TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            widget.value,
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.subtitle,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.white.withOpacity(0.8),
-                            fontWeight: FontWeight.w500,
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.subtitle,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withOpacity(0.8),
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),

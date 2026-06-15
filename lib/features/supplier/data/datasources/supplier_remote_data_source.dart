@@ -14,7 +14,9 @@ import 'package:app_jht_front/features/config/environment_config.dart';
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
 import 'package:app_jht_front/core/network/base_remote_data_source.dart';
+import 'package:flutter/foundation.dart';
 
 abstract class SupplierRemoteDataSource {
   // Métodos existentes
@@ -39,7 +41,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
   @override
   Future<SupplierRegistroResponse> registrarProveedor(SupplierRegistroDto dto) async {
     try {
-      print('🔵 Iniciando registro de proveedor: ${dto.razonSocial}');
+      debugPrint('🔵 Iniciando registro de proveedor: ${dto.razonSocial}');
       
       final String? token = await TokenService.getToken();
       
@@ -47,7 +49,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         throw Exception('No hay token de autenticación.');
       }
       
-      print('🟡 Token obtenido: ${token.substring(0, 20)}...');
+      debugPrint('🟡 Token obtenido: ${token.substring(0, 20)}...');
 
       final response = await http.post(
         Uri.parse('${EnvironmentConfig.baseUrl}/api/general/insertar-proveedor'),
@@ -59,8 +61,8 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         body: json.encode(dto.toJson()),
       );
 
-      print('🟡 Response status: ${response.statusCode}');
-      print('🟡 Response body: ${response.body}');
+      debugPrint('🟡 Response status: ${response.statusCode}');
+      debugPrint('🟡 Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -74,7 +76,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         throw Exception(_getErrorMessage(errorData));
       }
     } catch (e) {
-      print('❌ ERROR en registro de proveedor: $e');
+      debugPrint('❌ ERROR en registro de proveedor: $e');
       rethrow;
     }
   }
@@ -82,7 +84,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
   @override
   Future<List<TipoTelefonoModel>> getTiposTelefono() async {
     try {
-      print('🟡 Obteniendo tipos de teléfono...');
+      debugPrint('🟡 Obteniendo tipos de teléfono...');
       
       final String? token = await TokenService.getToken();
       
@@ -98,7 +100,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         },
       );
 
-      print('🟡 Response status tipos teléfono: ${response.statusCode}');
+      debugPrint('🟡 Response status tipos teléfono: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -108,7 +110,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         throw Exception('Error al obtener tipos de teléfono: ${response.statusCode}');
       }
     } catch (e) {
-      print('❌ ERROR en getTiposTelefono: $e');
+      debugPrint('❌ ERROR en getTiposTelefono: $e');
       throw Exception('Error en getTiposTelefono: $e');
     }
   }
@@ -117,7 +119,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
   @override
   Future<SupplierListResponse> listarProveedores() async {
     try {
-      print('🔵 Listando proveedores...');
+      debugPrint('🔵 Listando proveedores...');
       
       final String? token = await TokenService.getToken();
       
@@ -133,7 +135,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         },
       );
 
-      print('🟡 Response status listar proveedores: ${response.statusCode}');
+      debugPrint('🟡 Response status listar proveedores: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -147,7 +149,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         throw Exception(_getErrorMessage(errorData));
       }
     } catch (e) {
-      print('❌ ERROR en listar proveedores: $e');
+      debugPrint('❌ ERROR en listar proveedores: $e');
       rethrow;
     }
   }
@@ -156,7 +158,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
   @override
   Future<SupplierDetailResponse> obtenerDetalleProveedor(int proveedorId) async {
     try {
-      print('🔵 Obteniendo detalle del proveedor ID: $proveedorId');
+      debugPrint('🔵 Obteniendo detalle del proveedor ID: $proveedorId');
       
       final String? token = await TokenService.getToken();
       
@@ -172,10 +174,16 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         },
       );
 
-      print('🟡 Response status detalle proveedor: ${response.statusCode}');
+      debugPrint('🟡 Response status detalle proveedor: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
+        try {
+          // DEBUG: Escribir json en archivo
+          // Usamos la ruta absoluta de Windows del workspace para guardar el JSON
+          File('d:\\JONATHAN\\Proyectos\\Jht_Transport Company\\Software\\Front_jht\\app_jht_front\\api_detalle_proveedor_debug.json').writeAsStringSync(response.body);
+        } catch (e) {}
+        
         return SupplierDetailResponse.fromJson(responseData);
       } else if (response.statusCode == 401) {
         throw Exception('No autorizado. Token inválido o expirado.');
@@ -188,7 +196,7 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         throw Exception(_getErrorMessage(errorData));
       }
     } catch (e) {
-      print('❌ ERROR en obtener detalle proveedor: $e');
+      debugPrint('❌ ERROR en obtener detalle proveedor: $e');
       rethrow;
     }
   }
@@ -196,14 +204,14 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
  @override
   Future<SupplierActualizarResponse> actualizarProveedor(SupplierActualizarDto dto) async {
     try {
-      print('🔵 Actualizando proveedor ID: ${dto.proveedorId}');
+      debugPrint('🔵 Actualizando proveedor ID: ${dto.proveedorId}');
       
       final String? token = await TokenService.getToken();
       
       if (token == null || token.isEmpty) {
         throw Exception('No hay token de autenticación.');
       }
-      print('📤 JSON enviado supplier_remote_data_source.dart:  ${json.encode(dto.toJson())}');
+      debugPrint('📤 JSON enviado supplier_remote_data_source.dart:  ${json.encode(dto.toJson())}');
       final response = await http.put(
         Uri.parse('${EnvironmentConfig.baseUrl}/api/general/actualizar-proveedor'),
         headers: {
@@ -214,8 +222,8 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         body: json.encode(dto.toJson()),
       );
 
-      print('🟡 Response status actualizar: ${response.statusCode}');
-      print('🟡 Response body: ${response.body}');
+      debugPrint('🟡 Response status actualizar: ${response.statusCode}');
+      debugPrint('🟡 Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -231,34 +239,55 @@ class SupplierRemoteDataSourceImpl extends BaseRemoteDataSource
         throw Exception(_getErrorMessage(errorData));
       }
     } catch (e) {
-      print('❌ ERROR en actualizar proveedor: $e');
+      debugPrint('❌ ERROR en actualizar proveedor: $e');
       rethrow;
     }
   }
 
 
   String _getErrorMessage(Map<String, dynamic> errorData) {
-    print('🔍 Error data: $errorData');
-
-    if (errorData['mensaje'] != null) return errorData['mensaje'].toString();
-    if (errorData['message'] != null) return errorData['message'].toString();
+    debugPrint('🔍 Error data: $errorData');
 
     if (errorData['errors'] != null) {
       final errors = errorData['errors'] as Map<String, dynamic>;
       if (errors.isNotEmpty) {
-        final firstKey = errors.keys.first;
-        final firstError = errors[firstKey];
-        if (firstError is List && firstError.isNotEmpty) {
-          return firstError.first.toString();
-        } else if (firstError is String) {
-          return firstError;
+        List<String> mensajes = [];
+        errors.forEach((key, value) {
+          if (value is List && value.isNotEmpty) {
+            mensajes.add('• $key: ${value.join(', ')}');
+          } else if (value is String) {
+            mensajes.add('• $key: $value');
+          }
+        });
+        if (mensajes.isNotEmpty) {
+          return 'Campos inválidos:\n' + mensajes.join('\n');
         }
       }
     }
 
-    if (errorData['title'] != null) return errorData['title'].toString();
+    String detalle = '';
+    if (errorData['error'] != null && errorData['error'] is String) {
+      detalle = errorData['error'].toString();
+    } else if (errorData['detalle'] != null) {
+      detalle = errorData['detalle'].toString();
+    }
 
-    return 'Error en el registro del proveedor';
+    String general = '';
+    if (errorData['mensaje'] != null) general = errorData['mensaje'].toString();
+    else if (errorData['message'] != null) general = errorData['message'].toString();
+    else if (errorData['title'] != null) general = errorData['title'].toString();
+
+    if (detalle.isNotEmpty && general.isNotEmpty) {
+      // Evitar redundancia si el mensaje general es igual al detalle
+      if (general == detalle) return general;
+      return '$general\n\nDetalle: $detalle';
+    } else if (detalle.isNotEmpty) {
+      return detalle;
+    } else if (general.isNotEmpty) {
+      return general;
+    }
+
+    return 'Error en la operación del proveedor';
   }
 
 }

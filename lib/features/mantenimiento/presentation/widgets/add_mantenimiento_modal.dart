@@ -321,24 +321,24 @@ class _ModalBodyState extends State<_ModalBody> {
       foto: _gastoFoto,
     );
 
-    print('\n══ SUBMIT Mantenimiento ════════════════════════════');
-    print('perIid: $perIid | vehIid: ${_vehId} | proIid: ${_provId}');
-    print('km: $km | fecha: $fechaStr');
-    print('Items: ${historicos.length}');
+    debugPrint('\n══ SUBMIT Mantenimiento ════════════════════════════');
+    debugPrint('perIid: $perIid | vehIid: ${_vehId} | proIid: ${_provId}');
+    debugPrint('km: $km | fecha: $fechaStr');
+    debugPrint('Items: ${historicos.length}');
     for (int i = 0; i < historicos.length; i++) {
       final h = historicos[i];
-      print(
+      debugPrint(
         '  [$i] acc=${h.accIid} tipo=${h.dicVtipo} '
         'dic=${h.dicIid} km=${h.hisIproxKilometraje} '
         'foto=${h.foto?.fileName ?? "ninguna"}',
       );
     }
-    print(
+    debugPrint(
       'Gasto: tipo=${gastoRegistro.gasVtipo} '
       'monto=${gastoRegistro.gasBmonto} '
       'moneda=${gastoRegistro.gasVmoneda}',
     );
-    print('════════════════════════════════════════════════════\n');
+    debugPrint('════════════════════════════════════════════════════\n');
 
     context.read<RegistroMantenimientoBloc>().add(
       RegistrarMantenimientoV2Event(
@@ -454,7 +454,7 @@ class _ModalBodyState extends State<_ModalBody> {
           prev.exitoRegistro != curr.exitoRegistro ||
           prev.errorRegistro != curr.errorRegistro,
       listener: (ctx, state) {
-        print(
+        debugPrint(
           "BlocListener: enviando=${state.enviando} exito=${state.exitoRegistro} error=${state.errorRegistro}",
         );
 

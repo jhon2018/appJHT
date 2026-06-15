@@ -11,6 +11,7 @@ import 'package:app_jht_front/features/conductor/data/models/persona_detalle_res
 import 'package:app_jht_front/features/conductor/data/models/persona_actualizar_dto.dart';
 import 'package:app_jht_front/features/conductor/data/models/persona_actualizar_response.dart';
 import 'package:app_jht_front/features/config/environment_config.dart';
+import 'package:flutter/foundation.dart';
 
 abstract class ConductorRemoteDataSource {
   Future<ConductorRegistroResponse> registrarConductor(
@@ -29,7 +30,7 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
     ConductorRegistroDto dto,
   ) async {
     try {
-      print(
+      debugPrint(
         '🔵 Iniciando registro de conductor: ${dto.persona.primerNombre} ${dto.persona.apellidoPaterno}',
       );
 
@@ -39,7 +40,7 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
         throw Exception('No hay token de autenticación.');
       }
 
-      print('🟡 Token obtenido: ${token.substring(0, 20)}...');
+      debugPrint('🟡 Token obtenido: ${token.substring(0, 20)}...');
 
       // ✅ Usando EnvironmentConfig.baseUrl de forma global
       final response = await http.post(
@@ -52,8 +53,8 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
         body: json.encode(dto.toJson()),
       );
 
-      print('🟡 Response status: ${response.statusCode}');
-      print('🟡 Response body: ${response.body}');
+      debugPrint('🟡 Response status: ${response.statusCode}');
+      debugPrint('🟡 Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -67,7 +68,7 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
         throw Exception(_getErrorMessage(errorData));
       }
     } catch (e) {
-      print('❌ ERROR en registro de conductor: $e');
+      debugPrint('❌ ERROR en registro de conductor: $e');
       rethrow;
     }
   }
@@ -75,7 +76,7 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
   @override
   Future<List<TipoTelefonoModel>> getTiposTelefono() async {
     try {
-      print('🟡 Obteniendo tipos de teléfono...');
+      debugPrint('🟡 Obteniendo tipos de teléfono...');
 
       final String? token = await TokenService.getToken();
 
@@ -92,7 +93,7 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
         },
       );
 
-      print('🟡 Response status tipos teléfono: ${response.statusCode}');
+      debugPrint('🟡 Response status tipos teléfono: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -104,18 +105,18 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
         );
       }
     } catch (e) {
-      print('❌ ERROR en getTiposTelefono: $e');
+      debugPrint('❌ ERROR en getTiposTelefono: $e');
       throw Exception('Error en getTiposTelefono: $e');
     }
   }
 
   String _getErrorMessage(Map<String, dynamic> errorData) {
-    print('🔍 Error data: $errorData');
+    debugPrint('🔍 Error data: $errorData');
 
     // PRIMERO: Buscar el campo 'error' que contiene el mensaje específico
     if (errorData['error'] != null) {
       final errorMessage = errorData['error'].toString();
-      print('🟡 Mensaje del campo "error": $errorMessage');
+      debugPrint('🟡 Mensaje del campo "error": $errorMessage');
 
       // Extraer solo la parte específica si contiene "Ocurrió un error al registrar el colaborador:"
       if (errorMessage.contains(
@@ -154,7 +155,7 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
   @override
   Future<PersonaListResponse> listarPersonas() async {
     try {
-      print('🔵 Listando personas...');
+      debugPrint('🔵 Listando personas...');
 
       final String? token = await TokenService.getToken();
 
@@ -162,7 +163,7 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
         throw Exception('No hay token de autenticación.');
       }
 
-      print('🟡 Token obtenido: ${token.substring(0, 20)}...');
+      debugPrint('🟡 Token obtenido: ${token.substring(0, 20)}...');
 
       final response = await http.get(
         Uri.parse('${EnvironmentConfig.baseUrl}/api/admin/Listar-personas'),
@@ -172,8 +173,8 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
         },
       );
 
-      print('🟡 Response status listar personas: ${response.statusCode}');
-      print('🟡 Response body listar personas: ${response.body}');
+      debugPrint('🟡 Response status listar personas: ${response.statusCode}');
+      debugPrint('🟡 Response body listar personas: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -187,7 +188,7 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
         throw Exception('Error al listar personas: ${errorData['message']}');
       }
     } catch (e) {
-      print('❌ ERROR en listarPersonas: $e');
+      debugPrint('❌ ERROR en listarPersonas: $e');
       rethrow;
     }
   }
@@ -195,7 +196,7 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
   @override
   Future<PersonaDetalleResponse> obtenerPersonaDetalle(int personaId) async {
     try {
-      print('🔵 Obteniendo detalle de persona ID: $personaId');
+      debugPrint('🔵 Obteniendo detalle de persona ID: $personaId');
 
       final String? token = await TokenService.getToken();
       if (token == null || token.isEmpty) throw Exception('No hay token.');
@@ -209,8 +210,8 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
         },
       );
 
-      print('🟡 Response status detalle persona: ${response.statusCode}');
-      print('🟡 Response body detalle persona: ${response.body}');
+      debugPrint('🟡 Response status detalle persona: ${response.statusCode}');
+      debugPrint('🟡 Response body detalle persona: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -228,7 +229,7 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
         );
       }
     } catch (e) {
-      print('❌ ERROR en obtenerPersonaDetalle: $e');
+      debugPrint('❌ ERROR en obtenerPersonaDetalle: $e');
       rethrow;
     }
   }
@@ -238,8 +239,8 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
     PersonaActualizarDto dto,
   ) async {
     try {
-      print('🔵 Iniciando actualización de persona ID: ${dto.personaId}');
-      print(
+      debugPrint('🔵 Iniciando actualización de persona ID: ${dto.personaId}');
+      debugPrint(
         '🔵 Datos a actualizar: ${dto.primerNombre} ${dto.apellidoPaterno}',
       );
 
@@ -257,8 +258,8 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
         body: json.encode(dto.toJson()),
       );
 
-      print('🟡 Response status actualizar persona: ${response.statusCode}');
-      print('🟡 Response body actualizar persona: ${response.body}');
+      debugPrint('🟡 Response status actualizar persona: ${response.statusCode}');
+      debugPrint('🟡 Response body actualizar persona: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -276,7 +277,7 @@ class ConductorRemoteDataSourceImpl implements ConductorRemoteDataSource {
         );
       }
     } catch (e) {
-      print('❌ ERROR en actualizarPersona: $e');
+      debugPrint('❌ ERROR en actualizarPersona: $e');
       rethrow;
     }
   }

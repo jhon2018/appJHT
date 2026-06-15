@@ -2,6 +2,10 @@
 //descripción: Página de login con diseño responsivo para web y móvil logrando una experiencia de usuario óptima en ambas plataformas.
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/core/widgets/app_notification.dart';
+// ruta: lib/features/login/presentation/pages/login_page.dart
+//descripción: Página de login con diseño responsivo para web y móvil logrando una experiencia de usuario óptima en ambas plataformas.
+import 'package:flutter/material.dart';
+import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 // Importamos el clipper
 import '../widgets/login_wave_clipper.dart';
@@ -9,12 +13,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/login_bloc.dart';
 import '../bloc/login_event.dart';
 import '../bloc/login_state.dart';
+import 'package:go_router/go_router.dart';
 import '../../../admin/presentation/pages/admin_dashboard.dart';
 import '../../../conductor/presentation/pages/conductor_dashboard.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
-
   // Colores definidos para el login, basados en el diseño web (Azul Oscuro/Blue Background).
   static const Color primaryColor = Color.fromARGB(
     255,
@@ -54,10 +58,10 @@ class _LoginPageState extends State<LoginPage> {
 
   // MÉTODO DE NAVEGACIÓN COMÚN PARA WEB Y MÓVIL - ACTUALIZADO
   void _handleLoginSuccess(BuildContext context, LoginState state) {
-    print('✅ Login exitoso! Navegando...');
-    print('Estado actual: $state');
-    print('cargo: ${state.cargo}');
-    print('usuario: ${state.usuario}');
+    debugPrint('✅ Login exitoso! Navegando...');
+    debugPrint('Estado actual: $state');
+    debugPrint('cargo: ${state.cargo}');
+    debugPrint('usuario: ${state.usuario}');
 
     // Validar que tengamos los datos necesarios
     if (state.cargo == null || state.usuario == null) {
@@ -70,27 +74,9 @@ class _LoginPageState extends State<LoginPage> {
 
     // Usar WidgetsBinding para asegurar que el contexto esté disponible
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Navegación por rol
-      if (state.cargo == 'Root' || state.cargo == 'Administrador') {
-        // Admin - ✅ CORREGIDO: Usamos el operador ! porque ya validamos que no es null
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => AdminDashboard(
-              userName: state.usuario!,
-              userRole: state.cargo!,
-            ),
-          ),
-        );
-      } else if (state.cargo == 'Conductor') {
-        // Conductor - ✅ CORREGIDO: Usamos el operador ! porque ya validamos que no es null
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => ConductorDashboard(
-              userName: state.usuario!,
-              userRole: state.cargo!,
-            ),
-          ),
-        );
+      // Navegación con go_router
+      if (state.cargo == 'Root' || state.cargo == 'Administrador' || state.cargo == 'Conductor') {
+        context.go('/dashboard');
       } else {
         // Rol no reconocido
         AppNotification.warning(
@@ -169,10 +155,10 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return BlocListener<LoginBloc, LoginState>(
       listener: (context, state) {
-        print(' 2 Estado actual: $state');
-        print('Cargo: ${state.cargo}');
-        print('usuario: ${state.usuario}');
-        print('error: ${state.error}');
+        debugPrint(' 2 Estado actual: $state');
+        debugPrint('Cargo: ${state.cargo}');
+        debugPrint('usuario: ${state.usuario}');
+        debugPrint('error: ${state.error}');
         if (state.isSuccess) {
           _handleLoginSuccess(context, state);
         }
@@ -238,7 +224,7 @@ class _LoginPageState extends State<LoginPage> {
                         onLoginSuccess: () {
                           _usernameController.clear();
                           _passwordController.clear();
-                          print('✅ Login web exitoso - Campos limpiados');
+                          debugPrint('✅ Login web exitoso - Campos limpiados');
                         },
                       ),
                     ),
@@ -710,7 +696,7 @@ class _WebLoginFormCard extends StatelessWidget {
     return BlocListener<LoginBloc, LoginState>(
       listener: (context, state) {
         if (state.isSuccess) {
-          print('Login exitoso en formulario web!');
+          debugPrint('Login exitoso en formulario web!');
           onLoginSuccess();
         }
         if (state.error != null) {

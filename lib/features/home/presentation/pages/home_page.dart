@@ -1,6 +1,7 @@
 // lib/features/home/presentation/pages/home_page.dart
 import 'package:app_jht_front/features/home/data/datasources/dashboard_service.dart';
 import 'package:flutter/material.dart';
+import 'package:app_jht_front/features/home/presentation/widgets/download_report_modal.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -477,6 +478,19 @@ class _HomePageState extends State<HomePage> {
                   title: 'Nuevo Conductor',
                   color: successColor,
                   onTap: () {},
+                ),
+                const SizedBox(height: 12),
+                _buildActionTile(
+                  icon: Icons.download_rounded,
+                  title: 'Reporte Mant. (CSV)',
+                  color: Colors.teal,
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: true,
+                      builder: (context) => const DownloadReportModal(),
+                    );
+                  },
                 ),
               ],
             ),

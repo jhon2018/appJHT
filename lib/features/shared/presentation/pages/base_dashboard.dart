@@ -32,6 +32,7 @@ import 'package:flutter/material.dart';
 import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../widgets/side_menu.dart';
+import '../widgets/scaffold_with_menu.dart';
 import 'package:app_jht_front/features/shared/presentation/mixins/navigation_helper_mixin.dart';
 
 class BaseDashboard extends StatefulWidget {
@@ -104,66 +105,27 @@ class _BaseDashboardState extends State<BaseDashboard>
     
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          // Contenido principal
-          _buildMainContent(isDesktopDevice),
-
-          // Overlay oscuro (solo móvil/tablet)
-          if (_isMenuOpen && !isDesktopDevice) _buildOverlay(),
-
-          // Menú lateral (drawer para móvil, sidebar para desktop)
-          if (isDesktopDevice)
-            _buildDesktopSideMenu()
-          else
-            _buildMobileSideMenu(),
-        ],
-      ),
+      body: _buildMainContent(isDesktopDevice),
     );
   }
 
   Widget _buildMainContent(bool isDesktopDevice) {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return Stack(
-          children: [
-            Transform.scale(
-              scale: _scaleAnimation.value,
-              child: Container(
-                color: Colors.white,
-                child: Column(
-                  children: [
-                    _buildHeader(isDesktopDevice),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: EdgeInsets.all(isDesktopDevice ? 24 : 16),
-                        child: widget.contentBuilder != null
-                            ? widget.contentBuilder!(context, isDesktopDevice)
-                            : _buildDefaultContent(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: [
+          _buildHeader(isDesktopDevice),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.all(isDesktopDevice ? 24 : 16),
+              child: widget.contentBuilder != null
+                  ? widget.contentBuilder!(context, isDesktopDevice)
+                  : _buildDefaultContent(),
             ),
-            // Filtro de desenfoque cuando el menú está abierto (Móvil)
-            if (_isMenuOpen && !isDesktopDevice)
-              Positioned.fill(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(
-                    sigmaX: 5 * _animationController.value,
-                    sigmaY: 5 * _animationController.value,
-                  ),
-                  child: Container(
-                    color: Colors.black.withOpacity(0.1 * _animationController.value),
-                  ),
-                ),
-              ),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
   }
 
@@ -224,32 +186,30 @@ class _BaseDashboardState extends State<BaseDashboard>
                       color: Colors.grey[700],
                     ),
                   ),
-                  const SizedBox(width: 20),
-                ],
-                // Botón de Menú Estilizado
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _toggleMenu,
-                    borderRadius: BorderRadius.circular(12),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: _isMenuOpen 
-                            ? const Color(0xFF303366) 
-                            : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        _isMenuOpen ? Icons.close_rounded : Icons.menu_rounded,
-                        color: _isMenuOpen ? Colors.white : const Color(0xFF303366),
-                        size: 24,
+                ] else ...[
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        final scaffoldState = context.findAncestorStateOfType<ScaffoldWithMenuState>();
+                        scaffoldState?.openMobileMenu();
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF303366).withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.menu_rounded,
+                          color: Color(0xFF303366),
+                          size: 26,
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ],

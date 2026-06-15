@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
+import 'package:app_jht_front/features/shared/presentation/widgets/scaffold_with_menu.dart';
 import 'package:app_jht_front/features/supplier/presentation/widgets/add_supplier_modal.dart';
 import 'package:app_jht_front/features/supplier/presentation/widgets/detalle_supplier_modal.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,7 +18,10 @@ import 'package:app_jht_front/features/supplier/domain/usecases/obtener_detalle_
 import 'package:app_jht_front/features/supplier/data/repositories/supplier_repository_impl.dart';
 import 'package:app_jht_front/features/supplier/data/datasources/supplier_remote_data_source.dart';
 import 'package:app_jht_front/features/supplier/data/models/supplier_list_model.dart';
+import 'package:app_jht_front/features/supplier/data/models/supplier_detail_model.dart';
+import 'package:app_jht_front/features/supplier/data/models/telefono_detail_model.dart';
 import 'package:app_jht_front/features/shared/presentation/mixins/navigation_helper_mixin.dart';
+import 'package:flutter/foundation.dart';
 
 class SupplierPage extends StatefulWidget {
   final String userName;
@@ -201,7 +205,7 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
 
   Color _getEstadoColor(String estado) {
     final estadoLower = estado.toLowerCase();
-    print(
+    debugPrint(
       '🔍 Estado recibido: "$estado" -> Lower: "$estadoLower"',
     ); // Para debug
 
@@ -228,23 +232,18 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
   void _openAddSupplierModal() {
     if (!mounted) return;
     final supplierBloc = BlocProvider.of<SupplierBloc>(context);
+    final outerContext = context;
 
     showDialog(
-      context: context,
+      context: outerContext,
       barrierDismissible: false,
-      builder: (context) {
+      builder: (dialogContext) {
         return BlocProvider.value(
           value: supplierBloc,
           child: AddSupplierModal(
-            parentContext: context,
+            parentContext: outerContext,
             onSupplierAdded: () {
               _cargarProveedores();
-              if (mounted) {
-                AppNotification.success(
-                  context,
-                  'Proveedor agregado correctamente.',
-                );
-              }
             },
           ),
         );
@@ -299,45 +298,61 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
         state.when(
           initial: () {},
           loading: () {
-            _showLoadingDialog('Cargando proveedores...');
+            if (mounted) setState(() => _isLoading = true);
           },
-          success: (response) {},
+          success: (response) {
+            if (mounted) setState(() => _isLoading = false);
+          },
           listLoaded: (response) {
-            if (Navigator.canPop(context)) Navigator.pop(context);
             if (mounted) {
               setState(() {
+                _isLoading = false;
                 _proveedores = response.data;
                 _filteredProveedores = response.data;
                 _actualizarPagina();
               });
             }
           },
-          // En supplier_page.dart, en el BlocListener:
           detailLoaded: (response) {
-            if (Navigator.canPop(context)) Navigator.pop(context);
             if (mounted) {
-              // ✅ Obtener el BLoC ANTES de mostrar el diálogo
+              setState(() => _isLoading = false);
               final supplierBloc = BlocProvider.of<SupplierBloc>(context);
+              
+              final SupplierDetailModel detail = response.data;
+              
+              // FALLBACK: Inyectar teléfono de la lista si el detalle vino sin teléfonos
+              if (detail.telefonos.isEmpty) {
+                 final matchingList = _proveedores.where((p) => p.proveedorId == detail.proveedorId).toList();
+                 if (matchingList.isNotEmpty && matchingList.first.telefono.trim().isNotEmpty) {
+                    detail.telefonos.add(TelefonoDetailModel(
+                      telefonoId: 0,
+                      numero: matchingList.first.telefono.trim(),
+                      tipoId: 0,
+                      tipo: 'Principal',
+                      uso: 'General',
+                    ));
+                 }
+              }
 
               showDialog(
                 context: context,
                 builder: (context) => DetalleSupplierModal(
-                  proveedor: response.data,
-                  supplierBloc: supplierBloc, // ✅ PASAR EL BLOC COMO PARÁMETRO
+                  proveedor: detail,
+                  supplierBloc: supplierBloc,
                 ),
               );
             }
           },
           updateSuccess: (response) {
-            if (Navigator.canPop(context)) Navigator.pop(context);
             if (mounted) {
-              AppNotification.success(context, response.message);
+              setState(() => _isLoading = false);
+              // AppNotification is handled by the modal for updates
               _cargarProveedores();
             }
           },
           error: (message) {
-            if (Navigator.canPop(context)) Navigator.pop(context);
             if (mounted) {
+              setState(() => _isLoading = false);
               AppNotification.error(context, 'Error: $message');
             }
           },
@@ -345,14 +360,6 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
       },
       child: Scaffold(
         key: _scaffoldKey,
-        endDrawer: Drawer(
-          child: SideMenu(
-            userName: widget.userName,
-            userRole: widget.userRole,
-            onClose: () => Navigator.pop(context),
-            onItemSelected: _handleMenuSelection,
-          ),
-        ),
         backgroundColor: Colors.white,
         body: Column(
           children: [
@@ -360,6 +367,15 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
               child: CustomScrollView(
                 slivers: [
                   SliverAppBar(
+                    automaticallyImplyLeading: false,
+                    leading: _isMobile
+                        ? IconButton(
+                            icon: const Icon(Icons.menu_rounded, color: Color(0xFF303366)),
+                            onPressed: () {
+                              context.findAncestorStateOfType<ScaffoldWithMenuState>()?.openMobileMenu();
+                            },
+                          )
+                        : null,
                     backgroundColor: Colors.white,
                     elevation: 1,
                     pinned: true,
@@ -371,7 +387,6 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
                         color: Color(0xFF303366),
                       ),
                     ),
-                    actions: [_buildMenuButton()],
                   ),
                   SliverList(
                     delegate: SliverChildListDelegate([
@@ -397,7 +412,7 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
                 ],
               ),
             ),
-            _buildCopyright(),
+            const SizedBox(height: 30),
           ],
         ),
       ),
@@ -464,46 +479,6 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
     );
   }
 
-  Widget _buildMenuButton() {
-    return InkWell(
-      onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 40,
-        height: 40,
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-            ),
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-            ),
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   DataRow _buildDataRow(SupplierListModel proveedor, int index) {
     final globalIndex = ((_currentPage - 1) * _itemsPerPage) + index + 1;
@@ -803,6 +778,10 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
 
   // ✅ TABLA SIN SCROLLBAR - EVITA ERROR EN DESKTOP
   Widget _buildResponsiveTable() {
+    if (_isLoading) {
+      return _buildLoadingSupplier();
+    }
+
     if (_filteredProveedores.isEmpty) {
       return Container(
         height: 200,

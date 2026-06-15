@@ -87,7 +87,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
     });
 
     try {
-      print('🟡 Cargando segmentos...');
+      debugPrint('🟡 Cargando segmentos...');
             
             final String? token = await TokenService.getToken();
             
@@ -104,7 +104,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
               },
             );
 
-            print('🟡 Response status segmentos: ${response.statusCode}');
+            debugPrint('🟡 Response status segmentos: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -115,12 +115,12 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
           _segmentosList = segmentos;
           _cargandoSegmentos = false;
         });
-        print('🟢 Segmentos cargados: ${segmentos.length}');
+        debugPrint('🟢 Segmentos cargados: ${segmentos.length}');
       } else {
         throw Exception('Error al obtener segmentos: ${response.statusCode}');
       }
     } catch (e) {
-      print('❌ ERROR al cargar segmentos: $e');
+      debugPrint('❌ ERROR al cargar segmentos: $e');
       setState(() {
         _segmentosList = [];
         _cargandoSegmentos = false;
@@ -269,7 +269,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
         diccionarios: diccionarios,
       );
 
-      print('🟡 DTO a enviar: ${json.encode(dto.toJson())}');
+      debugPrint('🟡 DTO a enviar: ${json.encode(dto.toJson())}');
 
       // Obtener el bloc y registrar
       final bloc = BlocProvider.of<AccessoryBloc>(context);

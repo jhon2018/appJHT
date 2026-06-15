@@ -6,6 +6,7 @@ flutter run -d web-server
 flutter run -d chrome --web-browser-flag "--ignore-certificate-errors" --web-browser-flag "--disable-web-security"
 flutter run -d web-server --web-port=5000
 flutter run -d web-server --web-port=5000 --dart-define=USE_LOCAL=false
+flutter run
 
 ## 2. Inicia el método de trabajo y crea las ramas
 git flow init
@@ -52,5 +53,7 @@ Admin123*
 david
 123
 
-22222222
-22222222
+# DIAGRAMAS FRONT
+Diagrama de flujo de datos (arquitectura)
+Diagrama de secuencia (casos importantes)
+consulta para este proyecto ayudaria  npx skill add pbakaus/impecable que ganria o no seria lo mejor?

@@ -19,7 +19,13 @@ import 'package:app_jht_front/features/login/presentation/bloc/login_bloc.dart';
 // Auditoría
 import 'package:app_jht_front/core/utils/app_logger.dart';
 
+import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:app_jht_front/core/router/app_router.dart';
+
 void main() {
+  // Configurar estrategia de URL para Web (quita el # de la URL)
+  usePathUrlStrategy();
+  
   // ── FIX: ensureInitialized DENTRO de runZonedGuarded ─────────────────────
   // Si se llama FUERA, Flutter crea los bindings en el zone raíz.
   // Luego runApp corre en el zone de runZonedGuarded → "Zone mismatch".
@@ -107,17 +113,19 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider(create: (context) => LoginBloc()),
       ],
-      child: MaterialApp(
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
         title: 'JHT Transport',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: WelcomePage.primaryColor,
           ),
           useMaterial3: true,
+          fontFamily: 'Inter',
         ),
-        debugShowCheckedModeBanner: false,
-
-        locale: const Locale('es', 'ES'),
+        routeInformationProvider: appRouter.routeInformationProvider,
+        routeInformationParser: appRouter.routeInformationParser,
+        routerDelegate: appRouter.routerDelegate,
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
@@ -127,17 +135,6 @@ class MyApp extends StatelessWidget {
           Locale('es', 'ES'),
           Locale('en', 'US'),
         ],
-
-        navigatorObservers: [
-          _JhtNavigatorObserver(),
-        ],
-
-        routes: {
-          '/welcome': (context) => const WelcomePage(),
-          '/login':   (context) => LoginPage(),
-          '/home':    (context) => HomePage(),
-        },
-        initialRoute: '/welcome',
       ),
     );
   }

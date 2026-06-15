@@ -11,6 +11,7 @@ import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
+import 'package:app_jht_front/features/shared/presentation/widgets/scaffold_with_menu.dart';
 import 'package:app_jht_front/features/accessory/presentation/widgets/add_accessory_modal.dart';
 import 'package:app_jht_front/features/accessory/presentation/widgets/detalle_accessory_modal.dart';
 import 'package:app_jht_front/features/accessory/presentation/widgets/edit_accessory_modal.dart';
@@ -56,6 +57,9 @@ class _AccessoryPageState extends State<AccessoryPage>
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   Timer? _debounceTimer;
+
+  bool _isVehiclesLoading = true;
+  bool _hasVehiclesError = false;
 
   @override
   void initState() {
@@ -111,32 +115,39 @@ class _AccessoryPageState extends State<AccessoryPage>
   }
 
   // ── Loading dialog ────────────────────────────────────────────────────────
+  bool _isLoadingDialogVisible = false;
+
   void _showLoadingDialog(String message) {
+    if (_isLoadingDialogVisible) return;
+    _isLoadingDialogVisible = true;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        backgroundColor: const Color(0xFF303366),
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(color: Colors.white),
-            const SizedBox(height: 20),
-            Text(
-              message,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: const Color(0xFF303366),
+          contentPadding: const EdgeInsets.all(24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: Colors.white),
+              const SizedBox(height: 20),
+              Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    );
+    ).then((_) => _isLoadingDialogVisible = false);
   }
 
   // ── Agregar accesorio ─────────────────────────────────────────────────────
@@ -202,24 +213,24 @@ class _AccessoryPageState extends State<AccessoryPage>
       listener: (context, state) {
         // Vehículos
         if (state is VehiculosLoading) {
-          _showLoadingDialog('Cargando lista de vehículos...');
+          setState(() {
+            _isVehiclesLoading = true;
+            _hasVehiclesError = false;
+          });
         } else if (state is VehiculosLoaded) {
-          if (Navigator.canPop(context)) Navigator.pop(context);
-          setState(() => _vehiclesList = state.vehiculos);
-
-          // Accesorios por vehículo
-        } else if (state is AccesoriosByVehiculoLoading) {
-          _showLoadingDialog(
-            _selectedVehicle != null
-                ? 'Cargando accesorios del vehículo ${_selectedVehicle!.placa}...'
-                : 'Cargando accesorios...',
-          );
-        } else if (state is AccesoriosByVehiculoLoaded) {
-          if (Navigator.canPop(context)) Navigator.pop(context);
-
-          // Error general
-        } else if (state is AccessoryError) {
-          if (Navigator.canPop(context)) Navigator.pop(context);
+          setState(() {
+            _vehiclesList = state.vehiculos;
+            _isVehiclesLoading = false;
+            _hasVehiclesError = false;
+          });
+        }
+        
+        // Error general (al cargar listas)
+        if (state is AccessoryError) {
+          setState(() {
+            _isVehiclesLoading = false;
+            _hasVehiclesError = true;
+          });
           AppNotification.error(context, state.message);
         }
 
@@ -230,7 +241,9 @@ class _AccessoryPageState extends State<AccessoryPage>
 
         // Detalle listo → decide qué modal abrir
         if (state is DetalleAccesorioLoaded) {
-          if (Navigator.canPop(context)) Navigator.pop(context);
+          if (_isLoadingDialogVisible) {
+            Navigator.of(context, rootNavigator: true).pop();
+          }
           if (_pendingAction == _PendingAction.verDetalle) {
             _pendingAction = _PendingAction.none;
             showDetalleAccesorioModal(context, state.detalle, 0.0);
@@ -247,7 +260,9 @@ class _AccessoryPageState extends State<AccessoryPage>
 
         // Actualizado OK
         if (state is AccesorioActualizado) {
-          if (Navigator.canPop(context)) Navigator.pop(context);
+          if (_isLoadingDialogVisible) {
+            Navigator.of(context, rootNavigator: true).pop();
+          }
           context.read<AccessoryBloc>().add(
             OnFetchAccesoriosByVehiculo(state.vehiculoId),
           );
@@ -259,20 +274,14 @@ class _AccessoryPageState extends State<AccessoryPage>
 
         // Error de actualización
         if (state is ActualizacionError) {
-          if (Navigator.canPop(context)) Navigator.pop(context);
+          if (_isLoadingDialogVisible) {
+            Navigator.of(context, rootNavigator: true).pop();
+          }
           AppNotification.error(context, state.message);
         }
       },
       child: Scaffold(
         key: _scaffoldKey,
-        endDrawer: Drawer(
-          child: SideMenu(
-            userName: widget.userName,
-            userRole: widget.userRole,
-            onClose: () => Navigator.pop(context),
-            onItemSelected: _handleMenuSelection,
-          ),
-        ),
         backgroundColor: Colors.white,
         body: Column(
           children: [
@@ -280,6 +289,15 @@ class _AccessoryPageState extends State<AccessoryPage>
               child: CustomScrollView(
                 slivers: [
                   SliverAppBar(
+                    automaticallyImplyLeading: false,
+                    leading: isMobile
+                        ? IconButton(
+                            icon: const Icon(Icons.menu_rounded, color: Color(0xFF303366)),
+                            onPressed: () {
+                              context.findAncestorStateOfType<ScaffoldWithMenuState>()?.openMobileMenu();
+                            },
+                          )
+                        : null,
                     backgroundColor: Colors.white,
                     elevation: 1,
                     pinned: true,
@@ -291,7 +309,7 @@ class _AccessoryPageState extends State<AccessoryPage>
                         color: Color(0xFF303366),
                       ),
                     ),
-                    actions: [_buildMenuButton()],
+                    actions: const [],
                   ),
                   SliverList(
                     delegate: SliverChildListDelegate([
@@ -313,38 +331,14 @@ class _AccessoryPageState extends State<AccessoryPage>
                 ],
               ),
             ),
-            _buildCopyright(),
+            const SizedBox(height: 30),
           ],
         ),
       ),
     );
   }
 
-  // ── Menú ──────────────────────────────────────────────────────────────────
-  Widget _buildMenuButton() {
-    return InkWell(
-      onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 40,
-        height: 40,
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [_dot(), _dot(), _dot()],
-        ),
-      ),
-    );
-  }
 
-  Widget _dot() => Container(
-    width: 4,
-    height: 4,
-    decoration: const BoxDecoration(
-      color: Colors.black87,
-      shape: BoxShape.circle,
-    ),
-  );
 
   // ── Header con botón agregar + dropdown vehículo ──────────────────────────
   Widget _buildHeaderWithAddButton(bool isMobile) {
@@ -484,7 +478,7 @@ class _AccessoryPageState extends State<AccessoryPage>
               value: _selectedVehicle,
               isExpanded: true,
               icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF303366)),
-              hint: _vehiclesList.isEmpty
+              hint: _isVehiclesLoading
                   ? const Row(
                       children: [
                         SizedBox(width: 4),
@@ -500,7 +494,11 @@ class _AccessoryPageState extends State<AccessoryPage>
                         ),
                       ],
                     )
-                  : const Text('Seleccione vehículo'),
+                  : _hasVehiclesError
+                      ? const Text('Error al cargar vehículos', style: TextStyle(color: Colors.red))
+                      : _vehiclesList.isEmpty
+                          ? const Text('No hay vehículos')
+                          : const Text('Seleccione vehículo'),
               items: _vehiclesList
                   .map(
                     (v) => DropdownMenuItem<VehiculoModel>(

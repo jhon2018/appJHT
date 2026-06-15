@@ -12,6 +12,7 @@ import 'package:app_jht_front/features/conductor/data/models/conductor_registro_
 import 'package:app_jht_front/features/supplier/data/models/tipo_telefono_model.dart';
 import 'package:app_jht_front/features/config/environment_config.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 // ── Color tokens ──────────────────────────────────────────────────────────────
 const _primary = Color(0xFF303366);
@@ -111,7 +112,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
 
   Future<void> _cargarTiposTelefono() async {
     try {
-      print('🟡 Cargando tipos de teléfono...');
+      debugPrint('🟡 Cargando tipos de teléfono...');
 
       final String? token = await TokenService.getToken();
 
@@ -130,7 +131,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
         },
       );
 
-      print('🟡 Response status tipos teléfono: ${response.statusCode}');
+      debugPrint('🟡 Response status tipos teléfono: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -142,14 +143,14 @@ class _AddConductorModalState extends State<AddConductorModal> {
         setState(() {
           _tiposTelefonoList = tipos;
         });
-        print('🟢 Tipos de teléfono cargados: ${tipos.length}');
+        debugPrint('🟢 Tipos de teléfono cargados: ${tipos.length}');
       } else {
         throw Exception(
           'Error al obtener tipos de teléfono: ${response.statusCode}',
         );
       }
     } catch (e) {
-      print('❌ ERROR al cargar tipos de teléfono: $e');
+      debugPrint('❌ ERROR al cargar tipos de teléfono: $e');
       if (mounted)
         setState(() {
           _tiposTelefonoList = [
@@ -169,7 +170,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
     BuildContext context,
     TextEditingController controller,
   ) async {
-    print('🟡 Seleccionando fecha para: ${controller.hashCode}');
+    debugPrint('🟡 Seleccionando fecha para: ${controller.hashCode}');
 
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -200,10 +201,10 @@ class _AddConductorModalState extends State<AddConductorModal> {
       setState(() {
         controller.text = _formatDate(picked);
       });
-      print('🟢 Fecha seleccionada: $picked');
-      print('🔵 Controller text actualizado: ${controller.text}');
+      debugPrint('🟢 Fecha seleccionada: $picked');
+      debugPrint('🔵 Controller text actualizado: ${controller.text}');
     } else {
-      print('🔴 No se seleccionó fecha');
+      debugPrint('🔴 No se seleccionó fecha');
     }
   }
 
@@ -329,7 +330,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
 
   String _limpiarMensajeError(String message) {
     if (message.contains('DNI debe ser mayor que 0')) {
-      return 'La identificación (DNI o Carné) debe ser numérica y mayor que 0.';
+      return 'El DNI debe ser numérico y mayor que 0.';
     } else if (message.contains('Ocurrió un error al registrar')) {
       final partes = message.split(':');
       if (partes.length > 1) {
@@ -345,19 +346,13 @@ class _AddConductorModalState extends State<AddConductorModal> {
 
     if (dniText.isEmpty) {
       setState(() => _dniError = 'El DNI es requerido');
-      _mostrarSnackBarError('Complete el campo DNI / Carné');
+      _mostrarSnackBarError('Complete el campo DNI');
       return;
     }
 
-    if (dniText.length < 8 || dniText.length > 9) {
-      setState(() => _dniError =
-          dniText.length < 8
-              ? 'Faltan ${8 - dniText.length} dígitos (mínimo 8)'
-              : 'Máximo 9 dígitos permitidos');
-      _mostrarSnackBarError(
-          dniText.length < 8
-              ? 'Documento incompleto: faltan ${8 - dniText.length} dígitos (mínimo 8)'
-              : 'El documento debe tener entre 8 y 9 dígitos');
+    if (dniText.length != 8) {
+      setState(() => _dniError = 'El DNI debe tener exactamente 8 dígitos');
+      _mostrarSnackBarError('El DNI debe tener exactamente 8 dígitos');
       return;
     }
 
@@ -500,8 +495,8 @@ class _AddConductorModalState extends State<AddConductorModal> {
     // Limpiar error inline cuando el usuario corrige el campo
     setState(() {
       _dniDuplicado = dup;
-      // Si el usuario escribe y tiene 8 o 9 dígitos → limpiar el error
-      if (v.length == 8 || v.length == 9) _dniError = null;
+      // Si el usuario escribe y tiene 8 dígitos → limpiar el error
+      if (v.length == 8) _dniError = null;
     });
   }
 
@@ -1339,23 +1334,19 @@ class _AddConductorModalState extends State<AddConductorModal> {
       lengthMessage = 'Faltan ${8 - dniLength} dígitos para DNI';
       lengthColor = _primary; // Color primario para progreso
     } else if (dniLength == 8) {
-      lengthMessage = 'DNI válido (8). Digite 1 más si es Carné';
-      lengthColor = const Color(0xFF4CAF50); // Verde para éxito
-      lengthIcon = Icons.check_circle_outline;
-    } else if (dniLength == 9) {
-      lengthMessage = 'Carné válido (9 dígitos)';
+      lengthMessage = 'DNI válido (8 dígitos)';
       lengthColor = const Color(0xFF4CAF50); // Verde para éxito
       lengthIcon = Icons.check_circle_outline;
     }
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
-        const Text('DNI / Carné *',
+        const Text('DNI *',
             style: TextStyle(
                 fontSize: 12, fontWeight: FontWeight.w600, color: _textPri)),
         const SizedBox(width: 4),
         Tooltip(
-          message: 'DNI peruano: 8 dígitos\nCarné de extranjería: 9 dígitos',
+          message: 'DNI peruano: 8 dígitos',
           triggerMode: TooltipTriggerMode.tap,
           child: const Icon(Icons.info_outline, size: 13, color: _textSec),
         ),
@@ -1367,7 +1358,7 @@ class _AddConductorModalState extends State<AddConductorModal> {
         style: const TextStyle(fontSize: 13),
         inputFormatters: [
           FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(9),
+          LengthLimitingTextInputFormatter(8),
         ],
         onChanged: _onDniChanged,
         decoration: InputDecoration(
@@ -1421,14 +1412,14 @@ class _AddConductorModalState extends State<AddConductorModal> {
                       child: const Icon(Icons.warning_amber_rounded,
                           color: _yellow, size: 18),
                     )
-                  : (dniLength == 8 || dniLength == 9)
+                  : (dniLength == 8)
                       ? const Icon(Icons.check_circle_outline,
                           color: Color(0xFF4CAF50), size: 18)
                       : null,
         ),
         validator: (v) {
           if (v == null || v.isEmpty) return 'Obligatorio';
-          if (v.length < 8 || v.length > 9) return 'Debe tener 8 o 9 dígitos';
+          if (v.length != 8) return 'Debe tener exactamente 8 dígitos';
           if (_dniDuplicado) return 'DNI ya registrado';
           return null;
         },
