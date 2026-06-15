@@ -9,7 +9,7 @@ import 'package:app_jht_front/features/mantenimiento/presentation/bloc/mantenimi
 import 'package:app_jht_front/features/mantenimiento/data/repositories/mantenimiento_repository.dart';
 import 'package:app_jht_front/features/mantenimiento/presentation/pages/mantenimiento_page.dart';
 import 'package:flutter/foundation.dart';
-
+import 'package:shimmer/shimmer.dart';
 class ConductorDashboard extends StatefulWidget {
   final String userName;
   final String userRole;
@@ -69,11 +69,9 @@ class _ConductorDashboardState extends State<ConductorDashboard>
       userRole: widget.userRole,
       contentBuilder: (context, isDesktop) {
         if (_isLoading) {
-          return const Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFF4834D4),
-              strokeWidth: 3,
-            ),
+          return SingleChildScrollView(
+            padding: getResponsivePadding(context),
+            child: _buildSkeleton(),
           );
         }
 
@@ -96,12 +94,6 @@ class _ConductorDashboardState extends State<ConductorDashboard>
                 const SizedBox(height: 32),
 
                 _buildMaintenanceAndTasks(context, isDesktop),
-                const SizedBox(height: 32),
-
-                _buildDailyChecklist(context),
-                const SizedBox(height: 32),
-
-                _buildNotifications(context),
                 const SizedBox(height: 40),
               ],
             ),
@@ -383,25 +375,8 @@ class _ConductorDashboardState extends State<ConductorDashboard>
 
   Widget _buildMaintenanceAndTasks(BuildContext context, bool isDesktop) {
     final List<dynamic> alertas = _dashboardData?['mantenimientosAlertas'] ?? [];
-
-    if (isDesktop) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(child: _buildMaintenanceSchedule(alertas)),
-          const SizedBox(width: 24),
-          Expanded(child: _buildTodaysTasks()),
-        ],
-      );
-    }
-    
-    return Column(
-      children: [
-        _buildMaintenanceSchedule(alertas),
-        const SizedBox(height: 24),
-        _buildTodaysTasks(),
-      ],
-    );
+    // Tasks se han eliminado porque no son datos reales todavía
+    return _buildMaintenanceSchedule(alertas);
   }
 
   Widget _buildMaintenanceSchedule(List<dynamic> alertas) {
@@ -530,242 +505,46 @@ class _ConductorDashboardState extends State<ConductorDashboard>
     );
   }
 
-  Widget _buildTodaysTasks() {
-    return _GlassContainer(
+  Widget _buildSkeleton() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD1FAE5),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.checklist_rounded, color: Color(0xFF059669), size: 20),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'TAREAS DE HOY',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E293B),
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _buildTaskItem('Realizar inspección pre-viaje', true),
-          _buildTaskItem('Confirmar asistencia con Dispatch', true),
-          _buildTaskItem('Reportar estado de llantas', false),
-          _buildTaskItem('Actualizar bitácora de viaje', false),
-          const SizedBox(height: 16),
-          const Center(
-            child: Text(
-              '2 de 4 tareas completadas',
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskItem(String task, bool completed) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: completed ? const Color(0xFFF8FAFC) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: completed ? Colors.transparent : const Color(0xFFE2E8F0)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: completed ? const Color(0xFF10B981) : Colors.transparent,
-                border: Border.all(
-                  color: completed ? const Color(0xFF10B981) : const Color(0xFFCBD5E1),
-                  width: 2,
-                ),
-              ),
-              child: completed ? const Icon(Icons.check_rounded, size: 16, color: Colors.white) : null,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                task,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: completed ? FontWeight.w500 : FontWeight.w600,
-                  color: completed ? const Color(0xFF94A3B8) : const Color(0xFF334155),
-                  decoration: completed ? TextDecoration.lineThrough : null,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDailyChecklist(BuildContext context) {
-    return _GlassContainer(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDBEAFE),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.assignment_turned_in_rounded, color: Color(0xFF2563EB), size: 20),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'CHECKLIST DIARIO',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E293B),
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: const [
-              _ChecklistChip('Luces', true),
-              _ChecklistChip('Frenos', true),
-              _ChecklistChip('Aceite', true),
-              _ChecklistChip('Refrigerante', false),
-              _ChecklistChip('Neumáticos', true),
-              _ChecklistChip('Espejos', true),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotifications(BuildContext context) {
-    return _GlassContainer(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3E8FF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.notifications_active_rounded, color: Color(0xFF9333EA), size: 20),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'NOTIFICACIONES',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E293B),
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _buildNotificationItem(
-            '¡Buen viaje! Respeta los límites de velocidad.',
-            'Hace 1 hora',
-            Icons.speed_rounded,
-            const Color(0xFF9333EA),
-          ),
-          _buildNotificationItem(
-            'Ruta asignada actualizada por el Administrador.',
-            'Hace 3 horas',
-            Icons.route_rounded,
-            const Color(0xFF3B82F6),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotificationItem(String text, String time, IconData icon, Color color) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFF1F5F9)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, size: 20, color: color),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    text,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    time,
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
-                  ),
+                  _skeletonBox(width: 120, height: 24),
+                  const SizedBox(height: 8),
+                  _skeletonBox(width: 200, height: 32),
+                  const SizedBox(height: 12),
+                  _skeletonBox(width: 150, height: 30, borderRadius: 20),
                 ],
               ),
-            ),
-          ],
-        ),
+              _skeletonBox(width: 48, height: 48, borderRadius: 16),
+            ],
+          ),
+          const SizedBox(height: 32),
+          _skeletonBox(width: double.infinity, height: 250, borderRadius: 24),
+          const SizedBox(height: 32),
+          _skeletonBox(width: double.infinity, height: 200, borderRadius: 24),
+        ],
       ),
     );
   }
 
-  Widget _buildFooter(BuildContext context) {
+  Widget _skeletonBox({required double width, required double height, double borderRadius = 8}) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Column(
-        children: [
-          const Text(
-            'JHT Transport Company',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF94A3B8)),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '© ${DateTime.now().year} Todos los derechos reservados',
-            style: const TextStyle(fontSize: 12, color: Color(0xFFCBD5E1)),
-          ),
-        ],
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(borderRadius),
       ),
     );
   }
@@ -779,16 +558,15 @@ class _GlassContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 2),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF94A3B8).withOpacity(0.1),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            color: const Color(0xFF94A3B8).withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),

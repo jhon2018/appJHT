@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
 import 'side_menu.dart';
 import 'package:go_router/go_router.dart';
-
 class ScaffoldWithMenu extends StatefulWidget {
   final Widget child;
 
@@ -41,7 +40,7 @@ class ScaffoldWithMenuState extends State<ScaffoldWithMenu> {
   }
 
   Future<void> _loadUserData() async {
-    final userData = await TokenService.getUserData();
+    final userData = await TokenService.getResolvedUserData();
     if (mounted) {
       setState(() {
         _userName = userData?['usuario'] ?? 'Usuario';
@@ -52,7 +51,7 @@ class ScaffoldWithMenuState extends State<ScaffoldWithMenu> {
   }
 
   void _onMenuItemSelected(String pageName) {
-    if (pageName == 'Panel') {
+    if (pageName == 'Panel' || pageName == 'Dashboard') {
       context.go('/dashboard');
     } else if (pageName == 'Vehículo') {
       context.go('/vehiculos');

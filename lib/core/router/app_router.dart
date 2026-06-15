@@ -228,7 +228,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   void initState() {
     super.initState();
-    TokenService.getUserData().then((data) {
+    TokenService.getResolvedUserData().then((data) {
       if (mounted) {
         setState(() {
           _userName = data?['usuario'] ?? '';

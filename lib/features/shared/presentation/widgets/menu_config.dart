@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 // Definición de tipos de menú
 enum MenuItemType {
+  dashboard,
   mantenimiento,
   vehiculo,
   proveedor,
@@ -29,6 +30,11 @@ class MenuItemConfig {
 
 // Configuración visual de todos los items
 const Map<MenuItemType, MenuItemConfig> menuItemVisualConfig = {
+  MenuItemType.dashboard: MenuItemConfig(
+    icon: '📊',
+    title: 'Dashboard',
+    materialIcon: Icons.dashboard_rounded,
+  ),
   MenuItemType.mantenimiento: MenuItemConfig(
     icon: '🔧',
     title: 'Mantenimiento',
@@ -65,6 +71,7 @@ const Map<MenuItemType, MenuItemConfig> menuItemVisualConfig = {
 const Map<String, List<MenuItemType>> rolePermissions = {
   // Root y Administrador ven TODO
   UserRoles.root: [
+    MenuItemType.dashboard,
     MenuItemType.mantenimiento,
     MenuItemType.vehiculo,
     MenuItemType.proveedor,
@@ -73,6 +80,7 @@ const Map<String, List<MenuItemType>> rolePermissions = {
     MenuItemType.ayuda,
   ],
   UserRoles.administrador: [
+    MenuItemType.dashboard,
     MenuItemType.mantenimiento,
     MenuItemType.vehiculo,
     MenuItemType.proveedor,
@@ -80,8 +88,9 @@ const Map<String, List<MenuItemType>> rolePermissions = {
     MenuItemType.accesorios,
     MenuItemType.ayuda,
   ],
-  // Conductor solo ve Mantenimiento y Ayuda
+  // Conductor solo ve Dashboard, Mantenimiento y Ayuda
   UserRoles.conductor: [
+    MenuItemType.dashboard,
     MenuItemType.mantenimiento,
     MenuItemType.ayuda, // Ayuda visible para todos
   ],
