@@ -331,7 +331,7 @@ class _AccessoryPageState extends State<AccessoryPage>
                 ],
               ),
             ),
-            _buildCopyright(),
+            const SizedBox(height: 30),
           ],
         ),
       ),

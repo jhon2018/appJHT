@@ -103,8 +103,6 @@ class _ConductorDashboardState extends State<ConductorDashboard>
 
                 _buildNotifications(context),
                 const SizedBox(height: 40),
-
-                _buildFooter(context),
               ],
             ),
           ),

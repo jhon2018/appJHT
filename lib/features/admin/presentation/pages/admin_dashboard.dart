@@ -89,8 +89,6 @@ class _AdminDashboardState extends State<AdminDashboard>
 
             _buildRecentDataTable(context, isDesktop),
             const SizedBox(height: 40),
-
-            _buildFooter(context),
           ],
         );
       },

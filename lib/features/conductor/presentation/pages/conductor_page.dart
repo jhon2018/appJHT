@@ -367,7 +367,7 @@ class _ConductorPageState extends State<ConductorPage>
                 ],
               ),
             ),
-            _buildCopyright(),
+            const SizedBox(height: 30),
           ],
         ),
       ),

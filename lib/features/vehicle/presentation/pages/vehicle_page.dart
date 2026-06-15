@@ -298,7 +298,7 @@ class _VehiclePageState extends State<VehiclePage>
                 ],
               ),
             ),
-            _buildCopyright(),
+            const SizedBox(height: 30),
           ],
         ),
       ),

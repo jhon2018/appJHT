@@ -149,7 +149,32 @@ class ScaffoldWithMenuState extends State<ScaffoldWithMenu> {
                 ),
 
               // ── Contenido principal ──
-              Expanded(child: widget.child),
+              Expanded(
+                child: Column(
+                  children: [
+                    Expanded(child: widget.child),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border(
+                          top: BorderSide(color: Colors.grey.shade300, width: 1.0),
+                        ),
+                      ),
+                      child: const Text(
+                        '© 2026 JHT Transport Company · Todos los derechos reservados.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF888888),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         );

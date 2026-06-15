@@ -412,7 +412,7 @@ class __SupplierPageContentState extends State<_SupplierPageContent>
                 ],
               ),
             ),
-            _buildCopyright(),
+            const SizedBox(height: 30),
           ],
         ),
       ),

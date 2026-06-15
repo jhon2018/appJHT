@@ -234,7 +234,7 @@ class _MantenimientoPageState extends State<MantenimientoPage>
                 ],
               ),
             ),
-            _buildCopyright(),
+            const SizedBox(height: 30),
           ],
         ),
       ),

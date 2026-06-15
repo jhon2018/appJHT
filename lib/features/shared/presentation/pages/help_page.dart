@@ -465,10 +465,6 @@ class HelpPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        Text(
-          '© 2026 JHT System. Todos los derechos reservados.',
-          style: TextStyle(fontSize: 10, color: Colors.grey[400]),
-        ),
         const SizedBox(height: 20),
       ],
     );
