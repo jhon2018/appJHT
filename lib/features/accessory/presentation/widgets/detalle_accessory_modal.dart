@@ -6,17 +6,28 @@ import '../../data/models/accesorio_detalle_model.dart';
 void showDetalleAccesorioModal(
   BuildContext context,
   AccesorioDetalleModel detalle,
-  num kilometrajeActualVehiculo,
-) {
+  num kilometrajeActualVehiculo, {
+  String? proximaFechaMantenimiento,
+}) {
   final ahora = DateTime.now();
   final instalacion = detalle.fechaInstalacion;
 
   final diasTranscurridos = ahora.difference(instalacion).inDays;
   final kmRecorridos = (kilometrajeActualVehiculo - detalle.kilometrajeInstalacion).floor();
 
+  int? diasParaMantenimiento;
+  if (proximaFechaMantenimiento != null && proximaFechaMantenimiento.isNotEmpty) {
+    try {
+      final fechaProx = DateTime.parse(proximaFechaMantenimiento);
+      diasParaMantenimiento = fechaProx.difference(DateTime(ahora.year, ahora.month, ahora.day)).inDays;
+    } catch (_) {}
+  }
+
   final bool alertaDias = diasTranscurridos > 15;
   final bool alertaKm = kmRecorridos > 500;
-  final bool mostrarAlerta = alertaDias || alertaKm;
+  final bool alertaMantenimiento = diasParaMantenimiento != null && diasParaMantenimiento <= 45; // Mostrar si faltan 45 días o menos, o si ya pasó
+  
+  final bool mostrarAlerta = alertaDias || alertaKm || alertaMantenimiento;
 
   final Color colorNombre = mostrarAlerta ? Colors.red.shade700 : const Color(0xFF303366);
 
@@ -170,6 +181,14 @@ void showDetalleAccesorioModal(
                                 style: const TextStyle(color: Colors.red, fontSize: 14)),
                           if (alertaKm)
                             Text('• Se han recorrido $kmRecorridos km desde la instalación',
+                                style: const TextStyle(color: Colors.red, fontSize: 14)),
+                          if (alertaMantenimiento && diasParaMantenimiento != null)
+                            Text(
+                                diasParaMantenimiento! > 0
+                                    ? '• Faltan $diasParaMantenimiento días para su próximo mantenimiento'
+                                    : diasParaMantenimiento == 0
+                                        ? '• El próximo mantenimiento es hoy'
+                                        : '• Han pasado ${diasParaMantenimiento!.abs()} días desde su próximo mantenimiento programado',
                                 style: const TextStyle(color: Colors.red, fontSize: 14)),
                         ],
                       ),
