@@ -42,8 +42,9 @@ void showDetalleAccesorioModal(
         insetPadding: isMobile
             ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
             : const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
+        child: SelectionArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
             maxWidth: isMobile ? 380 : 500,
             maxHeight: MediaQuery.sizeOf(context).height * 0.85,
           ),
@@ -215,6 +216,7 @@ void showDetalleAccesorioModal(
             ),
           ),
         ),
+      ),
       );
     },
   );

@@ -23,8 +23,9 @@ class PersonaDetalleModal extends StatelessWidget {
       backgroundColor: Colors.white,
       insetPadding: const EdgeInsets.all(20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Container(
-        constraints: BoxConstraints(
+      child: SelectionArea(
+        child: Container(
+          constraints: BoxConstraints(
           maxWidth: isMobile ? double.infinity : 600,
           maxHeight: MediaQuery.sizeOf(context).height * 0.85,
         ),
@@ -52,6 +53,7 @@ class PersonaDetalleModal extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }
