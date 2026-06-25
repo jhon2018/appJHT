@@ -111,8 +111,9 @@ class DetalleSupplierModal extends StatelessWidget {
         vertical: 24,
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
+      child: SelectionArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
           maxWidth: 820,
           maxHeight: MediaQuery.sizeOf(context).height * 0.9,
         ),
@@ -141,6 +142,7 @@ class DetalleSupplierModal extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
