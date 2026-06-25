@@ -52,6 +52,7 @@ class _AccessoryPageState extends State<AccessoryPage>
 
   // Controla qué modal abrir cuando llega DetalleAccesorioLoaded
   _PendingAction _pendingAction = _PendingAction.none;
+  String? _proximaFechaMantenimiento;
 
   // ── Búsqueda con debounce ──────────────────────────────────────────────────
   final TextEditingController _searchController = TextEditingController();
@@ -246,7 +247,8 @@ class _AccessoryPageState extends State<AccessoryPage>
           }
           if (_pendingAction == _PendingAction.verDetalle) {
             _pendingAction = _PendingAction.none;
-            showDetalleAccesorioModal(context, state.detalle, 0.0);
+            showDetalleAccesorioModal(context, state.detalle, 0.0, proximaFechaMantenimiento: _proximaFechaMantenimiento);
+            _proximaFechaMantenimiento = null;
           } else if (_pendingAction == _PendingAction.editar) {
             _pendingAction = _PendingAction.none;
             _openEditAccessoryModal(state.detalle);
@@ -727,6 +729,7 @@ class _AccessoryPageState extends State<AccessoryPage>
                 child: InkWell(
                   onTap: () {
                     _pendingAction = _PendingAction.verDetalle;
+                    _proximaFechaMantenimiento = acc.ultimoMantenimiento?.proximaFecha;
                     context.read<AccessoryBloc>().add(
                       OnFetchDetalleAccesorio(acc.accesorioId),
                     );
