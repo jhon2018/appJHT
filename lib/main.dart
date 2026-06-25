@@ -123,6 +123,12 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           fontFamily: 'Inter',
         ),
+        builder: (context, child) {
+          // Envolvemos toda la app en SelectionArea para permitir la selección de texto
+          return SelectionArea(
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
         routeInformationProvider: appRouter.routeInformationProvider,
         routeInformationParser: appRouter.routeInformationParser,
         routerDelegate: appRouter.routerDelegate,
