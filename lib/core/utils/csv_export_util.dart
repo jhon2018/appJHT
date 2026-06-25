@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:csv/csv.dart';
 import 'package:path_provider/path_provider.dart';
@@ -22,7 +23,9 @@ class CsvExportUtil {
 
       if (kIsWeb) {
         // Implementación para Web
-        final blob = html.Blob([bytes], 'text/csv;charset=utf-8;');
+        // IMPORTANTE: Se debe usar Uint8List para que el navegador lo interprete como bytes y no como un array de números (strings)
+        final Uint8List uint8ListBytes = Uint8List.fromList(bytes);
+        final blob = html.Blob([uint8ListBytes], 'text/csv;charset=utf-8;');
         final url = html.Url.createObjectUrlFromBlob(blob);
         
         final anchor = html.AnchorElement(href: url)
