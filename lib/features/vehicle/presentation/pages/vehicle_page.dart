@@ -5,6 +5,7 @@ import 'package:app_jht_front/core/widgets/app_notification.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/side_menu.dart';
+import 'package:app_jht_front/features/shared/presentation/widgets/scaffold_with_menu.dart';
 import 'package:app_jht_front/features/vehicle/presentation/widgets/add_vehicle_modal.dart';
 import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
 import 'package:app_jht_front/features/vehicle/presentation/widgets/edit_vehicle_modal.dart';
@@ -138,6 +139,12 @@ class _VehiclePageState extends State<VehiclePage>
     final vehicleBloc = context
         .read<VehicleBloc>(); // ← capturar ANTES del showDialog
 
+    // Extraer placas existentes del estado actual del bloc
+    final existingPlates = vehicleBloc.state.maybeWhen(
+      vehiculosCargados: (vehicles) => vehicles.map((v) => v.placa).toList(),
+      orElse: () => <String>[],
+    );
+
     final vehicleEntity = VehicleEntity(
       vehiculoId: vehicle.vehiculoId,
       placa: vehicle.placa,
@@ -166,15 +173,15 @@ class _VehiclePageState extends State<VehiclePage>
       estado: vehicle.estado,
     );
 
-    print('🔵 VehicleEntity creado - ID: ${vehicleEntity.vehiculoId}');
-
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => BlocProvider.value(
-        // ← ESTO ES LO QUE FALTABA
         value: vehicleBloc,
-        child: EditVehicleModal(vehicle: vehicleEntity),
+        child: EditVehicleModal(
+          vehicle: vehicleEntity,
+          existingPlates: existingPlates,
+        ),
       ),
     );
   }
@@ -215,28 +222,14 @@ class _VehiclePageState extends State<VehiclePage>
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 768;
+    final bool isMobile = MediaQuery.sizeOf(context).width < 768;
 
     return Scaffold(
       key: _scaffoldKey,
-      endDrawer: Drawer(
-        child: SideMenu(
-          userName: widget.userName,
-          userRole: widget.userRole,
-          onClose: () => Navigator.pop(context),
-          onItemSelected: _handleMenuSelection,
-        ),
-      ),
       backgroundColor: Colors.white,
       body: BlocListener<VehicleBloc, VehicleState>(
         listener: (context, state) {
           state.maybeWhen(
-            loading: () {
-              _showLoadingDialog('Cargando vehículos...');
-            },
-            vehiculosCargados: (vehiculos) {
-              if (Navigator.canPop(context)) Navigator.pop(context);
-            },
             actualizacionExitosa: (response) {
               AppNotification.success(context, response.message);
               context.read<VehicleBloc>().add(
@@ -244,9 +237,13 @@ class _VehiclePageState extends State<VehiclePage>
               );
               _resetPagination();
             },
-            error: (message) {
-              if (Navigator.canPop(context)) Navigator.pop(context);
-              AppNotification.error(context, message);
+            registroExitoso: (response) {
+              // La notificación ya se muestra en el modal.
+              // Solo recargar datos.
+              context.read<VehicleBloc>().add(
+                const VehicleEvent.cargarVehiculos(),
+              );
+              _resetPagination();
             },
             orElse: () {},
           );
@@ -257,6 +254,15 @@ class _VehiclePageState extends State<VehiclePage>
               child: CustomScrollView(
                 slivers: [
                   SliverAppBar(
+                    automaticallyImplyLeading: false,
+                    leading: isMobile
+                        ? IconButton(
+                            icon: const Icon(Icons.menu_rounded, color: Color(0xFF303366)),
+                            onPressed: () {
+                              context.findAncestorStateOfType<ScaffoldWithMenuState>()?.openMobileMenu();
+                            },
+                          )
+                        : null,
                     backgroundColor: Colors.white,
                     elevation: 1,
                     pinned: true,
@@ -268,7 +274,7 @@ class _VehiclePageState extends State<VehiclePage>
                         color: Color(0xFF303366),
                       ),
                     ),
-                    actions: [_buildMenuButton()],
+                    actions: const [],
                   ),
 
                   SliverList(
@@ -292,38 +298,13 @@ class _VehiclePageState extends State<VehiclePage>
                 ],
               ),
             ),
-            _buildCopyright(),
+            const SizedBox(height: 30),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMenuButton() {
-    return InkWell(
-      onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 40,
-        height: 40,
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(
-            3,
-            (_) => Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildHeaderWithAddButton(bool isMobile) {
     return Column(

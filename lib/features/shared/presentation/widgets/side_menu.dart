@@ -2,6 +2,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
+import 'package:go_router/go_router.dart';
 import 'menu_config.dart';
 import 'permission_service.dart';
 
@@ -247,7 +248,11 @@ class SideMenu extends StatelessWidget {
             item: item,
             index: index,
             onTap: () {
-              onClose();
+              // Solo cerrar si estamos dentro de un Drawer (móvil)
+              final isInsideDrawer = ModalRoute.of(context)?.canPop ?? false;
+              if (isInsideDrawer) {
+                onClose();
+              }
               onItemSelected(item.title);
             },
           ),
@@ -346,7 +351,7 @@ class SideMenu extends StatelessWidget {
       PermissionService().updateRole(null);
       
       if (context.mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        context.go('/login');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Sesión cerrada correctamente'),
@@ -386,6 +391,7 @@ class _MenuItemWidget extends StatefulWidget {
 
 class _MenuItemWidgetState extends State<_MenuItemWidget> with SingleTickerProviderStateMixin {
   bool _isPressed = false;
+  bool _isHovered = false;
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -422,82 +428,111 @@ class _MenuItemWidgetState extends State<_MenuItemWidget> with SingleTickerProvi
 
   @override
   Widget build(BuildContext context) {
+    // Determine active state for styling (pressed takes priority over hover)
+    final bool isActive = _isPressed || _isHovered;
+    
     return FadeTransition(
       opacity: _fadeAnimation,
       child: SlideTransition(
         position: _slideAnimation,
-        child: GestureDetector(
-          onTapDown: (_) => setState(() => _isPressed = true),
-          onTapUp: (_) => setState(() => _isPressed = false),
-          onTapCancel: () => setState(() => _isPressed = false),
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: _isPressed 
-                  ? const Color(0xFF303366).withOpacity(0.1) 
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                // Icono con contenedor estilizado
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: _isPressed 
-                        ? const Color(0xFF303366) 
-                        : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: _isPressed ? [
-                      BoxShadow(
-                        color: const Color(0xFF303366).withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      )
-                    ] : [],
-                  ),
-                  child: widget.item.materialIcon != null
-                      ? Icon(
-                          widget.item.materialIcon,
-                          size: 18,
-                          color: _isPressed ? Colors.white : const Color(0xFF303366),
-                        )
-                      : Text(
-                          widget.item.icon,
-                          style: const TextStyle(fontSize: 16),
-                        ),
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTapDown: (_) => setState(() => _isPressed = true),
+            onTapUp: (_) => setState(() => _isPressed = false),
+            onTapCancel: () => setState(() => _isPressed = false),
+            onTap: widget.onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: isActive 
+                    ? const Color(0xFF303366).withOpacity(0.08) 
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isActive ? const Color(0xFF303366).withOpacity(0.1) : Colors.transparent,
+                  width: 1,
                 ),
-                const SizedBox(width: 16),
-                // Texto del item
-                Expanded(
-                  child: Text(
-                    widget.item.title,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: _isPressed ? FontWeight.w700 : FontWeight.w600,
-                      color: _isPressed ? const Color(0xFF303366) : const Color(0xFF334155),
-                      letterSpacing: 0.2,
+                // Subtle slide effect on hover
+                boxShadow: _isHovered && !_isPressed ? [
+                  BoxShadow(
+                    color: const Color(0xFF303366).withOpacity(0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  )
+                ] : [],
+              ),
+              // Apply a small translation when hovered to make it "pop"
+              transform: Matrix4.translationValues(_isHovered && !_isPressed ? 4.0 : 0.0, 0.0, 0.0),
+              child: Row(
+                children: [
+                  // Icono con contenedor estilizado
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isActive 
+                          ? const Color(0xFF303366) 
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: isActive ? [
+                        BoxShadow(
+                          color: const Color(0xFF303366).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        )
+                      ] : [],
+                    ),
+                    child: widget.item.materialIcon != null
+                        ? Icon(
+                            widget.item.materialIcon,
+                            size: 18,
+                            color: isActive ? Colors.white : const Color(0xFF303366),
+                          )
+                        : Text(
+                            widget.item.icon,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Texto del item
+                  Expanded(
+                    child: AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 200),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+                        color: isActive ? const Color(0xFF303366) : const Color(0xFF334155),
+                        letterSpacing: isActive ? 0.5 : 0.2, // slight expansion on hover
+                      ),
+                      child: Text(widget.item.title),
                     ),
                   ),
-                ),
-                // Flecha de indicación
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 18,
-                  color: _isPressed 
-                      ? const Color(0xFF303366) 
-                      : const Color(0xFFCBD5E1),
-                ),
+                  // Chevron icon that appears on hover
+                  AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: _isHovered ? 1.0 : 0.0,
+                    child: AnimatedSlide(
+                      duration: const Duration(milliseconds: 200),
+                      offset: _isHovered ? Offset.zero : const Offset(-0.5, 0),
+                      child: const Icon(
+                        Icons.chevron_right_rounded,
+                        color: Color(0xFF303366),
+                        size: 18,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _LogoutButtonWidget extends StatefulWidget {

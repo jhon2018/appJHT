@@ -11,6 +11,7 @@ import 'package:app_jht_front/features/accessory/data/models/vehiculo_model.dart
 import 'package:app_jht_front/features/accessory/data/models/accesorio_actualizar_dto.dart';
 
 import '../../domain/entities/accesorio_entity.dart';
+import 'package:flutter/foundation.dart';
 
 class AccessoryRepositoryImpl implements AccessoryRepository {
   final AccessoryRemoteDataSource remoteDataSource;
@@ -68,7 +69,7 @@ Future<AccesorioDetalleModel> getDetalleAccesorio(int accId) async {
   @override
   Future<AccesorioEntity> registrarAccesorio(AccesorioRegistroDto dto) async {
     try {
-      print('🔵 Repository: Registrando accesorio');
+      debugPrint('🔵 Repository: Registrando accesorio');
 
       // Llamar al datasource
       final response = await remoteDataSource.insertarAccesorio(dto);
@@ -91,7 +92,7 @@ Future<AccesorioDetalleModel> getDetalleAccesorio(int accId) async {
         tipoAccesorioId: dto.tipoAccesorioId,
       );
     } catch (e) {
-      print('❌ ERROR en repository registrarAccesorio: $e');
+      debugPrint('❌ ERROR en repository registrarAccesorio: $e');
       rethrow;
     }
   }
@@ -99,7 +100,7 @@ Future<AccesorioDetalleModel> getDetalleAccesorio(int accId) async {
  @override
   Future<dynamic> registrarTipoAccesorio(TipoAccesorioRegistroDto dto) async {
     try {
-      print('🔵 Repository: Registrando tipo de accesorio: ${dto.tipoAccesorio.tipVnombre}');
+      debugPrint('🔵 Repository: Registrando tipo de accesorio: ${dto.tipoAccesorio.tipVnombre}');
       
       final response = await remoteDataSource.registrarTipoAccesorio(dto);
       
@@ -109,7 +110,7 @@ Future<AccesorioDetalleModel> getDetalleAccesorio(int accId) async {
       
       return response;
     } catch (e) {
-      print('❌ ERROR en repository registrarTipoAccesorio: $e');
+      debugPrint('❌ ERROR en repository registrarTipoAccesorio: $e');
       rethrow;
     }
   }

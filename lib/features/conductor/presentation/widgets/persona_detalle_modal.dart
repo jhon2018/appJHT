@@ -17,7 +17,7 @@ class PersonaDetalleModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 768;
+    final bool isMobile = MediaQuery.sizeOf(context).width < 768;
 
     return Dialog(
       backgroundColor: Colors.white,
@@ -26,7 +26,7 @@ class PersonaDetalleModal extends StatelessWidget {
       child: Container(
         constraints: BoxConstraints(
           maxWidth: isMobile ? double.infinity : 600,
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
         ),
         child: SingleChildScrollView(
           child: Padding(

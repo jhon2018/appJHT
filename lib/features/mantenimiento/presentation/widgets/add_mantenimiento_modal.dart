@@ -321,24 +321,24 @@ class _ModalBodyState extends State<_ModalBody> {
       foto: _gastoFoto,
     );
 
-    print('\n══ SUBMIT Mantenimiento ════════════════════════════');
-    print('perIid: $perIid | vehIid: ${_vehId} | proIid: ${_provId}');
-    print('km: $km | fecha: $fechaStr');
-    print('Items: ${historicos.length}');
+    debugPrint('\n══ SUBMIT Mantenimiento ════════════════════════════');
+    debugPrint('perIid: $perIid | vehIid: ${_vehId} | proIid: ${_provId}');
+    debugPrint('km: $km | fecha: $fechaStr');
+    debugPrint('Items: ${historicos.length}');
     for (int i = 0; i < historicos.length; i++) {
       final h = historicos[i];
-      print(
+      debugPrint(
         '  [$i] acc=${h.accIid} tipo=${h.dicVtipo} '
         'dic=${h.dicIid} km=${h.hisIproxKilometraje} '
         'foto=${h.foto?.fileName ?? "ninguna"}',
       );
     }
-    print(
+    debugPrint(
       'Gasto: tipo=${gastoRegistro.gasVtipo} '
       'monto=${gastoRegistro.gasBmonto} '
       'moneda=${gastoRegistro.gasVmoneda}',
     );
-    print('════════════════════════════════════════════════════\n');
+    debugPrint('════════════════════════════════════════════════════\n');
 
     context.read<RegistroMantenimientoBloc>().add(
       RegistrarMantenimientoV2Event(
@@ -446,7 +446,7 @@ class _ModalBodyState extends State<_ModalBody> {
   // ══════════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 768;
+    final isMobile = MediaQuery.sizeOf(context).width < 768;
 
     return BlocListener<RegistroMantenimientoBloc, RegistroMantenimientoState>(
       listenWhen: (prev, curr) =>
@@ -454,7 +454,7 @@ class _ModalBodyState extends State<_ModalBody> {
           prev.exitoRegistro != curr.exitoRegistro ||
           prev.errorRegistro != curr.errorRegistro,
       listener: (ctx, state) {
-        print(
+        debugPrint(
           "BlocListener: enviando=${state.enviando} exito=${state.exitoRegistro} error=${state.errorRegistro}",
         );
 
@@ -487,7 +487,7 @@ class _ModalBodyState extends State<_ModalBody> {
     child: ConstrainedBox(
       constraints: BoxConstraints(
         maxWidth: 860,
-        maxHeight: MediaQuery.of(context).size.height * 0.92,
+        maxHeight: MediaQuery.sizeOf(context).height * 0.92,
       ),
       child: Column(
         children: [
@@ -698,7 +698,29 @@ class _ModalBodyState extends State<_ModalBody> {
                       onChanged: (id) => setState(() => _conductorId = id),
                     ),
                   )
-                : const SizedBox.shrink(),
+                : _label(
+                    'Colaborador asignado',
+                    Tooltip(
+                      message: 'El sistema registra este mantenimiento a su nombre automáticamente.',
+                      child: Stack(
+                        children: [
+                          _readonlyField(
+                            datos.conductores
+                                .where((c) => c.id == _perIid)
+                                .map((c) => c.nombreCompleto)
+                                .firstWhere((_) => true, orElse: () => 'Conductor actual'),
+                            'Colaborador',
+                          ),
+                          Positioned(
+                            right: 12,
+                            top: 0,
+                            bottom: 0,
+                            child: Icon(Icons.info_outline, size: 16, color: _textSecondary),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
             right: _label(
               'Seleccionar diccionario',
               _SearchableDropdown<int>(
@@ -855,14 +877,7 @@ class _ModalBodyState extends State<_ModalBody> {
             ),
             right: _label(
               'Código fabrica',
-              _lockableField(
-                value: item.codigoFabrica,
-                hint: 'Código fabrica',
-                unlocked: item.unlockCodigo,
-                onToggleLock: () =>
-                    setState(() => item.unlockCodigo = !item.unlockCodigo),
-                onChanged: (v) => setState(() => item.codigoFabrica = v),
-              ),
+              _readonlyField(item.codigoFabrica, 'Código fabrica'),
             ),
           ),
           const SizedBox(height: 10),
@@ -872,26 +887,11 @@ class _ModalBodyState extends State<_ModalBody> {
             isMobile,
             left: _label(
               'Marca',
-              _lockableField(
-                value: item.marca,
-                hint: 'Marca',
-                unlocked: item.unlockMarca,
-                onToggleLock: () =>
-                    setState(() => item.unlockMarca = !item.unlockMarca),
-                onChanged: (v) => setState(() => item.marca = v),
-              ),
+              _readonlyField(item.marca, 'Marca'),
             ),
             right: _label(
               'Fecha de instalación',
-              _lockableField(
-                value: item.fechaInstalacion,
-                hint: 'Fecha de instalación',
-                unlocked: item.unlockFechaInst,
-                onToggleLock: () => setState(
-                  () => item.unlockFechaInst = !item.unlockFechaInst,
-                ),
-                onChanged: (v) => setState(() => item.fechaInstalacion = v),
-              ),
+              _readonlyField(item.fechaInstalacion, 'Fecha de instalación'),
             ),
           ),
           const SizedBox(height: 10),

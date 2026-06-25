@@ -87,6 +87,10 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
   // ✅ BUG FIX #2: normalizado a MAYÚSCULAS
   String? _estadoValue;
 
+  // Sugerencias de correo
+  final List<String> _dominios = ['gmail.com', 'hotmail.com', 'yahoo.com', 'outlook.com'];
+  bool _mostrarDominios = false;
+
   // Banco select
   String? _bancoSeleccionado;
   bool _bancoEsOtro = false;
@@ -146,7 +150,7 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
 
     for (final tel in p.telefonos) {
       _telControllers.add(TextEditingController(text: tel.numero));
-      _telTipoIds.add(tel.tipoId == 0 ? null : tel.tipoId);
+      _telTipoIds.add(tel.tipoId); // ✅ Keep 0 if it's the fallback
       _telIds.add(tel.telefonoId);
     }
 
@@ -172,6 +176,7 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
         if (mounted) {
           setState(() {
             _tiposTelefono = data.map((e) => TipoTelefonoModel.fromJson(e)).toList();
+            
             _cargandoTipos = false;
           });
         }
@@ -198,7 +203,10 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
   }
 
   void _submitForm() {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      _showSnack('Por favor, revisa los campos en rojo. Faltan datos obligatorios.', isError: true);
+      return;
+    }
     if (_estadoValue == null) {
       _showSnack('Seleccione el estado del proveedor', isError: true);
       return;
@@ -323,17 +331,21 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
   // ── BUILD ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 768;
+    final isMobile = MediaQuery.sizeOf(context).width < 768;
 
     return BlocListener<SupplierBloc, SupplierState>(
       listener: (ctx, state) {
         state.whenOrNull(
           updateSuccess: (response) {
+            if (!mounted) return;
             Navigator.of(ctx).pop();
             _showSnack(response.message);
             widget.onEditComplete();
           },
-          error: (msg) => _showSnack('Error: $msg', isError: true),
+          error: (msg) {
+            if (!mounted) return;
+            _showSnack('Error: $msg', isError: true);
+          },
         );
       },
       child: Dialog(
@@ -346,7 +358,7 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: 680,
-            maxHeight: MediaQuery.of(context).size.height * 0.92,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.92,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -391,13 +403,7 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
                           _field('N° Cuenta *', _numeroCuentaCtrl,
                               keyboard: TextInputType.number,
                               validator: (v) => v!.isEmpty ? 'Requerido' : null),
-                          _field('Correo *', _correoCtrl,
-                              keyboard: TextInputType.emailAddress,
-                              validator: (v) {
-                                if (v!.isEmpty) return 'Requerido';
-                                if (!v.contains('@')) return 'Correo inválido';
-                                return null;
-                              }),
+                          _correoField(),
                         ),
                         _field('Link Ubicación', _ubicacionLinkCtrl),
                         _estadoDropdown(),
@@ -556,10 +562,6 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
                     color: Colors.white, fontSize: 16,
                     fontWeight: FontWeight.w700, letterSpacing: 0.5)),
           ),
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
         ],
       ),
     );
@@ -629,6 +631,69 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
                 borderSide: const BorderSide(color: _kError)),
           ),
         ),
+      ]),
+    );
+  }
+
+  // ── Correo sugerencias ────────────────────────────────────────────────────
+  Widget _correoField() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Correo *',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kPrimary)),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: _correoCtrl,
+          keyboardType: TextInputType.emailAddress,
+          style: const TextStyle(fontSize: 14),
+          onChanged: (v) {
+            setState(() {
+              _mostrarDominios = v.contains('@') && !v.split('@').last.contains('.');
+            });
+          },
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.grey[50],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kBorder)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _kError)),
+          ),
+          validator: (v) {
+            if (v == null || v.isEmpty) return 'Requerido';
+            if (!v.contains('@')) return 'Correo inválido';
+            return null;
+          },
+        ),
+        if (_mostrarDominios) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _dominios.map((d) {
+              return ActionChip(
+                label: Text(d, style: const TextStyle(fontSize: 12, color: _kPrimary, fontWeight: FontWeight.w600)),
+                backgroundColor: _kPrimaryBg,
+                side: BorderSide.none,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                onPressed: () {
+                  final partes = _correoCtrl.text.split('@');
+                  if (partes.isNotEmpty) {
+                    _correoCtrl.text = '${partes[0]}@$d';
+                    _correoCtrl.selection = TextSelection.collapsed(offset: _correoCtrl.text.length);
+                    setState(() => _mostrarDominios = false);
+                  }
+                },
+              );
+            }).toList(),
+          ),
+        ],
       ]),
     );
   }
@@ -720,12 +785,16 @@ class _EditSupplierModalState extends State<EditSupplierModal> {
   }
 
   Widget _tipoDrop(int index) {
+    // Protección contra error de aserción (value not found in items)
+    final val = _telTipoIds[index];
+    final validValue = val == null ? null : (_tiposTelefono.any((t) => t.id == val) ? val : null);
+
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Text('Tipo *',
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kTextSub)),
       const SizedBox(height: 4),
       DropdownButtonFormField<int?>(
-        value: _telTipoIds[index],
+        value: validValue,
         style: const TextStyle(fontSize: 13, color: Color(0xFF212121)),
         decoration: InputDecoration(
           filled: true,

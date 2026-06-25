@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:app_jht_front/features/conductor/data/models/conductor_registro_dto.dart';
 import 'package:app_jht_front/features/conductor/data/models/persona_actualizar_dto.dart';
+import 'package:app_jht_front/features/conductor/data/models/persona_model.dart';
 import 'package:app_jht_front/features/conductor/domain/usecases/registrar_conductor_usecase.dart';
 import 'package:app_jht_front/features/conductor/domain/usecases/listar_personas_usecase.dart';
 import 'package:app_jht_front/features/conductor/domain/usecases/obtener_persona_detalle_usecase.dart';
@@ -17,6 +18,10 @@ class ConductorBloc extends Bloc<ConductorEvent, ConductorState> {
   final ObtenerPersonaDetalleUseCase obtenerPersonaDetalleUseCase;
   final ActualizarPersonaUseCase actualizarPersonaUseCase;
   final ConductorRepository conductorRepository;
+
+  // Cache de la última lista cargada para restaurar la tabla
+  // tras un error de registro sin afectar la visualización.
+  List<PersonaModel>? _lastLoadedPersonas;
 
   ConductorBloc({
     required this.registrarConductorUseCase,
@@ -46,7 +51,14 @@ class ConductorBloc extends Bloc<ConductorEvent, ConductorState> {
       final response = await registrarConductorUseCase.execute(dto);
       emit(ConductorState.success(response: response));
     } catch (e) {
+      // Emitir error para que el BlocListener del modal muestre el diálogo
       emit(ConductorState.error(message: e.toString()));
+
+      // Restaurar la tabla inmediatamente: si la lista estaba cargada,
+      // re-emitirla para que el BlocBuilder de la tabla no quede en estado error.
+      if (_lastLoadedPersonas != null) {
+        emit(ConductorState.personasCargadas(personas: _lastLoadedPersonas!));
+      }
     }
   }
 
@@ -57,6 +69,7 @@ class ConductorBloc extends Bloc<ConductorEvent, ConductorState> {
     
     try {
       final response = await listarPersonasUseCase.execute();
+      _lastLoadedPersonas = response.data;
       emit(ConductorState.personasCargadas(personas: response.data));
     } catch (e) {
       emit(ConductorState.error(message: e.toString()));
@@ -104,4 +117,4 @@ Future<void> _onCargarTiposTelefono(Emitter<ConductorState> emit) async {
     }
   }
 
-}
+}

@@ -283,7 +283,7 @@ class _AddVehicleModalState extends State<AddVehicleModal> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.sizeOf(context).width;
     final bool isMobile = screenWidth < 768;
     final bool isTablet = screenWidth >= 768 && screenWidth < 1200;
 
@@ -291,15 +291,15 @@ class _AddVehicleModalState extends State<AddVehicleModal> {
       listener: (context, state) {
         state.whenOrNull(
           registroExitoso: (response) {
-            Navigator.of(context).pop();
-            widget.onVehicleAdded
-                ?.call(); // ← notifica a vehicle_page para recargar
+            if (!mounted) return;
+            Navigator.of(context).pop(); // cierra el modal
             AppNotification.success(context, response.message);
           },
           error: (message) {
+            if (!mounted) return;
             showDialog(
               context: context,
-              builder: (context) => AlertDialog(
+              builder: (ctx) => AlertDialog(
                 backgroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -347,7 +347,7 @@ class _AddVehicleModalState extends State<AddVehicleModal> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => Navigator.of(ctx).pop(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
                         foregroundColor: Colors.white,
@@ -369,9 +369,7 @@ class _AddVehicleModalState extends State<AddVehicleModal> {
           },
         );
       },
-      child: PopScope(
-        canPop: false,
-        child: Dialog(
+      child: Dialog(
           backgroundColor: Colors.white,
           insetPadding: EdgeInsets.symmetric(
             horizontal: isMobile
@@ -387,7 +385,7 @@ class _AddVehicleModalState extends State<AddVehicleModal> {
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: isMobile ? double.infinity : 900,
-              maxHeight: MediaQuery.of(context).size.height * 0.92,
+              maxHeight: MediaQuery.sizeOf(context).height * 0.92,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -408,7 +406,6 @@ class _AddVehicleModalState extends State<AddVehicleModal> {
             ),
           ),
         ),
-      ),
     );
   }
 
@@ -1427,7 +1424,7 @@ class _AddVehicleModalState extends State<AddVehicleModal> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: (MediaQuery.of(context).size.width - 160 - 32) / 3,
+            width: (MediaQuery.sizeOf(context).width - 160 - 32) / 3,
             child: _estadoDropdownContent(),
           ),
         ],

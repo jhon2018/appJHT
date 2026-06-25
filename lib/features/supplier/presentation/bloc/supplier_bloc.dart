@@ -12,6 +12,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'package:app_jht_front/features/supplier/domain/usecases/registrar_supplier_usecase.dart';
 import 'package:app_jht_front/features/supplier/data/models/supplier_registro_dto.dart';
+import 'package:flutter/foundation.dart';
 
 part 'supplier_event.dart';
 part 'supplier_state.dart';
@@ -34,7 +35,7 @@ final ActualizarSupplierUseCase actualizarSupplierUseCase;
     on<_ListarProveedores>(_onListarProveedores);
     on<_ObtenerDetalleProveedor>(_onObtenerDetalleProveedor);
     on<_ActualizarProveedor>(_onActualizarProveedor);
-      print('🔵 [DEBUG] SupplierBloc - Eventos registrados');
+      debugPrint('🔵 [DEBUG] SupplierBloc - Eventos registrados');
   }
 
   Future<void> _onRegistrarProveedor(
@@ -83,15 +84,15 @@ final ActualizarSupplierUseCase actualizarSupplierUseCase;
     _ActualizarProveedor event,
     Emitter<SupplierState> emit,
   ) async {
-      print('🔵 [DEBUG] _onActualizarProveedor - INICIO');
+      debugPrint('🔵 [DEBUG] _onActualizarProveedor - INICIO');
     emit(const SupplierState.loading());
     
     try {
       final response = await actualizarSupplierUseCase.execute(event.dto);
-       print('🟢 [DEBUG] Actualización exitosa: ${response.message}');
+       debugPrint('🟢 [DEBUG] Actualización exitosa: ${response.message}');
       emit(SupplierState.updateSuccess(response: response));
     } catch (e) {
-      print('❌ [DEBUG] Error en actualización: $e');
+      debugPrint('❌ [DEBUG] Error en actualización: $e');
       emit(SupplierState.error(message: e.toString()));
     }
   }

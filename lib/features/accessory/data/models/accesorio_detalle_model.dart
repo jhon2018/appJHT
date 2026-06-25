@@ -14,6 +14,7 @@ class AccesorioDetalleModel {
   final String tipoNombre;
   final String tipoDescripcion;
   final String marca; // Asumo que viene o se usa la del tipo, pero agregaré campo si falta en JSON
+  final int? segmentoId; // API27 devuelve este campo — usado para pre-seleccionar el dropdown Segmento
   
   AccesorioDetalleModel({
     required this.accesorioId,
@@ -30,6 +31,7 @@ class AccesorioDetalleModel {
     required this.tipoNombre,
     required this.tipoDescripcion,
     this.marca = '', // Valor por defecto si no viene
+    this.segmentoId,  // nullable — viene de API27
   });
 
   factory AccesorioDetalleModel.fromJson(Map<String, dynamic> json) {
@@ -47,8 +49,7 @@ class AccesorioDetalleModel {
       tipoId: json['tipoId'] ?? 0,
       tipoNombre: json['tipoNombre'] ?? '',
       tipoDescripcion: json['tipoDescripcion'] ?? '',
+      segmentoId: json['segmentoId'],  // ← nuevo campo de API27
     );
   }
-
-  get segmentoNombre => null;
 }

@@ -4,14 +4,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_jht_front/features/vehicle/data/models/vehicle_update_dto.dart';
 import 'package:app_jht_front/features/vehicle/domain/entities/vehicle_entity.dart';
 import 'package:app_jht_front/features/vehicle/presentation/bloc/vehicle_bloc.dart';
+import 'package:app_jht_front/features/vehicle/presentation/widgets/vehicle_form_data.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
 
 class EditVehicleModal extends StatefulWidget {
   final VehicleEntity vehicle;
+  final List<String> existingPlates;
 
   const EditVehicleModal({
     super.key,
     required this.vehicle,
+    this.existingPlates = const [],
   });
 
   @override
@@ -43,6 +47,11 @@ class _EditVehicleModalState extends State<EditVehicleModal> {
   DateTime? _fechaVencimientoTUC;
   String _selectedEstado = 'ACTIVO';
 
+  // Marca seleccionada para filtrar modelos
+  String? _marcaSeleccionada;
+  // Validación placa duplicada
+  bool _placaDuplicada = false;
+
   static const _primaryColor = Color(0xFF303366);
 
   @override
@@ -70,8 +79,24 @@ class _EditVehicleModalState extends State<EditVehicleModal> {
     _fechaFabricacion = v.fechaFabricacion;
     _fechaHabilitacionTUC = v.fechaHabilitacionTUC;
     _fechaVencimientoTUC = v.fechaVencimientoTUC;
-_selectedEstado = v.estado == 'ACTIVO' || v.estado == 'Activo' ? 'Activo' : 'Inactivo';
- }
+    _selectedEstado = v.estado == 'ACTIVO' || v.estado == 'Activo' ? 'Activo' : 'Inactivo';
+
+    // Inicializar marca seleccionada para que Modelo cargue la lista correcta
+    _marcaSeleccionada = v.marca;
+
+    // Listener para validar placa duplicada
+    _placaController.addListener(_checkPlacaDuplicada);
+  }
+
+  void _checkPlacaDuplicada() {
+    final placa = _placaController.text.toUpperCase().trim();
+    final placaOriginal = widget.vehicle.placa.toUpperCase().trim();
+    // Es duplicada si: no está vacía, es diferente a la placa original, y existe en la BD
+    final isDup = placa.isNotEmpty &&
+        placa != placaOriginal &&
+        widget.existingPlates.any((p) => p.toUpperCase().trim() == placa);
+    if (isDup != _placaDuplicada) setState(() => _placaDuplicada = isDup);
+  }
   @override
   void dispose() {
     _placaController.dispose();
@@ -171,6 +196,23 @@ _selectedEstado = v.estado == 'ACTIVO' || v.estado == 'Activo' ? 'Activo' : 'Ina
   }
 
   void _submitForm() {
+    if (_placaDuplicada) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade700,
+          content: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 10),
+              Text('La placa ya está registrada en el sistema.',
+                  style: TextStyle(color: Colors.white)),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
 
     showDialog(
@@ -250,7 +292,7 @@ _selectedEstado = v.estado == 'ACTIVO' || v.estado == 'Activo' ? 'Activo' : 'Ina
       estado: _selectedEstado,
     );
 
-    print('🔵 Dispatching actualizarVehiculo — id: ${dto.vehiculoId}');
+    debugPrint('🔵 Dispatching actualizarVehiculo — id: ${dto.vehiculoId}');
     context.read<VehicleBloc>().add(VehicleEvent.actualizarVehiculo(dto: dto));
     
   }
@@ -259,7 +301,7 @@ _selectedEstado = v.estado == 'ACTIVO' || v.estado == 'Activo' ? 'Activo' : 'Ina
 
 @override
 Widget build(BuildContext context) {
-  final isMobile = MediaQuery.of(context).size.width < 768;
+  final isMobile = MediaQuery.sizeOf(context).width < 768;
 
   return BlocListener<VehicleBloc, VehicleState>(
     listener: (context, state) {
@@ -319,7 +361,7 @@ Widget build(BuildContext context) {
         child: Container(
           constraints: BoxConstraints(
             maxWidth: isMobile ? double.infinity : 680,
-            maxHeight: MediaQuery.of(context).size.height * 0.92,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.92,
           ),
           child: Column(
             children: [
@@ -416,7 +458,7 @@ Widget build(BuildContext context) {
                         text: 'GUARDAR',
                         bg: _primaryColor,
                         fg: Colors.white,
-                        onTap: _submitForm,
+                        onTap: _placaDuplicada ? null : _submitForm,
                       ),
               ),
             ],
@@ -454,9 +496,9 @@ Widget build(BuildContext context) {
   }
 
   List<Widget> _allFields() => [
-        _textField('Placa', _placaController, required: true),
-        _textField('Marca', _marcaController, required: true),
-        _textField('Modelo', _modeloController, required: true),
+        _buildPlacaField(),
+        _buildMarcaAutocomplete(),
+        _buildModeloAutocomplete(),
         _textField('Número VIN', _numeroVinController, required: true),
         _textField('Color', _colorController, required: true),
         _textField('Tipo', _tipoController, required: true),
@@ -589,6 +631,246 @@ Widget build(BuildContext context) {
   }
 
   // ── micro helpers ─────────────────────────────────────────────────────────
+
+  /// Campo Placa con validación de duplicado
+  Widget _buildPlacaField() {
+    return _fieldWrapper(
+      'Placa *',
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextFormField(
+            controller: _placaController,
+            decoration: _inputDeco('Placa').copyWith(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: _placaDuplicada ? Colors.red : Colors.grey[400]!,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: _placaDuplicada ? Colors.red : Colors.grey[400]!,
+                  width: _placaDuplicada ? 1.5 : 1.0,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: _placaDuplicada ? Colors.red : _primaryColor,
+                  width: 1.5,
+                ),
+              ),
+            ),
+            validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+          ),
+          if (_placaDuplicada)
+            Container(
+              margin: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFDECEC),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFF5C6CB)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Color(0xFFC62828), size: 16),
+                  SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '⚠ Esta placa ya está registrada en el sistema',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFC62828),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Campo Marca con Autocomplete
+  Widget _buildMarcaAutocomplete() {
+    return _fieldWrapper(
+      'Marca *',
+      Autocomplete<String>(
+        initialValue: TextEditingValue(text: _marcaController.text),
+        optionsBuilder: (TextEditingValue textEditingValue) {
+          if (textEditingValue.text.isEmpty) return kMarcasVehiculo;
+          final query = textEditingValue.text.toLowerCase();
+          return kMarcasVehiculo.where((m) => m.toLowerCase().contains(query));
+        },
+        onSelected: (String selection) {
+          _marcaController.text = selection;
+          setState(() {
+            _marcaSeleccionada = selection;
+            _modeloController.clear();
+          });
+        },
+        fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+          textController.addListener(() {
+            if (_marcaController.text != textController.text) {
+              _marcaController.text = textController.text;
+              // Actualizar marca seleccionada al escribir
+              final typed = textController.text.trim();
+              if (kMarcasVehiculo.contains(typed) && _marcaSeleccionada != typed) {
+                setState(() => _marcaSeleccionada = typed);
+              }
+            }
+          });
+          return TextFormField(
+            controller: textController,
+            focusNode: focusNode,
+            validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+            style: const TextStyle(fontSize: 14),
+            decoration: _inputDeco('Buscar marca...').copyWith(
+              prefixIcon: const Padding(
+                padding: EdgeInsets.only(left: 10, right: 6),
+                child: Icon(Icons.search, size: 18, color: Color(0xFF9CA3AF)),
+              ),
+              prefixIconConstraints: const BoxConstraints(minWidth: 34, minHeight: 0),
+              suffixIcon: const Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: Icon(Icons.arrow_drop_down, size: 22, color: Color(0xFF6B7280)),
+              ),
+              suffixIconConstraints: const BoxConstraints(minWidth: 30, minHeight: 0),
+            ),
+          );
+        },
+        optionsViewBuilder: (context, onSelected, options) {
+          return Align(
+            alignment: Alignment.topLeft,
+            child: Material(
+              elevation: 6,
+              shadowColor: Colors.black26,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                constraints: const BoxConstraints(maxHeight: 220, maxWidth: 300),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (context, index) {
+                    final option = options.elementAt(index);
+                    return InkWell(
+                      onTap: () => onSelected(option),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        child: Row(children: [
+                          const Icon(Icons.directions_car_outlined, size: 16, color: Color(0xFF6B7280)),
+                          const SizedBox(width: 10),
+                          Text(option, style: const TextStyle(fontSize: 13, color: Color(0xFF1F2937))),
+                        ]),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Campo Modelo dependiente de la Marca seleccionada
+  Widget _buildModeloAutocomplete() {
+    final modelos = kModelosPorMarca[_marcaSeleccionada] ?? [];
+
+    // Si no hay modelos para la marca, mostrar TextFormField normal
+    if (modelos.isEmpty) {
+      return _textField('Modelo', _modeloController, required: true);
+    }
+
+    return _fieldWrapper(
+      'Modelo *',
+      Autocomplete<String>(
+        initialValue: TextEditingValue(text: _modeloController.text),
+        optionsBuilder: (TextEditingValue textEditingValue) {
+          if (textEditingValue.text.isEmpty) return modelos;
+          final query = textEditingValue.text.toLowerCase();
+          return modelos.where((m) => m.toLowerCase().contains(query));
+        },
+        onSelected: (String selection) {
+          _modeloController.text = selection;
+        },
+        fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+          textController.addListener(() {
+            if (_modeloController.text != textController.text) {
+              _modeloController.text = textController.text;
+            }
+          });
+          return TextFormField(
+            controller: textController,
+            focusNode: focusNode,
+            validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+            style: const TextStyle(fontSize: 14),
+            decoration: _inputDeco('Buscar modelo...').copyWith(
+              prefixIcon: const Padding(
+                padding: EdgeInsets.only(left: 10, right: 6),
+                child: Icon(Icons.search, size: 18, color: Color(0xFF9CA3AF)),
+              ),
+              prefixIconConstraints: const BoxConstraints(minWidth: 34, minHeight: 0),
+              suffixIcon: const Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: Icon(Icons.arrow_drop_down, size: 22, color: Color(0xFF6B7280)),
+              ),
+              suffixIconConstraints: const BoxConstraints(minWidth: 30, minHeight: 0),
+            ),
+          );
+        },
+        optionsViewBuilder: (context, onSelected, options) {
+          return Align(
+            alignment: Alignment.topLeft,
+            child: Material(
+              elevation: 6,
+              shadowColor: Colors.black26,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                constraints: const BoxConstraints(maxHeight: 220, maxWidth: 300),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (context, index) {
+                    final option = options.elementAt(index);
+                    return InkWell(
+                      onTap: () => onSelected(option),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        child: Row(children: [
+                          const Icon(Icons.model_training, size: 16, color: Color(0xFF6B7280)),
+                          const SizedBox(width: 10),
+                          Text(option, style: const TextStyle(fontSize: 13, color: Color(0xFF1F2937))),
+                        ]),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   Widget _fieldWrapper(String label, Widget child) {
     return Padding(

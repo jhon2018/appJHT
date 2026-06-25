@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:app_jht_front/features/shared/presentation/widgets/scaffold_with_menu.dart';
 
 class HelpPage extends StatelessWidget {
   final String userName;
@@ -32,6 +33,8 @@ class HelpPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width < 768;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -42,13 +45,18 @@ class HelpPage extends StatelessWidget {
         backgroundColor: primaryColor,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: isMobile
+            ? IconButton(
+                icon: const Icon(
+                  Icons.menu_rounded,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  context.findAncestorStateOfType<ScaffoldWithMenuState>()?.openMobileMenu();
+                },
+              )
+            : null,
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -457,10 +465,6 @@ class HelpPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        Text(
-          '© 2026 JHT System. Todos los derechos reservados.',
-          style: TextStyle(fontSize: 10, color: Colors.grey[400]),
-        ),
         const SizedBox(height: 20),
       ],
     );
