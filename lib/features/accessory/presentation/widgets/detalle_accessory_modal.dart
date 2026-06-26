@@ -25,7 +25,7 @@ void showDetalleAccesorioModal(
 
   final bool alertaDias = diasTranscurridos > 15;
   final bool alertaKm = kmRecorridos > 500;
-  final bool alertaMantenimiento = diasParaMantenimiento != null && diasParaMantenimiento <= 45; // Mostrar si faltan 45 días o menos, o si ya pasó
+  final bool alertaMantenimiento = diasParaMantenimiento != null && diasParaMantenimiento < 0; // Mostrar si ya pasó la fecha de mantenimiento
   
   final bool mostrarAlerta = alertaDias || alertaKm || alertaMantenimiento;
 
@@ -122,6 +122,14 @@ void showDetalleAccesorioModal(
                         ? Colors.green.shade700 : Colors.orange.shade800,
                     isMobile,
                   ),
+
+                  if (proximaFechaMantenimiento != null && proximaFechaMantenimiento.isNotEmpty)
+                    _buildDetailRowMantenimiento(
+                      'Próximo mantenimiento',
+                      proximaFechaMantenimiento,
+                      diasParaMantenimiento,
+                      isMobile: isMobile,
+                    ),
 
                   const SizedBox(height: 24),
 
@@ -318,6 +326,70 @@ Widget _buildDetailRowKm(
                 Text(
                   '(+$kmDiferencia km recorridos)',
                   style: TextStyle(fontSize: isMobile ? 12 : 13, color: color ?? Colors.grey.shade700),
+                ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildDetailRowMantenimiento(
+  String label,
+  String fechaStr,
+  int? diasParaMantenimiento, {
+  required bool isMobile,
+}) {
+  DateTime? fecha;
+  try {
+    fecha = DateTime.parse(fechaStr);
+  } catch (_) {}
+
+  final formato = DateFormat('dd/MM/yyyy');
+  final valorMostrar = fecha != null ? formato.format(fecha) : fechaStr;
+  
+  String calculoText = '';
+  Color? colorCalculo;
+
+  if (diasParaMantenimiento != null) {
+    if (diasParaMantenimiento > 0) {
+      calculoText = '(Faltan $diasParaMantenimiento días)';
+      colorCalculo = diasParaMantenimiento <= 45 ? Colors.orange.shade800 : Colors.green.shade700;
+    } else if (diasParaMantenimiento == 0) {
+      calculoText = '(Hoy es el mantenimiento)';
+      colorCalculo = Colors.red.shade700;
+    } else {
+      calculoText = '(Venció hace ${diasParaMantenimiento.abs()} días)';
+      colorCalculo = Colors.red.shade700;
+    }
+  }
+
+  return Padding(
+    padding: EdgeInsets.symmetric(vertical: isMobile ? 8 : 10),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: isMobile ? 130 : 160,
+          child: Text(label, style: TextStyle(fontSize: isMobile ? 13 : 14, color: Colors.grey)),
+        ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                valorMostrar,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+              ),
+              if (calculoText.isNotEmpty)
+                Text(
+                  calculoText,
+                  style: TextStyle(
+                    fontSize: isMobile ? 12 : 13,
+                    color: colorCalculo,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
             ],
           ),

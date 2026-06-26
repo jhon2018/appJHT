@@ -27,6 +27,18 @@ whoami
 git config --global user.name
 git config --global user.email
 
+Opción 1 (La más estándar para tareas de configuración):
+bash
+git checkout -b chore/render-static-deploy
+
+Opción 2 (Si lo ves como una prueba de infraestructura):
+bash
+git checkout -b devops/static-site-test
+
+Opción 3 (Si será tu rama para pre-producción general):
+bash
+git checkout -b release/staging
+
 ## FRONT PLANTILLAS
 -- MOVIL LOGIN ---
 https://www.figma.com/design/8JToHlfCggOXy8gmDc0Cj2/Simple-Login-%E2%9C%A8--Community-?node-id=0-1&p=f&t=Q2Pyobv6QMaZ99uF-0
