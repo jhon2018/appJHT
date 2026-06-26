@@ -274,15 +274,6 @@ class SideMenu extends StatelessWidget {
             onClose();
             _showLogoutConfirmation(context);
           }),
-          const SizedBox(height: 12),
-          Text(
-            'v1.2.0 • JHT System',
-            style: TextStyle(
-              fontSize: 10,
-              color: Colors.grey[400],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
         ],
       ),
     );

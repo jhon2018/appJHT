@@ -124,9 +124,15 @@ class MyApp extends StatelessWidget {
           fontFamily: 'Inter',
         ),
         builder: (context, child) {
-          // Envolvemos toda la app en SelectionArea para permitir la selección de texto
-          return SelectionArea(
-            child: child ?? const SizedBox.shrink(),
+          // Envolvemos en un Overlay para que SelectionArea encuentre un ancestro Overlay
+          return Overlay(
+            initialEntries: [
+              OverlayEntry(
+                builder: (context) => SelectionArea(
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              ),
+            ],
           );
         },
         routeInformationProvider: appRouter.routeInformationProvider,
