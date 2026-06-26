@@ -3,6 +3,7 @@
 import 'package:app_jht_front/features/shared/presentation/mixins/dashboard_responsive_mixin.dart';
 import 'package:app_jht_front/features/shared/presentation/pages/base_dashboard.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:app_jht_front/features/home/data/datasources/dashboard_service.dart';
 import 'package:app_jht_front/features/home/presentation/widgets/download_report_modal.dart';
 import 'dart:ui';
@@ -27,6 +28,7 @@ class _AdminDashboardState extends State<AdminDashboard>
   bool _isLoading = true;
   Map<String, dynamic>? _dashboardData;
   late AnimationController _animController;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
@@ -36,16 +38,22 @@ class _AdminDashboardState extends State<AdminDashboard>
       duration: const Duration(milliseconds: 800),
     );
     _loadData();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      _loadData(isSilent: true);
+    });
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _animController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadData({bool isSilent = false}) async {
+    if (!isSilent) {
+      setState(() => _isLoading = true);
+    }
     try {
       final data = await _dashboardService.getDashboardData();
       if (mounted) {
@@ -53,7 +61,9 @@ class _AdminDashboardState extends State<AdminDashboard>
           _dashboardData = data;
           _isLoading = false;
         });
-        _animController.forward(from: 0.0);
+        if (!isSilent) {
+          _animController.forward(from: 0.0);
+        }
       }
     } catch (e) {
       debugPrint('Error al cargar datos del dashboard: $e');
