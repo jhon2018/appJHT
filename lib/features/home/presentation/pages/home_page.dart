@@ -164,7 +164,7 @@ class _HomePageState extends State<HomePage> {
           isAlert: (_dashboardData?['mantenimientosCount'] ?? 0) > 0,
         ),
         _buildKPICard(
-          title: 'Conductores',
+          title: 'Colaborador',
           value: '${_dashboardData?['conductores'] ?? 0}',
           subtitle: 'Registrados',
           icon: Icons.badge_rounded,

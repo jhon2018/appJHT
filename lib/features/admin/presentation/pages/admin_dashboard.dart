@@ -246,7 +246,7 @@ class _AdminDashboardState extends State<AdminDashboard>
         ),
         _buildAnimatedStatCard(
           1,
-          title: 'Conductores',
+          title: 'Colaborador',
           value: '$conductoresCount',
           subtitle: 'Personal activo',
           icon: Icons.badge_rounded,
