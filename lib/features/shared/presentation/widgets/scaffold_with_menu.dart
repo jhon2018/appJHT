@@ -1,4 +1,5 @@
 // lib/features/shared/presentation/widgets/scaffold_with_menu.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
 import 'side_menu.dart';
@@ -20,6 +21,16 @@ class ScaffoldWithMenuState extends State<ScaffoldWithMenu> {
   bool _isLoading = true;
   bool _isMenuVisible = true; // <-- Control visibility for Desktop
 
+  // Variables para la detección de inactividad
+  Timer? _inactivityTimer;
+  Timer? _countdownTimer;
+  final ValueNotifier<int> _secondsRemaining = ValueNotifier<int>(120);
+  bool _isShowingTimeoutDialog = false;
+  final FocusNode _focusNode = FocusNode();
+  
+  static const Duration _inactivityDuration = Duration(minutes: 5);
+  static const int _alertDurationSeconds = 120;
+
   bool get isMenuVisible => _isMenuVisible;
 
   void toggleMenu() {
@@ -38,6 +49,133 @@ class ScaffoldWithMenuState extends State<ScaffoldWithMenu> {
   void initState() {
     super.initState();
     _loadUserData();
+    _resetInactivityTimer();
+  }
+
+  @override
+  void dispose() {
+    _inactivityTimer?.cancel();
+    _countdownTimer?.cancel();
+    _secondsRemaining.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _handleUserActivity() {
+    if (_isShowingTimeoutDialog) return;
+    _resetInactivityTimer();
+  }
+
+  void _resetInactivityTimer() {
+    _inactivityTimer?.cancel();
+    _inactivityTimer = Timer(_inactivityDuration, _showTimeoutDialog);
+  }
+
+  void _showTimeoutDialog() {
+    if (_isShowingTimeoutDialog) return;
+    _isShowingTimeoutDialog = true;
+    _secondsRemaining.value = _alertDurationSeconds;
+
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_secondsRemaining.value <= 1) {
+        timer.cancel();
+        _isShowingTimeoutDialog = false;
+        Navigator.of(context, rootNavigator: true).pop(); // Cerrar diálogo
+        _performRealLogout(context); // Cerrar sesión
+      } else {
+        _secondsRemaining.value--;
+      }
+    });
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.amber[50],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.security_update_warning_rounded, color: Colors.amber[800], size: 24),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                '¿Sigues ahí?',
+                style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1E293B)),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Detectamos inactividad en tu cuenta.',
+                style: TextStyle(color: Color(0xFF334155), fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              ValueListenableBuilder<int>(
+                valueListenable: _secondsRemaining,
+                builder: (context, value, child) {
+                  return RichText(
+                    text: TextSpan(
+                      style: const TextStyle(color: Color(0xFF64748B), height: 1.5, fontSize: 13),
+                      children: [
+                        const TextSpan(text: 'Tu sesión se cerrará automáticamente en '),
+                        TextSpan(
+                          text: '$value segundos',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEF4444)),
+                        ),
+                        const TextSpan(text: ' debido al protocolo de seguridad de JHT.'),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _countdownTimer?.cancel();
+                _isShowingTimeoutDialog = false;
+                Navigator.of(context).pop();
+                _performRealLogout(context);
+              },
+              child: Text(
+                'CERRAR SESIÓN AHORA',
+                style: TextStyle(color: Colors.red[700], fontWeight: FontWeight.w700, fontSize: 11),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF303366),
+                foregroundColor: Colors.white,
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              onPressed: () {
+                _countdownTimer?.cancel();
+                _isShowingTimeoutDialog = false;
+                Navigator.of(context).pop();
+                _resetInactivityTimer();
+              },
+              child: const Text('SEGUIR CONECTADO', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _loadUserData() async {
@@ -77,68 +215,82 @@ class ScaffoldWithMenuState extends State<ScaffoldWithMenu> {
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        bool isDesktop = constraints.maxWidth > 800;
-
-        return Scaffold(
-          key: _scaffoldKey,
-          drawer: !isDesktop
-              ? Drawer(
-                  child: SideMenu(
-                    userName: _userName,
-                    userRole: _userRole,
-                    onClose: () => Navigator.pop(context),
-                    onItemSelected: _onMenuItemSelected,
-                  ),
-                )
-              : null,
-          body: Row(
-            children: [
-              // ── Menú lateral completo (Desktop, visible) ──
-              if (isDesktop && _isMenuVisible)
-                SideMenu(
-                  userName: _userName,
-                  userRole: _userRole,
-                  onClose: () => setState(() => _isMenuVisible = false),
-                  onItemSelected: _onMenuItemSelected,
-                ),
-
-              // ── Mini rail (Desktop, menú oculto) ──
-              if (isDesktop && !_isMenuVisible)
-                _buildMiniRail(MenuUtil.toMenuItemList(_userRole)),
-
-              // ── Contenido principal ──
-              Expanded(
-                child: Column(
-                  children: [
-                    Expanded(child: widget.child),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border(
-                          top: BorderSide(color: Colors.grey.shade300, width: 1.0),
-                        ),
-                      ),
-                      child: const Text(
-                        '© 2026 JHT Transport Company · Todos los derechos reservados.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Color(0xFF888888),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
+    return Focus(
+      autofocus: true,
+      focusNode: _focusNode,
+      onKeyEvent: (node, event) {
+        _handleUserActivity();
+        return KeyEventResult.ignored;
       },
+      child: Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: (_) => _handleUserActivity(),
+        onPointerHover: (_) => _handleUserActivity(),
+        onPointerMove: (_) => _handleUserActivity(),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            bool isDesktop = constraints.maxWidth > 800;
+
+            return Scaffold(
+              key: _scaffoldKey,
+              drawer: !isDesktop
+                  ? Drawer(
+                      child: SideMenu(
+                        userName: _userName,
+                        userRole: _userRole,
+                        onClose: () => Navigator.pop(context),
+                        onItemSelected: _onMenuItemSelected,
+                      ),
+                    )
+                  : null,
+              body: Row(
+                children: [
+                  // ── Menú lateral completo (Desktop, visible) ──
+                  if (isDesktop && _isMenuVisible)
+                    SideMenu(
+                      userName: _userName,
+                      userRole: _userRole,
+                      onClose: () => setState(() => _isMenuVisible = false),
+                      onItemSelected: _onMenuItemSelected,
+                    ),
+
+                  // ── Mini rail (Desktop, menú oculto) ──
+                  if (isDesktop && !_isMenuVisible)
+                    _buildMiniRail(MenuUtil.toMenuItemList(_userRole)),
+
+                  // ── Contenido principal ──
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Expanded(child: widget.child),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border(
+                              top: BorderSide(color: Colors.grey.shade300, width: 1.0),
+                            ),
+                          ),
+                          child: const Text(
+                            '© 2026 JHT Transport Company · Todos los derechos reservados.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Color(0xFF888888),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 
