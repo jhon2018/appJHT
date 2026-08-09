@@ -123,15 +123,25 @@ class __$$RegistrarProveedorImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$RegistrarProveedorImpl implements _RegistrarProveedor {
+class _$RegistrarProveedorImpl
+    with DiagnosticableTreeMixin
+    implements _RegistrarProveedor {
   const _$RegistrarProveedorImpl({required this.dto});
 
   @override
   final SupplierRegistroDto dto;
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'SupplierEvent.registrarProveedor(dto: $dto)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'SupplierEvent.registrarProveedor'))
+      ..add(DiagnosticsProperty('dto', dto));
   }
 
   @override
@@ -268,12 +278,21 @@ class __$$ListarProveedoresImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$ListarProveedoresImpl implements _ListarProveedores {
+class _$ListarProveedoresImpl
+    with DiagnosticableTreeMixin
+    implements _ListarProveedores {
   const _$ListarProveedoresImpl();
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'SupplierEvent.listarProveedores()';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'SupplierEvent.listarProveedores'));
   }
 
   @override
@@ -402,15 +421,27 @@ class __$$ObtenerDetalleProveedorImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$ObtenerDetalleProveedorImpl implements _ObtenerDetalleProveedor {
+class _$ObtenerDetalleProveedorImpl
+    with DiagnosticableTreeMixin
+    implements _ObtenerDetalleProveedor {
   const _$ObtenerDetalleProveedorImpl({required this.proveedorId});
 
   @override
   final int proveedorId;
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'SupplierEvent.obtenerDetalleProveedor(proveedorId: $proveedorId)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(
+        DiagnosticsProperty('type', 'SupplierEvent.obtenerDetalleProveedor'),
+      )
+      ..add(DiagnosticsProperty('proveedorId', proveedorId));
   }
 
   @override
@@ -562,15 +593,25 @@ class __$$ActualizarProveedorImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$ActualizarProveedorImpl implements _ActualizarProveedor {
+class _$ActualizarProveedorImpl
+    with DiagnosticableTreeMixin
+    implements _ActualizarProveedor {
   const _$ActualizarProveedorImpl({required this.dto});
 
   @override
   final SupplierActualizarDto dto;
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'SupplierEvent.actualizarProveedor(dto: $dto)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'SupplierEvent.actualizarProveedor'))
+      ..add(DiagnosticsProperty('dto', dto));
   }
 
   @override
@@ -797,12 +838,18 @@ class __$$InitialImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$InitialImpl implements _Initial {
+class _$InitialImpl with DiagnosticableTreeMixin implements _Initial {
   const _$InitialImpl();
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'SupplierState.initial()';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties..add(DiagnosticsProperty('type', 'SupplierState.initial'));
   }
 
   @override
@@ -935,12 +982,18 @@ class __$$LoadingImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$LoadingImpl implements _Loading {
+class _$LoadingImpl with DiagnosticableTreeMixin implements _Loading {
   const _$LoadingImpl();
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'SupplierState.loading()';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties..add(DiagnosticsProperty('type', 'SupplierState.loading'));
   }
 
   @override
@@ -1087,15 +1140,23 @@ class __$$SuccessImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$SuccessImpl implements _Success {
+class _$SuccessImpl with DiagnosticableTreeMixin implements _Success {
   const _$SuccessImpl({required this.response});
 
   @override
   final SupplierRegistroResponse response;
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'SupplierState.success(response: $response)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'SupplierState.success'))
+      ..add(DiagnosticsProperty('response', response));
   }
 
   @override
@@ -1262,15 +1323,23 @@ class __$$ListLoadedImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$ListLoadedImpl implements _ListLoaded {
+class _$ListLoadedImpl with DiagnosticableTreeMixin implements _ListLoaded {
   const _$ListLoadedImpl({required this.response});
 
   @override
   final SupplierListResponse response;
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'SupplierState.listLoaded(response: $response)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'SupplierState.listLoaded'))
+      ..add(DiagnosticsProperty('response', response));
   }
 
   @override
@@ -1437,15 +1506,23 @@ class __$$DetailLoadedImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$DetailLoadedImpl implements _DetailLoaded {
+class _$DetailLoadedImpl with DiagnosticableTreeMixin implements _DetailLoaded {
   const _$DetailLoadedImpl({required this.response});
 
   @override
   final SupplierDetailResponse response;
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'SupplierState.detailLoaded(response: $response)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'SupplierState.detailLoaded'))
+      ..add(DiagnosticsProperty('response', response));
   }
 
   @override
@@ -1613,15 +1690,25 @@ class __$$UpdateSuccessImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$UpdateSuccessImpl implements _UpdateSuccess {
+class _$UpdateSuccessImpl
+    with DiagnosticableTreeMixin
+    implements _UpdateSuccess {
   const _$UpdateSuccessImpl({required this.response});
 
   @override
   final SupplierActualizarResponse response;
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'SupplierState.updateSuccess(response: $response)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'SupplierState.updateSuccess'))
+      ..add(DiagnosticsProperty('response', response));
   }
 
   @override
@@ -1789,15 +1876,23 @@ class __$$ErrorImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$ErrorImpl implements _Error {
+class _$ErrorImpl with DiagnosticableTreeMixin implements _Error {
   const _$ErrorImpl({required this.message});
 
   @override
   final String message;
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'SupplierState.error(message: $message)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'SupplierState.error'))
+      ..add(DiagnosticsProperty('message', message));
   }
 
   @override

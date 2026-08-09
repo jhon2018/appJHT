@@ -152,28 +152,10 @@ class _BaseDashboardState extends State<BaseDashboard>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'JHT TRANSPORT',
-                  style: TextStyle(
-                    fontSize: isDesktopDevice ? 20 : 16,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF303366),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                Text(
-                  'COMPANY',
-                  style: TextStyle(
-                    fontSize: isDesktopDevice ? 12 : 10,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF4834D4),
-                    letterSpacing: 2.0,
-                  ),
-                ),
-              ],
+            Image.asset(
+              'assets/images/JHTmarca-transparente.png',
+              height: isDesktopDevice ? 40 : 32, // Adaptativo Web/Móvil
+              fit: BoxFit.contain,
             ),
             Row(
               children: [

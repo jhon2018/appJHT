@@ -116,15 +116,25 @@ class __$$RegistrarVehiculoImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$RegistrarVehiculoImpl implements _RegistrarVehiculo {
+class _$RegistrarVehiculoImpl
+    with DiagnosticableTreeMixin
+    implements _RegistrarVehiculo {
   const _$RegistrarVehiculoImpl({required this.dto});
 
   @override
   final VehicleRegistroDto dto;
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'VehicleEvent.registrarVehiculo(dto: $dto)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'VehicleEvent.registrarVehiculo'))
+      ..add(DiagnosticsProperty('dto', dto));
   }
 
   @override
@@ -254,12 +264,21 @@ class __$$CargarVehiculosImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$CargarVehiculosImpl implements _CargarVehiculos {
+class _$CargarVehiculosImpl
+    with DiagnosticableTreeMixin
+    implements _CargarVehiculos {
   const _$CargarVehiculosImpl();
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'VehicleEvent.cargarVehiculos()';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'VehicleEvent.cargarVehiculos'));
   }
 
   @override
@@ -381,15 +400,25 @@ class __$$ActualizarVehiculoImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$ActualizarVehiculoImpl implements _ActualizarVehiculo {
+class _$ActualizarVehiculoImpl
+    with DiagnosticableTreeMixin
+    implements _ActualizarVehiculo {
   const _$ActualizarVehiculoImpl({required this.dto});
 
   @override
   final VehicleUpdateDto dto;
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'VehicleEvent.actualizarVehiculo(dto: $dto)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'VehicleEvent.actualizarVehiculo'))
+      ..add(DiagnosticsProperty('dto', dto));
   }
 
   @override
@@ -602,12 +631,18 @@ class __$$InitialImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$InitialImpl implements _Initial {
+class _$InitialImpl with DiagnosticableTreeMixin implements _Initial {
   const _$InitialImpl();
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'VehicleState.initial()';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties..add(DiagnosticsProperty('type', 'VehicleState.initial'));
   }
 
   @override
@@ -734,12 +769,18 @@ class __$$LoadingImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$LoadingImpl implements _Loading {
+class _$LoadingImpl with DiagnosticableTreeMixin implements _Loading {
   const _$LoadingImpl();
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'VehicleState.loading()';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties..add(DiagnosticsProperty('type', 'VehicleState.loading'));
   }
 
   @override
@@ -880,15 +921,25 @@ class __$$RegistroExitosoImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$RegistroExitosoImpl implements _RegistroExitoso {
+class _$RegistroExitosoImpl
+    with DiagnosticableTreeMixin
+    implements _RegistroExitoso {
   const _$RegistroExitosoImpl({required this.response});
 
   @override
   final VehicleRegistroResponse response;
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'VehicleState.registroExitoso(response: $response)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'VehicleState.registroExitoso'))
+      ..add(DiagnosticsProperty('response', response));
   }
 
   @override
@@ -1053,7 +1104,9 @@ class __$$VehiculosCargadosImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$VehiculosCargadosImpl implements _VehiculosCargados {
+class _$VehiculosCargadosImpl
+    with DiagnosticableTreeMixin
+    implements _VehiculosCargados {
   const _$VehiculosCargadosImpl({required final List<VehicleListData> vehicles})
     : _vehicles = vehicles;
 
@@ -1066,8 +1119,16 @@ class _$VehiculosCargadosImpl implements _VehiculosCargados {
   }
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'VehicleState.vehiculosCargados(vehicles: $vehicles)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'VehicleState.vehiculosCargados'))
+      ..add(DiagnosticsProperty('vehicles', vehicles));
   }
 
   @override
@@ -1232,15 +1293,25 @@ class __$$ActualizacionExitosaImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$ActualizacionExitosaImpl implements _ActualizacionExitosa {
+class _$ActualizacionExitosaImpl
+    with DiagnosticableTreeMixin
+    implements _ActualizacionExitosa {
   const _$ActualizacionExitosaImpl({required this.response});
 
   @override
   final VehicleUpdateResponse response;
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'VehicleState.actualizacionExitosa(response: $response)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'VehicleState.actualizacionExitosa'))
+      ..add(DiagnosticsProperty('response', response));
   }
 
   @override
@@ -1406,15 +1477,23 @@ class __$$ErrorImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$ErrorImpl implements _Error {
+class _$ErrorImpl with DiagnosticableTreeMixin implements _Error {
   const _$ErrorImpl({required this.message});
 
   @override
   final String message;
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'VehicleState.error(message: $message)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'VehicleState.error'))
+      ..add(DiagnosticsProperty('message', message));
   }
 
   @override

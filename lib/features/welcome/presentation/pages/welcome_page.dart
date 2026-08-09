@@ -1,12 +1,9 @@
 //ruta: lib/features/welcome/presentation/pages/welcome_page.dart
 //Objetivo: Página de bienvenida con diseño responsivo para web y móvil
-import 'package:app_jht_front/features/login/presentation/bloc/login_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/welcome_wave_clip.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../../login/presentation/pages/login_page.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -21,29 +18,40 @@ class WelcomePage extends StatelessWidget {
       builder: (context, constraints) {
         // Detecta si es una pantalla ancha (Web/Tablet)
         final isWebOrTablet = constraints.maxWidth > 600;
+        // Detecta si es una pantalla corta en altura (ej. iPhone SE, Galaxy S8)
+        final isCompactHeight = constraints.maxHeight < 750;
 
         return Scaffold(
-          // Elimirnamos el Center y el Container limitador aquí. 
-          // El Column debe ocupar todo el espacio.
-          body: Column(
-            children: [
-              // 1. Sección Superior (Imagen con Onda) - Ocupa 100% del ancho
-              _buildImageHeader(context, isWebOrTablet, constraints.maxHeight),
-              
-              // 2. Sección Inferior (Contenido de Texto y Botón) - Ocupa 100% del ancho restante
-              Expanded(
-                // Contenido de texto y botón con centrado horizontal condicional
-                child: Center( // Usamos Center aquí para limitar el ancho del contenido del texto
-                  child: Container(
-                    // === NUEVA LIMITACIÓN DE ANCHO PARA EL CONTENIDO DE TEXTO ===
-                    constraints: BoxConstraints(
-                      maxWidth: isWebOrTablet ? 800 : constraints.maxWidth, // El texto se limita a 800px en web
-                    ),
-                    child: _buildTextAndButton(context, isWebOrTablet),
+          backgroundColor: Colors.white,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight, // Ocupa al menos el 100% de la pantalla
+                ),
+                child: IntrinsicHeight( // Permite que Spacer funcione dentro del scroll
+                  child: Column(
+                    children: [
+                      // 1. Sección Superior (Imagen con Onda)
+                      _buildImageHeader(context, isWebOrTablet, constraints.maxHeight, isCompactHeight),
+                      
+                      // 2. Sección Inferior (Contenido de Texto y Botón)
+                      Expanded(
+                        child: Center(
+                          child: Container(
+                            constraints: BoxConstraints(
+                              maxWidth: isWebOrTablet ? 800 : constraints.maxWidth,
+                            ),
+                            child: _buildTextAndButton(context, isWebOrTablet, isCompactHeight),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
+            ),
           ),
         );
       },
@@ -51,20 +59,19 @@ class WelcomePage extends StatelessWidget {
   }
 
   // --- WIDGET PARA EL HEADER (IMAGEN) ---
-  // Ahora también pasamos la altura máxima del viewport para cálculos
-  Widget _buildImageHeader(BuildContext context, bool isWebOrTablet, double totalHeight) {
+  Widget _buildImageHeader(BuildContext context, bool isWebOrTablet, double totalHeight, bool isCompactHeight) {
     
-    // Altura controlada: menor en web para dejar espacio al texto, mayor en móvil.
+    // Altura dinámica: reducimos drásticamente en móviles pequeños para evitar que empuje el contenido.
     final double headerHeight = isWebOrTablet 
-        ? totalHeight * 0.40 // 40% de la altura de la ventana
-        : totalHeight * 0.60; // 60% en móvil
+        ? totalHeight * 0.40 
+        : (isCompactHeight ? totalHeight * 0.35 : totalHeight * 0.45); 
     
-    // Aseguramos un máximo de altura absoluta para web (para ventanas muy altas)
-    final double maxHeight = isWebOrTablet ? 300 : headerHeight; 
+    // Máximos y mínimos para garantizar consistencia visual
+    final double maxHeight = isWebOrTablet ? 300 : headerHeight.clamp(160.0, 360.0); 
 
     return SizedBox(
       height: maxHeight, 
-      width: double.infinity, // Ocupa el 100% del ancho
+      width: double.infinity,
       child: ClipPath(
         clipper: WelcomeWaveClipper(),
         child: Stack( 
@@ -85,49 +92,48 @@ class WelcomePage extends StatelessWidget {
   }
   
   // --- WIDGET PARA TEXTO Y BOTÓN ---
-  Widget _buildTextAndButton(BuildContext context, bool isWebOrTablet) {
+  Widget _buildTextAndButton(BuildContext context, bool isWebOrTablet, bool isCompactHeight) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: isWebOrTablet ? 40.0 : 25.0, // Más padding en web
-        vertical: 10,
+        horizontal: isWebOrTablet ? 40.0 : (isCompactHeight ? 20.0 : 25.0), 
+        vertical: isCompactHeight ? 5.0 : 10.0,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Espacio superior para web
           if (isWebOrTablet) const SizedBox(height: 20),
           
-          const Text(
+          Text(
             '¿Quiénes somos?', 
             style: TextStyle(
-              fontSize: 18,
+              fontSize: isCompactHeight ? 15 : 18,
               fontWeight: FontWeight.w500,
-              color: Color.fromARGB(222, 0, 0, 0),
+              color: const Color.fromARGB(222, 0, 0, 0),
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: isCompactHeight ? 4 : 6),
           Text(
             '¡Welcome to \n JHT Transport Company!',
             style: TextStyle(
-              fontSize: isWebOrTablet ? 36 : 30, 
+              fontSize: isWebOrTablet ? 36 : (isCompactHeight ? 26 : 30), 
               fontWeight: FontWeight.bold,
               color: accentColor,
               height: 1.2, 
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: isCompactHeight ? 8 : 10),
           Text(
             'Soluciones de transporte confiables y eficientes para tus necesidades logísticas.',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: isCompactHeight ? 14 : 16,
               color: const Color.fromARGB(255, 29, 27, 27),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: isCompactHeight ? 12 : 20),
           Text(
-            '¡Explora nuestra app mòvil o visita nuestra página web y descubre todo lo que podemos hacer por ti!',
+            '¡Explora nuestra app móvil o visita nuestra página web y descubre todo lo que podemos hacer por ti!',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: isCompactHeight ? 13 : 14,
               color: const Color.fromARGB(255, 29, 27, 27),
             ),
           ),
@@ -135,42 +141,64 @@ class WelcomePage extends StatelessWidget {
           const Spacer(), 
 
           // Botón "Continue"
-          Padding(
-            padding: const EdgeInsets.only(bottom: 20.0), 
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  'Continue',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: accentColor,
+          SafeArea(
+            top: false, // Solo aseguramos los bordes inferiores/laterales
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: isCompactHeight ? 15.0 : 20.0, 
+                top: 15.0
+              ), 
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const Text(
+                    'Continue',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: accentColor,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  width: 45,
-                  height: 45,
-                  decoration: BoxDecoration(
-                    color: accentColor,
-                    shape: BoxShape.circle,
+                  const SizedBox(width: 10),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        context.go('/login');
+                      },
+                      borderRadius: BorderRadius.circular(30),
+                      splashColor: accentColor.withOpacity(0.3),
+                      hoverColor: accentColor.withOpacity(0.1),
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: const BoxDecoration(
+                          color: accentColor,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 8,
+                              offset: Offset(0, 4),
+                            )
+                          ]
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            FontAwesomeIcons.arrowRight, 
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                child: IconButton(
-                  padding: EdgeInsets.zero, 
-                  icon: const Icon(FontAwesomeIcons.arrowRight, size: 20),
-                  color: Colors.white,
-                  onPressed: () {
-                    context.go('/login');
-                  },
-                ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
       ),
     );
   }
-
 }
