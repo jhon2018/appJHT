@@ -21,8 +21,6 @@ import '../bloc/registro_mantenimiento_event.dart';
 import '../bloc/registro_mantenimiento_state.dart';
 import '../../data/services/photo_upload_service.dart';
 import '../../data/services/photo_file_helper.dart';
-import '../../data/datasources/registro_mantenimiento_datasource.dart'
-    show HistoricoItem, GastoRegistro;
 
 // ─── Color tokens ─────────────────────────────────────────────────────────────
 const _primary = Color(0xFF303366);
@@ -39,6 +37,20 @@ const _yellowBg = Color(0xFFFEF3C7);
 const _red = Color(0xFFDC2626);
 const _blue = Color(0xFF2563EB);
 const _blueBg = Color(0xFFDBEAFE);
+
+/// Formateador para convertir automáticamente a mayúsculas
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
+    );
+  }
+}
 
 // ─── Modelo interno de un ítem accesorio en el formulario ────────────────────
 class _AccesorioItem {
@@ -310,7 +322,7 @@ class _ModalBodyState extends State<_ModalBody> {
     // ── Construir GastoRegistro ───────────────────────────────────────────────
     final gastoRegistro = GastoRegistro(
       gasVtipo: _tipoGasto ?? 'Boleta',
-      gasInumeroDocumento: int.tryParse(_nrFacturaCtrl.text) ?? 0,
+      gasVnumeroDocumento: _nrFacturaCtrl.text.trim(),
       gasVtipoGasto: _tipoGastoGasto,
       gasVmoneda: _moneda ?? 'Soles',
       gasBmonto: double.tryParse(_montoCtrl.text) ?? 0,
@@ -1181,16 +1193,17 @@ class _ModalBodyState extends State<_ModalBody> {
               ValueListenableBuilder<TextEditingValue>(
                 valueListenable: _nrFacturaCtrl,
                 builder: (context, value, child) {
-                  String tooltipMsg = 'Ingrese el documento';
+                  String tooltipMsg = 'Ingrese N° Factura, Boleta, DNI o RUC';
                   IconData icon = Icons.badge_outlined;
                   Color iconColor = _textSecondary;
-                  final text = value.text;
+                  final text = value.text.trim();
+                  final isOnlyDigits = RegExp(r'^\d+$').hasMatch(text);
                   
-                  if (text.length == 8) {
-                    tooltipMsg = 'DNI detectado';
+                  if (text.length == 8 && isOnlyDigits) {
+                    tooltipMsg = 'DNI detectado (8 dígitos)';
                     icon = Icons.person;
                     iconColor = _primary;
-                  } else if (text.length == 11) {
+                  } else if (text.length == 11 && isOnlyDigits) {
                     if (text.startsWith('10')) {
                       tooltipMsg = 'RUC Persona Natural (10)';
                       icon = Icons.person_pin;
@@ -1200,35 +1213,52 @@ class _ModalBodyState extends State<_ModalBody> {
                       icon = Icons.domain;
                       iconColor = _green;
                     } else {
-                      tooltipMsg = 'RUC Inválido';
-                      icon = Icons.warning_amber_rounded;
-                      iconColor = _red;
+                      tooltipMsg = 'RUC detectado (11 dígitos)';
+                      icon = Icons.assignment_outlined;
+                      iconColor = _blue;
                     }
                   } else if (text.isNotEmpty) {
-                    tooltipMsg = 'DNI (8) o RUC (11)';
-                    iconColor = _yellow;
+                    if (RegExp(r'[a-zA-Z]').hasMatch(text) || text.contains('-') || text.contains('/')) {
+                      tooltipMsg = 'Factura / Boleta / Doc. Alfanumérico';
+                      icon = Icons.receipt_long_rounded;
+                      iconColor = _primary;
+                    } else {
+                      tooltipMsg = 'Documento de referencia';
+                      icon = Icons.badge_outlined;
+                      iconColor = _primary;
+                    }
                   }
 
                   return Tooltip(
                     message: tooltipMsg,
                     child: TextFormField(
                       controller: _nrFacturaCtrl,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      maxLength: 11,
+                      keyboardType: TextInputType.text,
+                      textCapitalization: TextCapitalization.characters,
+                      inputFormatters: [
+                        UpperCaseTextFormatter(),
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'[a-zA-Z0-9\-\/\s]'),
+                        ),
+                      ],
+                      maxLength: 30,
                       style: const TextStyle(fontSize: 13),
                       decoration: _inputDec(
-                        hint: '8 u 11 dígitos',
-                        suffix: text.isNotEmpty ? '${text.length}/11' : null,
+                        hint: 'Ej: F001-00012345, 10738495012 o DNI',
+                        suffix: text.isNotEmpty ? '${text.length}/30' : null,
                       ).copyWith(
                         prefixIcon: Icon(icon, color: iconColor, size: 18),
                       ),
                       validator: (val) {
-                        if (val == null || val.isEmpty) {
+                        if (val == null || val.trim().isEmpty) {
                           return null; // No es obligatorio
                         }
-                        if (val.length != 8 && val.length != 11) {
-                          return 'Debe tener 8 (DNI) u 11 (RUC) dígitos';
+                        final clean = val.trim();
+                        if (clean.length < 3) {
+                          return 'Debe ingresar al menos 3 caracteres';
+                        }
+                        if (clean.length > 30) {
+                          return 'No puede superar 30 caracteres';
                         }
                         return null;
                       },

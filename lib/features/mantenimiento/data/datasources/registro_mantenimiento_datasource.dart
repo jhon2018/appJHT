@@ -74,7 +74,7 @@ class HistoricoItem {
 // ─── GastoRegistro ────────────────────────────────────────────────────────────
 class GastoRegistro {
   final String gasVtipo; // Boleta | Factura
-  final int gasInumeroDocumento;
+  final String gasVnumeroDocumento;
   final String gasVtipoGasto; // Mantenimiento | Compra
   final String gasVmoneda; // Soles | Dólares
   final double gasBmonto;
@@ -84,7 +84,7 @@ class GastoRegistro {
 
   const GastoRegistro({
     required this.gasVtipo,
-    required this.gasInumeroDocumento,
+    required this.gasVnumeroDocumento,
     required this.gasVtipoGasto,
     required this.gasVmoneda,
     required this.gasBmonto,
@@ -201,7 +201,7 @@ class RegistroMantenimientoDataSourceImpl extends BaseRemoteDataSource
     // ── Gasto — nota: el prefijo "Gasto." lo agrega buildAndSendRegistroRequest
     final gastoFields = {
       'gas_vtipo': gasto.gasVtipo,
-      'gas_vnumero_documento': gasto.gasInumeroDocumento.toString(),
+      'gas_vnumero_documento': gasto.gasVnumeroDocumento,
       'gas_vtipo_gasto': gasto.gasVtipoGasto,
       'gas_vmoneda': gasto.gasVmoneda,
       'gas_bmonto': gasto.gasBmonto.toString(),
