@@ -7,7 +7,15 @@ import 'dart:async';
 import 'package:app_jht_front/features/home/data/datasources/dashboard_service.dart';
 import 'package:app_jht_front/features/home/presentation/widgets/download_report_modal.dart';
 import 'dart:ui';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:app_jht_front/core/network/http_client.dart';
+import 'package:app_jht_front/features/admin/presentation/bloc/historial/historial_mantenimiento_bloc.dart';
+import 'package:app_jht_front/features/admin/presentation/bloc/historial/historial_mantenimiento_event.dart';
+import 'package:app_jht_front/features/admin/data/repositories/admin_repository_impl.dart';
+import 'package:app_jht_front/features/admin/data/datasources/admin_remote_datasource.dart';
+import 'package:app_jht_front/features/accessory/domain/repositories/accessory_repository_impl.dart';
+import 'package:app_jht_front/features/accessory/data/datasources/accessory_remote_data_source.dart';
+import 'package:app_jht_front/features/admin/presentation/widgets/historial/historial_dashboard_view.dart';
 class AdminDashboard extends StatefulWidget {
   final String userName;
   final String userRole;
@@ -94,10 +102,8 @@ class _AdminDashboardState extends State<AdminDashboard>
             _buildStatsGrid(context),
             const SizedBox(height: 32),
 
-            _buildChartsAndActivities(context, isDesktop),
-            const SizedBox(height: 32),
-
-            _buildRecentDataTable(context, isDesktop),
+            // Mostrar el módulo completo de Historial a todo el ancho
+            _buildChartSection(context),
             const SizedBox(height: 40),
           ],
         );
@@ -351,94 +357,20 @@ class _AdminDashboardState extends State<AdminDashboard>
   }
 
   Widget _buildChartSection(BuildContext context) {
-    return _GlassContainer(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Visión Operativa',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E293B),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Este mes',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF475569),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            height: 250,
-            child: Stack(
-              children: [
-                // Simulación visual elegante de gráfico (Background gradient curve)
-                Positioned.fill(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: CustomPaint(painter: _MockChartPainter()),
-                  ),
-                ),
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(
-                          Icons.insert_chart_rounded,
-                          color: Color(0xFF4834D4),
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Módulo de Analítica en Desarrollo',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF1E293B),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return BlocProvider(
+      create: (context) {
+        final httpClient = HttpClient();
+        final accessoryDataSource = AccessoryRemoteDataSourceImpl(httpClient: httpClient);
+        final accessoryRepository = AccessoryRepositoryImpl(remoteDataSource: accessoryDataSource);
+        final adminDataSource = AdminRemoteDataSourceImpl();
+        final adminRepository = AdminRepositoryImpl(remoteDataSource: adminDataSource);
+        
+        return HistorialMantenimientoBloc(
+          adminRepository: adminRepository,
+          vehicleRepository: accessoryRepository,
+        )..add(LoadHistorialEvent());
+      },
+      child: const HistorialDashboardView(),
     );
   }
 
@@ -979,75 +911,7 @@ class _GlassContainer extends StatelessWidget {
   }
 }
 
-// Pintor personalizado para simular un gráfico bonito y premium
-class _MockChartPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..shader = LinearGradient(
-        colors: [
-          const Color(0xFF4834D4).withOpacity(0.2),
-          const Color(0xFF4834D4).withOpacity(0.0),
-        ],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    final path = Path();
-    path.moveTo(0, size.height);
-    path.lineTo(0, size.height * 0.7);
-
-    // Curva suave
-    path.cubicTo(
-      size.width * 0.25,
-      size.height * 0.8,
-      size.width * 0.5,
-      size.height * 0.3,
-      size.width * 0.75,
-      size.height * 0.5,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.9,
-      size.height * 0.6,
-      size.width,
-      size.height * 0.2,
-    );
-
-    path.lineTo(size.width, size.height);
-    path.close();
-
-    canvas.drawPath(path, paint);
-
-    // Línea del gráfico
-    final linePaint = Paint()
-      ..color = const Color(0xFF4834D4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-
-    final linePath = Path();
-    linePath.moveTo(0, size.height * 0.7);
-    linePath.cubicTo(
-      size.width * 0.25,
-      size.height * 0.8,
-      size.width * 0.5,
-      size.height * 0.3,
-      size.width * 0.75,
-      size.height * 0.5,
-    );
-    linePath.quadraticBezierTo(
-      size.width * 0.9,
-      size.height * 0.6,
-      size.width,
-      size.height * 0.2,
-    );
-
-    canvas.drawPath(linePath, linePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
 // ---------------------------------------------------------
 // COMPONENTES DE CARGA (SKELETON LOADER) DE ALTO IMPACTO

@@ -435,9 +435,28 @@ class HelpPage extends StatelessWidget {
     return Column(
       children: [
         const Text(
+          '© 2024 JHT Transporte Mantenimiento',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Todos los derechos reservados. Aplicación de uso exclusivo.',
+          style: TextStyle(fontSize: 11, color: Colors.blueGrey[400]),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'Desarrollado por',
+          style: TextStyle(fontSize: 11, color: Colors.blueGrey[400]),
+        ),
+        const SizedBox(height: 4),
+        const Text(
           'ColdSolutions TI',
           style: TextStyle(
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w900,
             fontSize: 16,
             color: Color(0xFF303366),
             letterSpacing: 1,
@@ -445,8 +464,8 @@ class HelpPage extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Soluciones tecnológicas para la gestión empresarial',
-          style: TextStyle(fontSize: 11, color: Colors.blueGrey[400]),
+          'Soluciones tecnológicas que impulsan tu negocio',
+          style: TextStyle(fontSize: 10, color: Colors.blueGrey[400]),
         ),
         const SizedBox(height: 12),
         Container(
@@ -464,7 +483,6 @@ class HelpPage extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 24),
         const SizedBox(height: 20),
       ],
     );
