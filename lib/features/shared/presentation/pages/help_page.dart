@@ -48,12 +48,11 @@ class HelpPage extends StatelessWidget {
         automaticallyImplyLeading: false,
         leading: isMobile
             ? IconButton(
-                icon: const Icon(
-                  Icons.menu_rounded,
-                  color: Colors.white,
-                ),
+                icon: const Icon(Icons.menu_rounded, color: Colors.white),
                 onPressed: () {
-                  context.findAncestorStateOfType<ScaffoldWithMenuState>()?.openMobileMenu();
+                  context
+                      .findAncestorStateOfType<ScaffoldWithMenuState>()
+                      ?.openMobileMenu();
                 },
               )
             : null,
@@ -87,7 +86,8 @@ class HelpPage extends StatelessWidget {
                     description:
                         'Acceso inmediato sin instalación desde cualquier navegador.',
                     badgeText: 'Online',
-                    onTap: () => _launchURL('https://appjht.onrender.com/'),
+                    onTap: () =>
+                        _launchURL('https://app.jhttransportelogistica.com/'),
                   ),
                   const SizedBox(height: 24),
                   _buildSectionTitle('Soporte y Acompañamiento'),
@@ -133,7 +133,7 @@ class HelpPage extends StatelessWidget {
               ],
             ),
             child: Image.asset(
-              'assets/icons/Jht.png',
+              'assets/images/JHTmarca-transparente.png',
               height: 80,
               errorBuilder: (context, error, stackTrace) => Icon(
                 Icons.directions_bus_filled_rounded,
@@ -161,7 +161,7 @@ class HelpPage extends StatelessWidget {
               border: Border.all(color: Colors.white.withOpacity(0.3)),
             ),
             child: const Text(
-              'Versión 1.0 • 01/05/2026',
+              'Versión 2.1.1 • 01/05/2026',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 12,

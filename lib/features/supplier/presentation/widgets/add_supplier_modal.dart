@@ -44,6 +44,20 @@ const _kBancosPeru = [
 // ─── Segmentos predefinidos de tipo proveedor ────────────────────────────────
 const _kTiposPredef = ['Servicio', 'Producto', 'Servicio + Producto'];
 
+/// Formateador para convertir automáticamente a mayúsculas
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
+    );
+  }
+}
+
 class AddSupplierModal extends StatefulWidget {
   final Function()? onSupplierAdded;
   final BuildContext parentContext;
@@ -75,9 +89,6 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
   final _numeroCuentaCtrl   = TextEditingController();
   final _observacionCtrl    = TextEditingController();
 
-  // RUC — contador reactivo
-  int _rucLen = 0;
-
   // Tipo proveedor
   String? _tipoSeleccionado;   // chip seleccionado
 
@@ -101,7 +112,6 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
   @override
   void initState() {
     super.initState();
-    _rucCtrl.addListener(() => setState(() => _rucLen = _rucCtrl.text.length));
     _cargarTiposTelefono();
   }
 
@@ -144,31 +154,6 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
     _bancoOtroCtrl.dispose();
     for (final c in _telControllers) c.dispose();
     super.dispose();
-  }
-
-  // ── Helpers RUC ──────────────────────────────────────────────────────────
-  String _rucTipo(String ruc) {
-    if (ruc.length < 2) return '';
-    final pref = ruc.substring(0, 2);
-    if (pref == '10') return 'Persona Natural';
-    if (pref == '20') return 'Empresa / Sociedad';
-    if (pref == '15') return 'No domiciliado';
-    return 'Tipo desconocido';
-  }
-
-  /// Longitud máxima según prefijo: 10 dígitos para Persona Natural (10xx),
-  /// 11 dígitos para Empresa/Sociedad (20xx) y por defecto.
-  int _rucMaxLen() {
-    final text = _rucCtrl.text;
-    if (text.length >= 2 && text.substring(0, 2) == '10') return 10;
-    return 11;
-  }
-
-  Color _rucColor() {
-    final maxLen = _rucMaxLen();
-    if (_rucLen == maxLen) return const Color(0xFF2E7D32);
-    if (_rucLen > maxLen)  return _kError;
-    return _kTextSub;
   }
 
   // ── Helpers teléfono ─────────────────────────────────────────────────────
@@ -407,72 +392,131 @@ class _AddSupplierModalState extends State<AddSupplierModal> {
 
   // ── RUC field con contador + tooltip (A) ──────────────────────────────────
   Widget _rucField() {
-    final tipo = _rucTipo(_rucCtrl.text);
-    final maxLen = _rucMaxLen();
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const Text('RUC *',
+          const Text('RUC / DNI / Factura *',
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kPrimary)),
           const SizedBox(width: 6),
           Tooltip(
-            message: 'RUC Perú:\n• Empieza con 10 → Persona Natural (10 dígitos)\n'
-                '• Empieza con 20 → Empresa / Sociedad (11 dígitos)',
+            message: '• DNI: 8 dígitos\n'
+                '• RUC: 11 dígitos (10/20)\n'
+                '• Facturas/Boletas: Letras, números, guiones y diagonales.',
             triggerMode: TooltipTriggerMode.tap,
             child: const Icon(Icons.info_outline, size: 14, color: _kTextSub),
           ),
           const Spacer(),
-          Text('$_rucLen / $maxLen',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _rucColor())),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _rucCtrl,
+            builder: (context, value, child) {
+              final len = value.text.length;
+              Color color = _kTextSub;
+              if (len >= 3 && len <= 30) color = const Color(0xFF2E7D32); // Valido
+              else if (len > 30) color = _kError;
+              return Text('$len / 30',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color));
+            },
+          ),
         ]),
         const SizedBox(height: 6),
-        TextFormField(
-          controller: _rucCtrl,
-          keyboardType: TextInputType.number,
-          maxLength: maxLen,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          style: const TextStyle(fontSize: 14),
-          decoration: InputDecoration(
-            counterText: '',
-            filled: true,
-            fillColor: Colors.grey[50],
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: _kBorder)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: _kBorder)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
-            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: _kError)),
-            suffixIcon: _rucLen == maxLen
-                ? const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 18)
-                : null,
-          ),
-          validator: (v) {
-            if (v == null || v.isEmpty) return 'Ingrese el RUC';
-            final expectedLen = _rucMaxLen();
-            if (v.length != expectedLen) return 'El RUC debe tener exactamente $expectedLen dígitos';
-            return null;
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _rucCtrl,
+          builder: (context, value, child) {
+            final text = value.text;
+            IconData? sufIcon;
+            Color sufColor = Colors.transparent;
+
+            if (text.length >= 3 && text.length <= 30) {
+              sufIcon = Icons.check_circle;
+              sufColor = const Color(0xFF2E7D32);
+            } else if (text.isNotEmpty) {
+              sufIcon = Icons.error;
+              sufColor = _kError;
+            }
+
+            return TextFormField(
+              controller: _rucCtrl,
+              keyboardType: TextInputType.visiblePassword,
+              maxLength: 30,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\-\/]')),
+                UpperCaseTextFormatter(),
+              ],
+              style: const TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                counterText: '',
+                filled: true,
+                fillColor: Colors.grey[50],
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kBorder)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kBorder)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+                errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kError)),
+                suffixIcon: sufIcon != null
+                    ? Icon(sufIcon, color: sufColor, size: 18)
+                    : null,
+              ),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Este campo es requerido';
+                if (v.length < 3) return 'Mínimo 3 caracteres';
+                if (v.length > 30) return 'Máximo 30 caracteres';
+                return null;
+              },
+            );
           },
         ),
-        // Indicador dinámico RUC 10 / RUC 20
-        if (tipo.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: _kInfoBg,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.info_outline, size: 12, color: _kInfo),
-              const SizedBox(width: 4),
-              Text(tipo, style: const TextStyle(fontSize: 11, color: _kInfo, fontWeight: FontWeight.w600)),
-            ]),
-          ),
-        ],
+        // Indicador dinámico RUC 10 / RUC 20 / DNI
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _rucCtrl,
+          builder: (context, value, child) {
+            final text = value.text;
+            String msg = '';
+            IconData ic = Icons.info_outline;
+
+            if (RegExp(r'^\d+$').hasMatch(text)) {
+              if (text.length == 8) {
+                msg = 'DNI detectado';
+                ic = Icons.person_outline;
+              } else if (text.length == 11) {
+                if (text.startsWith('10')) {
+                  msg = 'RUC 10: Persona Natural';
+                  ic = Icons.person;
+                } else if (text.startsWith('20')) {
+                  msg = 'RUC 20: Empresa / Sociedad';
+                  ic = Icons.business;
+                } else {
+                  msg = 'RUC detectado';
+                }
+              }
+            } else if (text.isNotEmpty) {
+               msg = 'Formato Alfanumérico (Factura/Boleta)';
+               ic = Icons.receipt_long_outlined;
+            }
+
+            if (msg.isEmpty) return const SizedBox.shrink();
+
+            return Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _kInfoBg,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(ic, size: 12, color: _kInfo),
+                  const SizedBox(width: 4),
+                  Text(msg, style: const TextStyle(fontSize: 11, color: _kInfo, fontWeight: FontWeight.w600)),
+                ]),
+              ),
+            );
+          },
+        ),
       ]),
     );
   }
