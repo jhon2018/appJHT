@@ -5,7 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:app_jht_front/features/admin/data/models/historial_mantenimiento_model.dart';
 
 class HistorialPieChart extends StatefulWidget {
-  final List<HistorialPorAccesorioItem> data;
+  final List<HistorialPorClasificacionItem> data;
 
   const HistorialPieChart({super.key, required this.data});
 
@@ -42,44 +42,67 @@ class _HistorialPieChartState extends State<HistorialPieChart> {
       return Column(
         children: [
           Expanded(
-            child: PieChart(
-              PieChartData(
-                pieTouchData: PieTouchData(
-                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                    setState(() {
-                      if (!event.isInterestedForInteractions ||
-                          pieTouchResponse == null ||
-                          pieTouchResponse.touchedSection == null) {
-                        touchedIndex = -1;
-                        return;
-                      }
-                      touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-                    });
-                  },
-                ),
-                borderData: FlBorderData(show: false),
-                sectionsSpace: 2,
-                centerSpaceRadius: 30,
-                sections: widget.data.asMap().entries.map((entry) {
-                  final isTouched = entry.key == touchedIndex;
-                  final fontSize = isTouched ? 14.0 : 11.0;
-                  final radius = isTouched ? 45.0 : 38.0;
-                  final color = _chartColors[entry.key % _chartColors.length];
-                  return PieChartSectionData(
-                    color: color,
-                    value: entry.value.cantidad.toDouble(),
-                    title: '${entry.value.cantidad}',
-                    radius: radius,
-                    titleStyle: TextStyle(
-                      fontSize: fontSize,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                PieChart(
+                  PieChartData(
+                    pieTouchData: PieTouchData(
+                      touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                        setState(() {
+                          if (!event.isInterestedForInteractions ||
+                              pieTouchResponse == null ||
+                              pieTouchResponse.touchedSection == null) {
+                            touchedIndex = -1;
+                            return;
+                          }
+                          touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                        });
+                      },
                     ),
-                  );
-                }).toList(),
-              ),
-              swapAnimationDuration: const Duration(milliseconds: 400),
-              swapAnimationCurve: Curves.easeInOut,
+                    borderData: FlBorderData(show: false),
+                    sectionsSpace: 2,
+                    centerSpaceRadius: 55, // Aumentado para dar espacio al texto
+                    sections: widget.data.asMap().entries.map((entry) {
+                      final isTouched = entry.key == touchedIndex;
+                      final fontSize = isTouched ? 16.0 : 12.0;
+                      final radius = isTouched ? 45.0 : 38.0;
+                      final color = _chartColors[entry.key % _chartColors.length];
+                      return PieChartSectionData(
+                        color: color,
+                        value: entry.value.cantidad.toDouble(),
+                        title: '${entry.value.cantidad}',
+                        radius: radius,
+                        titleStyle: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  swapAnimationDuration: const Duration(milliseconds: 400),
+                  swapAnimationCurve: Curves.easeInOut,
+                ),
+                if (touchedIndex != -1)
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.data[touchedIndex].clasificacion,
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)),
+                          textAlign: TextAlign.center,
+                        ),
+                        Text(
+                          'S/ ${widget.data[touchedIndex].costoTotal.toStringAsFixed(2)}',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF303366), fontWeight: FontWeight.w900),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: 8),
@@ -101,7 +124,7 @@ class _HistorialPieChartState extends State<HistorialPieChart> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '${entry.value.tipVnombre}',
+                    '${entry.value.clasificacion}',
                     style: const TextStyle(fontSize: 11, color: Color(0xFF4B5563)),
                   ),
                 ],
@@ -116,44 +139,67 @@ class _HistorialPieChartState extends State<HistorialPieChart> {
       children: [
         Expanded(
           flex: 2,
-          child: PieChart(
-            PieChartData(
-              pieTouchData: PieTouchData(
-                touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                  setState(() {
-                    if (!event.isInterestedForInteractions ||
-                        pieTouchResponse == null ||
-                        pieTouchResponse.touchedSection == null) {
-                      touchedIndex = -1;
-                      return;
-                    }
-                    touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-                  });
-                },
-              ),
-              borderData: FlBorderData(show: false),
-              sectionsSpace: 2,
-              centerSpaceRadius: 40,
-              sections: widget.data.asMap().entries.map((entry) {
-                final isTouched = entry.key == touchedIndex;
-                final fontSize = isTouched ? 16.0 : 12.0;
-                final radius = isTouched ? 60.0 : 50.0;
-                final color = _chartColors[entry.key % _chartColors.length];
-                return PieChartSectionData(
-                  color: color,
-                  value: entry.value.cantidad.toDouble(),
-                  title: '${entry.value.cantidad}',
-                  radius: radius,
-                  titleStyle: TextStyle(
-                    fontSize: fontSize,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              PieChart(
+                PieChartData(
+                  pieTouchData: PieTouchData(
+                    touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                      setState(() {
+                        if (!event.isInterestedForInteractions ||
+                            pieTouchResponse == null ||
+                            pieTouchResponse.touchedSection == null) {
+                          touchedIndex = -1;
+                          return;
+                        }
+                        touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                      });
+                    },
                   ),
-                );
-              }).toList(),
-            ),
-            swapAnimationDuration: const Duration(milliseconds: 400),
-            swapAnimationCurve: Curves.easeInOut,
+                  borderData: FlBorderData(show: false),
+                  sectionsSpace: 2,
+                  centerSpaceRadius: 75, // Aumentado para el texto en el centro
+                  sections: widget.data.asMap().entries.map((entry) {
+                    final isTouched = entry.key == touchedIndex;
+                    final fontSize = isTouched ? 16.0 : 12.0;
+                    final radius = isTouched ? 60.0 : 50.0;
+                    final color = _chartColors[entry.key % _chartColors.length];
+                    return PieChartSectionData(
+                      color: color,
+                      value: entry.value.cantidad.toDouble(),
+                      title: '${entry.value.cantidad}',
+                      radius: radius,
+                      titleStyle: TextStyle(
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    );
+                  }).toList(),
+                ),
+                swapAnimationDuration: const Duration(milliseconds: 400),
+                swapAnimationCurve: Curves.easeInOut,
+              ),
+              if (touchedIndex != -1)
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.data[touchedIndex].clasificacion,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        'S/ ${widget.data[touchedIndex].costoTotal.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 16, color: Color(0xFF303366), fontWeight: FontWeight.w900),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
         ),
         Expanded(
@@ -177,7 +223,7 @@ class _HistorialPieChartState extends State<HistorialPieChart> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        entry.value.tipVnombre,
+                        entry.value.clasificacion,
                         style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                         overflow: TextOverflow.ellipsis,
                       ),

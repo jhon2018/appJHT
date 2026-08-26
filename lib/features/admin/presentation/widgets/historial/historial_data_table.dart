@@ -102,7 +102,7 @@ class _HistorialDataTableState extends State<HistorialDataTable> {
                           ],
                         )),
                         DataCell(Text(item.proVrazonSocial)),
-                        DataCell(Text('\$${item.gasBmonto.toStringAsFixed(2)}')),
+                        DataCell(Text('S/${item.gasBmonto.toStringAsFixed(2)}')),
                         DataCell(_buildStatusBadge(item.hisVestado)),
                       ],
                     );

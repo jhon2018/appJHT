@@ -19,6 +19,14 @@ class ChangeFilterVehiculoEvent extends HistorialMantenimientoEvent {
   List<Object?> get props => [vehIid];
 }
 
+class ChangeFilterSegmentoEvent extends HistorialMantenimientoEvent {
+  final int? segIid;
+  const ChangeFilterSegmentoEvent(this.segIid);
+
+  @override
+  List<Object?> get props => [segIid];
+}
+
 class ChangeFilterAccesorioEvent extends HistorialMantenimientoEvent {
   final int? tipIid;
   const ChangeFilterAccesorioEvent(this.tipIid);
@@ -33,4 +41,12 @@ class ChangeFilterAnioEvent extends HistorialMantenimientoEvent {
 
   @override
   List<Object?> get props => [anio];
+}
+
+class ToggleDataModeEvent extends HistorialMantenimientoEvent {
+  final bool useMockData;
+  const ToggleDataModeEvent(this.useMockData);
+
+  @override
+  List<Object?> get props => [useMockData];
 }

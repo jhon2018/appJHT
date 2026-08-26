@@ -18,7 +18,7 @@ abstract class AdminRemoteDataSource {
 
 class AdminRemoteDataSourceImpl extends BaseRemoteDataSource implements AdminRemoteDataSource {
   // Cuando el endpoint esté 100% en producción, cambia useMock = false
-  final bool useMock = true;
+  final bool useMock = false;
 
   @override
   Future<HistorialDashboardResponse> getHistorialMantenimiento({
@@ -53,8 +53,8 @@ class AdminRemoteDataSourceImpl extends BaseRemoteDataSource implements AdminRem
       }
     } catch (e) {
       AppLogger.error('AdminRemoteDataSource - Error al obtener historial', error: e);
-      // Fallback a mock en caso de fallo crítico en staging
-      return _getMockHistorial(anio, vehIid, tipIid);
+      // QA MODE: Desactivamos el fallback para ver el error real
+      rethrow;
     }
   }
 
@@ -86,9 +86,13 @@ class AdminRemoteDataSourceImpl extends BaseRemoteDataSource implements AdminRem
             mes: _getMesNombre(i + 1),
             anio: anio ?? DateTime.now().year,
             cantidad: 0,
+            costoTotal: 0.0,
           ),
         ),
         consultaHistorialPorAccesorio: [],
+        consultaHistorialPorClasificacion: [],
+        topVehiculosCostosos: [],
+        topProveedores: [],
       );
     }
 
@@ -150,24 +154,32 @@ class AdminRemoteDataSourceImpl extends BaseRemoteDataSource implements AdminRem
           ),
       ],
       consultaHistorialPorFecha: [
-        HistorialPorFechaItem(mes: "Enero", anio: 2026, cantidad: 0),
-        HistorialPorFechaItem(mes: "Febrero", anio: 2026, cantidad: 0),
-        HistorialPorFechaItem(mes: "Marzo", anio: 2026, cantidad: 0),
-        HistorialPorFechaItem(mes: "Abril", anio: 2026, cantidad: 0),
-        HistorialPorFechaItem(mes: "Mayo", anio: 2026, cantidad: 0),
-        HistorialPorFechaItem(mes: "Junio", anio: 2026, cantidad: (vehIid == null || vehIid == 5) ? 1 : 0),
-        HistorialPorFechaItem(mes: "Julio", anio: 2026, cantidad: 0),
-        HistorialPorFechaItem(mes: "Agosto", anio: 2026, cantidad: (vehIid == null || vehIid != 5) ? 1 : 0),
-        HistorialPorFechaItem(mes: "Septiembre", anio: 2026, cantidad: 0),
-        HistorialPorFechaItem(mes: "Octubre", anio: 2026, cantidad: 0),
-        HistorialPorFechaItem(mes: "Noviembre", anio: 2026, cantidad: 0),
-        HistorialPorFechaItem(mes: "Diciembre", anio: 2026, cantidad: 0),
+        HistorialPorFechaItem(mes: "Enero", anio: 2026, cantidad: 0, costoTotal: 0.0),
+        HistorialPorFechaItem(mes: "Febrero", anio: 2026, cantidad: 0, costoTotal: 0.0),
+        HistorialPorFechaItem(mes: "Marzo", anio: 2026, cantidad: 0, costoTotal: 0.0),
+        HistorialPorFechaItem(mes: "Abril", anio: 2026, cantidad: 0, costoTotal: 0.0),
+        HistorialPorFechaItem(mes: "Mayo", anio: 2026, cantidad: 0, costoTotal: 0.0),
+        HistorialPorFechaItem(mes: "Junio", anio: 2026, cantidad: (vehIid == null || vehIid == 5) ? 1 : 0, costoTotal: (vehIid == null || vehIid == 5) ? 450.0 : 0.0),
+        HistorialPorFechaItem(mes: "Julio", anio: 2026, cantidad: 0, costoTotal: 0.0),
+        HistorialPorFechaItem(mes: "Agosto", anio: 2026, cantidad: (vehIid == null || vehIid != 5) ? 1 : 0, costoTotal: (vehIid == null || vehIid != 5) ? 65.5 : 0.0),
+        HistorialPorFechaItem(mes: "Septiembre", anio: 2026, cantidad: 0, costoTotal: 0.0),
+        HistorialPorFechaItem(mes: "Octubre", anio: 2026, cantidad: 0, costoTotal: 0.0),
+        HistorialPorFechaItem(mes: "Noviembre", anio: 2026, cantidad: 0, costoTotal: 0.0),
+        HistorialPorFechaItem(mes: "Diciembre", anio: 2026, cantidad: 0, costoTotal: 0.0),
       ],
       consultaHistorialPorAccesorio: [
-        if (vehIid == null || vehIid != 5)
-          HistorialPorAccesorioItem(tipVnombre: "Filtros", cantidad: 1),
-        if (vehIid == null || vehIid == 5)
-          HistorialPorAccesorioItem(tipVnombre: "Neumáticos", cantidad: 1),
+        HistorialPorAccesorioItem(tipVnombre: "Baterías", cantidad: (vehIid == null || vehIid == 5) ? 1 : 0),
+        HistorialPorAccesorioItem(tipVnombre: "Filtros", cantidad: (vehIid == null || vehIid != 5) ? 1 : 0),
+      ],
+      consultaHistorialPorClasificacion: [
+        HistorialPorClasificacionItem(clasificacion: "Preventivo", cantidad: 1, costoTotal: 65.5),
+        HistorialPorClasificacionItem(clasificacion: "Correctivo", cantidad: 1, costoTotal: 450.0),
+      ],
+      topVehiculosCostosos: [
+        TopVehiculoCostosoItem(vehVplaca: "XYZ-987", costoTotal: 450.0),
+      ],
+      topProveedores: [
+        TopProveedorItem(proVrazonSocial: "Energía Total SAC", costoTotal: 450.0),
       ],
     );
   }

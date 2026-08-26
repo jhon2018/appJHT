@@ -1,5 +1,5 @@
 ---
-trigger: always_on
+trigger: manual
 ---
 
 Eres un asistente de desarrollo especializado en mi sistema backend .NET desplegado en Render.
@@ -8,19 +8,19 @@ OBJETIVO:
 Ayudarme a desarrollar el frontend (Flutter) entendiendo, usando y analizando correctamente mi API REST, incluyendo endpoints, parámetros, responses y lógica de negocio.
 
 BASE URL:
-https://jht-transport-api.onrender.com
+http://localhost:7030/swagger/index.html
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoianZlcmFzIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW5pc3RyYWRvciIsIlVzZXJJZCI6IjIiLCJqdGkiOiI4NDJkMThlYS00YzEwLTRmZmEtYjI4My02MzExYjM0N2ZlOWMiLCJleHAiOjE3Nzg4MzYwMTcsImlzcyI6IkpIVC5CYWNrZW5kLkFQSSIsImF1ZCI6IkpIVC1Vc2VycyJ9.FT_WC5NjHmhmmvpBK2lRiEVrjgd_2IwjXNNbwODadVE",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiNDc3MzY1NTkiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbmlzdHJhZG9yIiwiVXNlcklkIjoiMTIiLCJqdGkiOiI4ODU0NWVhNC0yYmI2LTQxYmYtYmEyZC1iMzEwNTEyMzdkOTQiLCJleHAiOjE3ODc4NTEzMzMsImlzcyI6IkpIVC5CYWNrZW5kLkFQSSIsImF1ZCI6IkpIVC1Vc2VycyJ9.03gqhaKcs4sfnvf6k4XdDXnUc0sEYri9MNgNnKBaMN4",
+  "refreshToken": "RHPVgsrXWc/8ad5RFdQA3wO/uVsxKQUHcu3tODh0ostKaN5MHr+w9fEg57mXiL9XKMS1wmIu53ELh9eeL5ujmQ==",
+  "expiration": "2026-08-27T12:22:13.6280848-05:00",
   "nivelAcceso": 1,
-  "usuario": "jveras",
+  "usuario": "47736559",
   "mensaje": "Login exitoso",
   "success": true,
   "cargo": "Administrador"
 }
+⚠️ NOTA: Si el token expira, renovarlo haciendo login nuevamente con POST /api/Auth/login.
 
-AUTENTICACIÓN:
-Todas las solicitudes deben usar:
-Authorization: Bearer {{eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoianZlcmFzIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW5pc3RyYWRvciIsIlVzZXJJZCI6IjIiLCJqdGkiOiI4NDJkMThlYS00YzEwLTRmZmEtYjI4My02MzExYjM0N2ZlOWMiLCJleHAiOjE3Nzg4MzYwMTcsImlzcyI6IkpIVC5CYWNrZW5kLkFQSSIsImF1ZCI6IkpIVC1Vc2VycyJ9.FT_WC5NjHmhmmvpBK2lRiEVrjgd_2IwjXNNbwODadVE}}
 
 REGLAS GENERALES:
 
@@ -51,6 +51,7 @@ VEHICULOS:
 
 ACCESORIOS:
 - POST /api/general/insertar-accesorio
+- PUT /api/general/actualizar-accesorio
 - GET /api/general/accesorios-por-vehiculo/{vehiculoId}
 - GET /api/general/vehiculo/{veh_iid}/accesorios
 - GET /api/general/accesorio/{acc_iid}
@@ -61,6 +62,11 @@ MANTENIMIENTO:
 - GET /api/general/detalle-mantenimiento
 - PUT /api/general/actualizar-historico
 - GET /api/general/mantenimientos-pendientes
+
+DASHBOARD / ANALÍTICA (nuevos):
+- GET /api/general/consulta-historial — Dashboard analítico. Params: ?anio=&veh_iid=&tip_iid=. Devuelve historial general, por fecha (con costoTotal), por clasificación, top vehículos y top proveedores.
+- GET /api/general/estado-flota — Conteo de vehículos agrupados por estado operativo (Operativo, Baja, En Mantenimiento).
+- GET /api/general/reporte-mantenimientos — Reporte filtrado por rango de fechas y opcionalmente vehiculoId.
 
 PROVEEDORES:
 - POST /api/general/insertar-proveedor
@@ -74,9 +80,9 @@ COLABORADORES:
 - GET /api/admin/Listar-personas
 - GET /api/admin/persona/{per_iid}
 
-OTROS:
+CATÁLOGOS / CONFIGURACIÓN:
 - GET /api/general/datos-iniciales
-- GET /api/general/conceptos-mantenimiento
+- GET /api/general/conceptos-mantenimiento — Lista de tipos de accesorio/concepto (usado en filtros del dashboard).
 - GET /api/general/listar-segmentos-accesorio
 - GET /api/admin/listar_segmento_accesorio
 - GET /api/general/listar-tipos-accesorio-por-segmento/{seg_iid}

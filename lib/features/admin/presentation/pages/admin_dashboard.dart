@@ -16,6 +16,7 @@ import 'package:app_jht_front/features/admin/data/datasources/admin_remote_datas
 import 'package:app_jht_front/features/accessory/domain/repositories/accessory_repository_impl.dart';
 import 'package:app_jht_front/features/accessory/data/datasources/accessory_remote_data_source.dart';
 import 'package:app_jht_front/features/admin/presentation/widgets/historial/historial_dashboard_view.dart';
+
 class AdminDashboard extends StatefulWidget {
   final String userName;
   final String userRole;
@@ -31,16 +32,21 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard>
-    with DashboardResponsiveMixin, SingleTickerProviderStateMixin {
+    with DashboardResponsiveMixin, TickerProviderStateMixin {
   final DashboardService _dashboardService = DashboardService();
   bool _isLoading = true;
   Map<String, dynamic>? _dashboardData;
   late AnimationController _animController;
+  late TabController _tabController;
   Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      setState(() {}); // Trigger rebuild on tab change
+    });
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -54,6 +60,7 @@ class _AdminDashboardState extends State<AdminDashboard>
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _tabController.dispose();
     _animController.dispose();
     super.dispose();
   }
@@ -97,13 +104,17 @@ class _AdminDashboardState extends State<AdminDashboard>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(context, isDesktop),
+            const SizedBox(height: 24),
+
+            _buildTabBar(),
             const SizedBox(height: 32),
 
-            _buildStatsGrid(context),
-            const SizedBox(height: 32),
-
-            // Mostrar el módulo completo de Historial a todo el ancho
-            _buildChartSection(context),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: _tabController.index == 0
+                  ? _buildOperativoTab(context, isDesktop)
+                  : _buildAnaliticoTab(context, isDesktop),
+            ),
             const SizedBox(height: 40),
           ],
         );
@@ -176,7 +187,9 @@ class _AdminDashboardState extends State<AdminDashboard>
 
   Widget _buildHeaderActions(bool isDesktop) {
     return Row(
-      mainAxisAlignment: isDesktop ? MainAxisAlignment.end : MainAxisAlignment.start,
+      mainAxisAlignment: isDesktop
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
       children: [
         ElevatedButton.icon(
           onPressed: () {
@@ -226,6 +239,163 @@ class _AdminDashboardState extends State<AdminDashboard>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white, width: 2),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicator: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: const Color(0xFF303366),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF303366).withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        labelColor: Colors.white,
+        unselectedLabelColor: const Color(0xFF6B7280),
+        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        tabs: [
+          const Tab(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.speed_rounded, size: 20),
+                SizedBox(width: 8),
+                Text('Operativo'),
+              ],
+            ),
+          ),
+          Tab(
+            child: Tooltip(
+              preferBelow: true,
+              padding: const EdgeInsets.all(14),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1B4B),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.4),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              richMessage: const TextSpan(
+                children: [
+                  TextSpan(
+                    text: '📊 Vista Analítica y Estratégica de Flota\n\n',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: Colors.white,
+                    ),
+                  ),
+                  TextSpan(
+                    text:
+                        '• ¿Qué ganas?: Visibilidad ejecutiva de costos mensuales, desglose gerencial y top de unidades.\n',
+                    style: TextStyle(fontSize: 12, color: Colors.white70),
+                  ),
+                  TextSpan(
+                    text:
+                        '• ¿Qué previenes?: Sobrecostos por reparaciones correctivas tardías y fugas en el presupuesto.\n',
+                    style: TextStyle(fontSize: 12, color: Colors.white70),
+                  ),
+                  TextSpan(
+                    text:
+                        '• Objetivo: Decidir con datos reales para reducir gastos y prolongar la vida útil de los vehículos.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFFFDE047),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.analytics_rounded, size: 20),
+                  SizedBox(width: 8),
+                  Text('Analítico'),
+                  SizedBox(width: 4),
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 14,
+                    color: Colors.white70,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOperativoTab(BuildContext context, bool isDesktop) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildStatsGrid(context),
+        const SizedBox(height: 32),
+        // Aquí irán las tablas y widgets del Operativo (en desarrollo)
+        Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.7),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white),
+          ),
+          child: const Center(
+            child: Column(
+              children: [
+                Icon(
+                  Icons.construction_rounded,
+                  size: 48,
+                  color: Color(0xFF94A3B8),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Dashboard Operativo en Construcción',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Próximamente disponible, coordina con el equipo de Coldsolution TI para más información.',
+                  style: TextStyle(color: Color(0xFF64748B)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAnaliticoTab(BuildContext context, bool isDesktop) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [_buildChartSection(context)],
     );
   }
 
@@ -360,11 +530,17 @@ class _AdminDashboardState extends State<AdminDashboard>
     return BlocProvider(
       create: (context) {
         final httpClient = HttpClient();
-        final accessoryDataSource = AccessoryRemoteDataSourceImpl(httpClient: httpClient);
-        final accessoryRepository = AccessoryRepositoryImpl(remoteDataSource: accessoryDataSource);
+        final accessoryDataSource = AccessoryRemoteDataSourceImpl(
+          httpClient: httpClient,
+        );
+        final accessoryRepository = AccessoryRepositoryImpl(
+          remoteDataSource: accessoryDataSource,
+        );
         final adminDataSource = AdminRemoteDataSourceImpl();
-        final adminRepository = AdminRepositoryImpl(remoteDataSource: adminDataSource);
-        
+        final adminRepository = AdminRepositoryImpl(
+          remoteDataSource: adminDataSource,
+        );
+
         return HistorialMantenimientoBloc(
           adminRepository: adminRepository,
           vehicleRepository: accessoryRepository,
@@ -911,8 +1087,6 @@ class _GlassContainer extends StatelessWidget {
   }
 }
 
-
-
 // ---------------------------------------------------------
 // COMPONENTES DE CARGA (SKELETON LOADER) DE ALTO IMPACTO
 // ---------------------------------------------------------
@@ -924,7 +1098,9 @@ class _DashboardSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.sizeOf(context).width > 800;
     final isMobileLocal = MediaQuery.sizeOf(context).width < 600;
-    final crossAxisCount = isMobileLocal ? 1 : (MediaQuery.sizeOf(context).width < 1200 ? 2 : 4);
+    final crossAxisCount = isMobileLocal
+        ? 1
+        : (MediaQuery.sizeOf(context).width < 1200 ? 2 : 4);
 
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
@@ -948,7 +1124,7 @@ class _DashboardSkeleton extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 32),
-          
+
           // Cards Skeleton
           GridView.count(
             shrinkWrap: true,
@@ -957,7 +1133,14 @@ class _DashboardSkeleton extends StatelessWidget {
             crossAxisSpacing: 20,
             mainAxisSpacing: 20,
             childAspectRatio: isMobileLocal ? 2.2 : 1.6,
-            children: List.generate(4, (index) => _SkeletonBox(width: double.infinity, height: double.infinity, borderRadius: 20)),
+            children: List.generate(
+              4,
+              (index) => _SkeletonBox(
+                width: double.infinity,
+                height: double.infinity,
+                borderRadius: 20,
+              ),
+            ),
           ),
           const SizedBox(height: 32),
 
@@ -966,17 +1149,39 @@ class _DashboardSkeleton extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 3, child: _SkeletonBox(width: double.infinity, height: 350, borderRadius: 20)),
+                Expanded(
+                  flex: 3,
+                  child: _SkeletonBox(
+                    width: double.infinity,
+                    height: 350,
+                    borderRadius: 20,
+                  ),
+                ),
                 const SizedBox(width: 24),
-                Expanded(flex: 2, child: _SkeletonBox(width: double.infinity, height: 350, borderRadius: 20)),
+                Expanded(
+                  flex: 2,
+                  child: _SkeletonBox(
+                    width: double.infinity,
+                    height: 350,
+                    borderRadius: 20,
+                  ),
+                ),
               ],
             )
           else
             Column(
               children: [
-                _SkeletonBox(width: double.infinity, height: 350, borderRadius: 20),
+                _SkeletonBox(
+                  width: double.infinity,
+                  height: 350,
+                  borderRadius: 20,
+                ),
                 const SizedBox(height: 24),
-                _SkeletonBox(width: double.infinity, height: 300, borderRadius: 20),
+                _SkeletonBox(
+                  width: double.infinity,
+                  height: 300,
+                  borderRadius: 20,
+                ),
               ],
             ),
           const SizedBox(height: 32),
@@ -1008,7 +1213,7 @@ class _SkeletonBox extends StatelessWidget {
       curve: Curves.easeInOutSine,
       builder: (context, value, child) {
         // En lugar de usar repeat directamente (que no existe en TweenAnimationBuilder nativamente),
-        // usamos un truco con un contenedor animado simulando el pulso (o en su defecto, 
+        // usamos un truco con un contenedor animado simulando el pulso (o en su defecto,
         // simplemente dejamos el contenedor estático claro que se ve muy elegante también).
         // Para ser nativo 100% y sin errores, haremos un contenedor brillante simple:
         return Container(

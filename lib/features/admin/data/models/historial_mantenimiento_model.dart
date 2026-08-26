@@ -76,7 +76,7 @@ class HistorialGeneralItem {
       tipVnombre: json['tip_vnombre'] ?? '',
       proVrazonSocial: json['pro_vrazon_social'] ?? '',
       gasVtipo: json['gas_vtipo'] ?? '',
-      gasVnumeroDocumento: json['gas_vnumero_documento'] ?? '',
+      gasVnumeroDocumento: json['gas_inumero_documento'] ?? json['gas_vnumero_documento'] ?? '',
       gasBmonto: (json['gas_bmonto'] ?? 0).toDouble(),
       gastoVlinkFoto: json['gasto_vlink_foto'],
     );
@@ -87,11 +87,13 @@ class HistorialPorFechaItem {
   final String mes;
   final int anio;
   final int cantidad;
+  final double costoTotal;
 
   HistorialPorFechaItem({
     required this.mes,
     required this.anio,
     required this.cantidad,
+    required this.costoTotal,
   });
 
   factory HistorialPorFechaItem.fromJson(Map<String, dynamic> json) {
@@ -99,6 +101,7 @@ class HistorialPorFechaItem {
       mes: json['mes'] ?? '',
       anio: json['anio'] ?? 0,
       cantidad: json['cantidad'] ?? 0,
+      costoTotal: (json['costoTotal'] ?? 0).toDouble(),
     );
   }
 }
@@ -120,15 +123,75 @@ class HistorialPorAccesorioItem {
   }
 }
 
+class HistorialPorClasificacionItem {
+  final String clasificacion;
+  final int cantidad;
+  final double costoTotal;
+
+  HistorialPorClasificacionItem({
+    required this.clasificacion,
+    required this.cantidad,
+    required this.costoTotal,
+  });
+
+  factory HistorialPorClasificacionItem.fromJson(Map<String, dynamic> json) {
+    return HistorialPorClasificacionItem(
+      clasificacion: json['clasificacion'] ?? '',
+      cantidad: json['cantidad'] ?? 0,
+      costoTotal: (json['costoTotal'] ?? 0).toDouble(),
+    );
+  }
+}
+
+class TopVehiculoCostosoItem {
+  final String vehVplaca;
+  final double costoTotal;
+
+  TopVehiculoCostosoItem({
+    required this.vehVplaca,
+    required this.costoTotal,
+  });
+
+  factory TopVehiculoCostosoItem.fromJson(Map<String, dynamic> json) {
+    return TopVehiculoCostosoItem(
+      vehVplaca: json['placa'] ?? json['veh_vplaca'] ?? '', // Fallback por si acaso
+      costoTotal: (json['costoTotal'] ?? 0).toDouble(),
+    );
+  }
+}
+
+class TopProveedorItem {
+  final String proVrazonSocial;
+  final double costoTotal;
+
+  TopProveedorItem({
+    required this.proVrazonSocial,
+    required this.costoTotal,
+  });
+
+  factory TopProveedorItem.fromJson(Map<String, dynamic> json) {
+    return TopProveedorItem(
+      proVrazonSocial: json['proveedor'] ?? json['pro_vrazon_social'] ?? '', // Fallback por si acaso
+      costoTotal: (json['costoTotal'] ?? 0).toDouble(),
+    );
+  }
+}
+
 class HistorialDashboardResponse {
   final List<HistorialGeneralItem> historialGeneral;
   final List<HistorialPorFechaItem> consultaHistorialPorFecha;
   final List<HistorialPorAccesorioItem> consultaHistorialPorAccesorio;
+  final List<HistorialPorClasificacionItem> consultaHistorialPorClasificacion;
+  final List<TopVehiculoCostosoItem> topVehiculosCostosos;
+  final List<TopProveedorItem> topProveedores;
 
   HistorialDashboardResponse({
     required this.historialGeneral,
     required this.consultaHistorialPorFecha,
     required this.consultaHistorialPorAccesorio,
+    required this.consultaHistorialPorClasificacion,
+    required this.topVehiculosCostosos,
+    required this.topProveedores,
   });
 
   factory HistorialDashboardResponse.fromJson(Map<String, dynamic> json) {
@@ -141,6 +204,15 @@ class HistorialDashboardResponse {
           .toList(),
       consultaHistorialPorAccesorio: (json['consultaHistorialPorAccesorio'] as List? ?? [])
           .map((e) => HistorialPorAccesorioItem.fromJson(e))
+          .toList(),
+      consultaHistorialPorClasificacion: (json['consultaHistorialPorClasificacion'] as List? ?? [])
+          .map((e) => HistorialPorClasificacionItem.fromJson(e))
+          .toList(),
+      topVehiculosCostosos: (json['topVehiculosCostosos'] as List? ?? [])
+          .map((e) => TopVehiculoCostosoItem.fromJson(e))
+          .toList(),
+      topProveedores: (json['topProveedores'] as List? ?? [])
+          .map((e) => TopProveedorItem.fromJson(e))
           .toList(),
     );
   }

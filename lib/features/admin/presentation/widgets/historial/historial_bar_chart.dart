@@ -18,8 +18,8 @@ class HistorialBarChart extends StatelessWidget {
       );
     }
 
-    final maxY = data.fold<int>(0, (max, item) => item.cantidad > max ? item.cantidad : max).toDouble();
-    final adjustedMaxY = maxY == 0 ? 5.0 : maxY + (maxY * 0.2); // Dar algo de espacio superior
+    final maxY = data.fold<double>(0, (max, item) => item.costoTotal > max ? item.costoTotal : max);
+    final adjustedMaxY = maxY == 0 ? 5000.0 : maxY + (maxY * 0.15); // Dar algo de espacio superior
 
     return Padding(
       padding: const EdgeInsets.only(top: 16.0, right: 16.0),
@@ -31,12 +31,17 @@ class HistorialBarChart extends StatelessWidget {
             enabled: true,
             touchTooltipData: BarTouchTooltipData(
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                final item = data[groupIndex];
                 return BarTooltipItem(
-                  '${data[groupIndex].mes}\n',
+                  '${item.mes}\n',
                   const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                   children: [
                     TextSpan(
-                      text: '${rod.toY.toInt()} mantenimientos',
+                      text: 'Costo: S/${item.costoTotal.toStringAsFixed(2)}\n',
+                      style: const TextStyle(color: Color(0xFF16A34A), fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                    TextSpan(
+                      text: '${item.cantidad} mantenimientos',
                       style: const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
@@ -67,15 +72,24 @@ class HistorialBarChart extends StatelessWidget {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 32,
+                reservedSize: 45,
                 getTitlesWidget: (value, meta) {
-                  if (value == value.toInt()) {
-                    return Text(
-                      value.toInt().toString(),
-                      style: const TextStyle(color: Color(0xFF6B7280), fontSize: 10),
-                    );
+                  if (value == meta.max || value == meta.min) return const SizedBox.shrink();
+                  // Format as k (thousands)
+                  String text;
+                  if (value >= 1000) {
+                    text = 'S/${(value / 1000).toStringAsFixed(1)}k';
+                  } else {
+                    text = 'S/${value.toInt()}';
                   }
-                  return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Text(
+                      text,
+                      style: const TextStyle(color: Color(0xFF6B7280), fontSize: 10),
+                      textAlign: TextAlign.right,
+                    ),
+                  );
                 },
               ),
             ),
@@ -97,7 +111,7 @@ class HistorialBarChart extends StatelessWidget {
               x: e.key,
               barRods: [
                 BarChartRodData(
-                  toY: e.value.cantidad.toDouble(),
+                  toY: e.value.costoTotal,
                   gradient: const LinearGradient(
                     colors: [Color(0xFF4682B4), Color(0xFF303366)],
                     begin: Alignment.bottomCenter,
