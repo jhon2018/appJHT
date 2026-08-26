@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:app_jht_front/features/shared/presentation/widgets/scaffold_with_menu.dart';
+import 'package:app_jht_front/core/services/version_checker_service.dart';
 
 class HelpPage extends StatelessWidget {
   final String userName;
@@ -161,7 +162,7 @@ class HelpPage extends StatelessWidget {
               border: Border.all(color: Colors.white.withOpacity(0.3)),
             ),
             child: const Text(
-              'Versión 2.1.1 • 01/05/2026',
+              'Versión ${VersionCheckerService.localVersion}',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 12,
@@ -435,7 +436,7 @@ class HelpPage extends StatelessWidget {
     return Column(
       children: [
         const Text(
-          '© 2024 JHT Transporte Mantenimiento',
+          '© 2026 JHT Transporte Mantenimiento',
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 14,

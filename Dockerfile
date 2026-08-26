@@ -19,8 +19,13 @@ COPY lib/ lib/
 COPY web/ web/
 COPY assets/ assets/
 
-RUN flutter build web --release \
-    --dart-define=API_BASE_URL=https://jht-transport-api.onrender.com
+RUN VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}') && \
+    APP_VER=$(echo $VERSION | cut -d'+' -f1) && \
+    BUILD_NUM=$(echo $VERSION | cut -d'+' -f2) && \
+    flutter build web --release \
+    --dart-define=APP_VERSION=$APP_VER \
+    --dart-define=API_BASE_URL=https://jht-transport-api.onrender.com && \
+    echo "{\"version\": \"$APP_VER\", \"buildNumber\": \"$BUILD_NUM\"}" > build/web/version.json
 
 FROM nginx:alpine
 COPY --from=build /app/build/web /usr/share/nginx/html

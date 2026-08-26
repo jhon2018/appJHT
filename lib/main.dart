@@ -21,7 +21,7 @@ import 'package:app_jht_front/core/utils/app_logger.dart';
 
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:app_jht_front/core/router/app_router.dart';
-
+import 'package:app_jht_front/features/shared/presentation/widgets/version_updater_wrapper.dart';
 void main() {
   // Configurar estrategia de URL para Web (quita el # de la URL)
   usePathUrlStrategy();
@@ -128,8 +128,10 @@ class MyApp extends StatelessWidget {
           return Overlay(
             initialEntries: [
               OverlayEntry(
-                builder: (context) => SelectionArea(
-                  child: child ?? const SizedBox.shrink(),
+                builder: (context) => VersionUpdaterWrapper(
+                  child: SelectionArea(
+                    child: child ?? const SizedBox.shrink(),
+                  ),
                 ),
               ),
             ],

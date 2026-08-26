@@ -1,6 +1,7 @@
 // lib/features/shared/presentation/widgets/scaffold_with_menu.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:app_jht_front/core/utils/token_service.dart';
 import 'side_menu.dart';
 import 'menu_config.dart';
@@ -26,7 +27,6 @@ class ScaffoldWithMenuState extends State<ScaffoldWithMenu> {
   Timer? _countdownTimer;
   final ValueNotifier<int> _secondsRemaining = ValueNotifier<int>(120);
   bool _isShowingTimeoutDialog = false;
-  final FocusNode _focusNode = FocusNode();
   
   static const Duration _inactivityDuration = Duration(minutes: 5);
   static const int _alertDurationSeconds = 120;
@@ -50,15 +50,21 @@ class ScaffoldWithMenuState extends State<ScaffoldWithMenu> {
     super.initState();
     _loadUserData();
     _resetInactivityTimer();
+    HardwareKeyboard.instance.addHandler(_handleGlobalKeyEvent);
   }
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleGlobalKeyEvent);
     _inactivityTimer?.cancel();
     _countdownTimer?.cancel();
     _secondsRemaining.dispose();
-    _focusNode.dispose();
     super.dispose();
+  }
+
+  bool _handleGlobalKeyEvent(KeyEvent event) {
+    _handleUserActivity();
+    return false; // Nunca consumir el evento, solo espiarlo
   }
 
   void _handleUserActivity() {
@@ -215,18 +221,11 @@ class ScaffoldWithMenuState extends State<ScaffoldWithMenu> {
       );
     }
 
-    return Focus(
-      autofocus: true,
-      focusNode: _focusNode,
-      onKeyEvent: (node, event) {
-        _handleUserActivity();
-        return KeyEventResult.ignored;
-      },
-      child: Listener(
-        behavior: HitTestBehavior.translucent,
-        onPointerDown: (_) => _handleUserActivity(),
-        onPointerHover: (_) => _handleUserActivity(),
-        onPointerMove: (_) => _handleUserActivity(),
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (_) => _handleUserActivity(),
+      onPointerHover: (_) => _handleUserActivity(),
+      onPointerMove: (_) => _handleUserActivity(),
         child: LayoutBuilder(
           builder: (context, constraints) {
             bool isDesktop = constraints.maxWidth > 800;
@@ -290,7 +289,6 @@ class ScaffoldWithMenuState extends State<ScaffoldWithMenu> {
             );
           },
         ),
-      ),
     );
   }
 
