@@ -124,13 +124,48 @@ class MyApp extends StatelessWidget {
           fontFamily: 'Inter',
         ),
         builder: (context, child) {
+          final mediaQuery = MediaQuery.of(context);
+          final isDesktopOrTablet = mediaQuery.size.width >= 768;
+          // Zoom de 90% para Desktop/Tablet
+          final double scale = isDesktopOrTablet ? 0.9 : 1.0;
+
+          Widget content = child ?? const SizedBox.shrink();
+
+          if (scale != 1.0) {
+            final scaledSize = Size(
+              mediaQuery.size.width / scale,
+              mediaQuery.size.height / scale,
+            );
+
+            content = FittedBox(
+              fit: BoxFit.contain,
+              alignment: Alignment.topLeft,
+              child: SizedBox(
+                width: scaledSize.width,
+                height: scaledSize.height,
+                child: MediaQuery(
+                  data: mediaQuery.copyWith(
+                    size: scaledSize,
+                    devicePixelRatio: mediaQuery.devicePixelRatio * scale,
+                    viewInsets: mediaQuery.viewInsets / scale,
+                    viewPadding: mediaQuery.viewPadding / scale,
+                    padding: mediaQuery.padding / scale,
+                  ),
+                  child: content,
+                ),
+              ),
+            );
+          }
+
           // Envolvemos en un Overlay para que SelectionArea encuentre un ancestro Overlay
+          // IMPORTANTE: Overlay debe ser el widget más externo para que no se destruya
+          // su estado al hacer resize o hot reload.
           return Overlay(
             initialEntries: [
               OverlayEntry(
                 builder: (context) => VersionUpdaterWrapper(
                   child: SelectionArea(
-                    child: child ?? const SizedBox.shrink(),
+                    child: content,
                   ),
                 ),
               ),
