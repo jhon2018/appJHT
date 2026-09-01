@@ -10,6 +10,7 @@ import 'package:app_jht_front/features/admin/presentation/bloc/historial/histori
 import 'historial_filters_bar.dart';
 import 'historial_bar_chart.dart';
 import 'historial_pie_chart.dart';
+import 'historial_accesorio_pie_chart.dart';
 import 'historial_data_table.dart';
 import 'historial_top_list.dart';
 
@@ -109,8 +110,16 @@ class HistorialDashboardView extends StatelessWidget {
       context: context,
       title: 'Clasificación Gerencial',
       tooltipQueMuestra: 'Distribución de mantenimientos preventivos, correctivos y predictivos.',
-      tooltipComoInterpretarlo: 'Un mayor peso del mantenimiento preventivo indica una estrategia proactiva, mientras que un exceso de correctivos advierte sobre posibles fallas imprevistas.',
+      tooltipComoInterpretarlo: 'Un mayor peso del mantenimiento preventivo indica una estrategia proactiva.',
       child: HistorialPieChart(data: state.data.consultaHistorialPorClasificacion),
+    );
+
+    final accesorioPieChartCard = _buildGlassCard(
+      context: context,
+      title: 'Mantenimientos por Accesorio',
+      tooltipQueMuestra: 'Distribución de la cantidad de mantenimientos según el tipo de accesorio.',
+      tooltipComoInterpretarlo: 'Permite identificar qué accesorios requieren mantenimiento con mayor frecuencia.',
+      child: HistorialAccesorioPieChart(data: state.data.consultaHistorialPorAccesorio),
     );
 
     final topVehiculosCard = _buildGlassCard(
@@ -142,14 +151,16 @@ class HistorialDashboardView extends StatelessWidget {
     if (isMobile) {
       return Column(
         children: [
-          SizedBox(height: 320, child: barChartCard),
-          const SizedBox(height: 24),
-          SizedBox(height: 350, child: pieChartCard),
-          const SizedBox(height: 24),
+          SizedBox(height: 300, child: barChartCard),
+          const SizedBox(height: 16),
+          SizedBox(height: 320, child: pieChartCard),
+          const SizedBox(height: 16),
+          SizedBox(height: 320, child: accesorioPieChartCard),
+          const SizedBox(height: 16),
           topVehiculosCard,
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           topProveedoresCard,
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           _buildGlassCard(
             context: context,
             title: 'Listado Detallado',
@@ -162,24 +173,33 @@ class HistorialDashboardView extends StatelessWidget {
 
     return Column(
       children: [
+        // Primera fila: Bar Chart
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(flex: 5, child: SizedBox(height: 350, child: barChartCard)),
-            const SizedBox(width: 24),
-            Expanded(flex: 3, child: SizedBox(height: 350, child: pieChartCard)),
+            Expanded(flex: 12, child: SizedBox(height: 340, child: barChartCard)),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+        // Segunda fila: Pie Charts
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: 5, child: SizedBox(height: 350, child: pieChartCard)),
+            const SizedBox(width: 16),
+            Expanded(flex: 5, child: SizedBox(height: 350, child: accesorioPieChartCard)),
+          ],
+        ),
+        const SizedBox(height: 16),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(child: topVehiculosCard),
-            const SizedBox(width: 24),
+            const SizedBox(width: 16),
             Expanded(child: topProveedoresCard),
           ],
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 24),
         _buildGlassCard(
           context: context,
           title: 'Listado Detallado de Mantenimientos',

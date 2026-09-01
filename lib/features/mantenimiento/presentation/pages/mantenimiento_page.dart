@@ -864,6 +864,7 @@ class _MantenimientoPageState extends State<MantenimientoPage>
           'text': Colors.orange[800]!,
         };
       case 'completado':
+      case 'completo':
         return {
           'bg': Colors.green[50]!,
           'dot': Colors.green,

@@ -111,7 +111,7 @@ class MantenimientoEntity extends Equatable {
   }
 
   String? validateEstado() {
-    const validos = ['Pendiente', 'En proceso', 'Completado'];
+    const validos = ['Pendiente', 'En proceso', 'Completo'];
     if (!validos.contains(estado)) return 'Estado no válido';
     return null;
   }

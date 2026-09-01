@@ -1,5 +1,6 @@
 // lib/features/admin/presentation/widgets/historial/historial_pie_chart.dart
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:app_jht_front/features/admin/data/models/historial_mantenimiento_model.dart';
@@ -15,6 +16,37 @@ class HistorialPieChart extends StatefulWidget {
 
 class _HistorialPieChartState extends State<HistorialPieChart> {
   int touchedIndex = -1;
+  Timer? _hideTimer;
+
+  @override
+  void dispose() {
+    _hideTimer?.cancel();
+    super.dispose();
+  }
+
+  void _handleTouch(FlTouchEvent event, PieTouchResponse? pieTouchResponse) {
+    setState(() {
+      if (!event.isInterestedForInteractions ||
+          pieTouchResponse == null ||
+          pieTouchResponse.touchedSection == null) {
+        
+        // Iniciar o reiniciar el timer de 3 segundos para limpiar
+        _hideTimer?.cancel();
+        _hideTimer = Timer(const Duration(seconds: 3), () {
+          if (mounted) {
+            setState(() {
+              touchedIndex = -1;
+            });
+          }
+        });
+        return;
+      }
+      
+      // Si el mouse entra, cancelamos el timer y actualizamos el índice
+      _hideTimer?.cancel();
+      touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+    });
+  }
 
   final List<Color> _chartColors = [
     const Color(0xFF303366),
@@ -48,17 +80,7 @@ class _HistorialPieChartState extends State<HistorialPieChart> {
                 PieChart(
                   PieChartData(
                     pieTouchData: PieTouchData(
-                      touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                        setState(() {
-                          if (!event.isInterestedForInteractions ||
-                              pieTouchResponse == null ||
-                              pieTouchResponse.touchedSection == null) {
-                            touchedIndex = -1;
-                            return;
-                          }
-                          touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-                        });
-                      },
+                      touchCallback: _handleTouch,
                     ),
                     borderData: FlBorderData(show: false),
                     sectionsSpace: 2,
@@ -145,17 +167,7 @@ class _HistorialPieChartState extends State<HistorialPieChart> {
               PieChart(
                 PieChartData(
                   pieTouchData: PieTouchData(
-                    touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                      setState(() {
-                        if (!event.isInterestedForInteractions ||
-                            pieTouchResponse == null ||
-                            pieTouchResponse.touchedSection == null) {
-                          touchedIndex = -1;
-                          return;
-                        }
-                        touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-                      });
-                    },
+                    touchCallback: _handleTouch,
                   ),
                   borderData: FlBorderData(show: false),
                   sectionsSpace: 2,

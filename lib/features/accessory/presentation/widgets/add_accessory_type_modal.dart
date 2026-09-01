@@ -51,7 +51,7 @@ class _AddAccessoryTypeModalState extends State<AddAccessoryTypeModal> {
 
   // Opciones
   final List<String> _estadoOptions = ['Activo', 'Inactivo'];
-  final List<String> _tipoManOptions = ['Preventivo', 'Correctivo', 'Predictivo'];
+  final List<String> _tipoManOptions = ['Preventivo', 'Correctivo', 'Predictivo', 'Cambio'];
   
   // Autocomplete opciones
   static const List<String> _unidadesComunes = [

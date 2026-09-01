@@ -57,7 +57,7 @@ class _EditMantenimientoModalState extends State<EditMantenimientoModal> {
   // permanece visible porque _cachedDetalle sigue siendo no-null.
   DetalleMantenimientoModel? _cachedDetalle;
 
-  static const _estadoOptions = ['Pendiente', 'En proceso', 'Completado'];
+  static const _estadoOptions = ['Pendiente', 'En proceso', 'Completo'];
 
   // ─────────────────────────────────────────────────────────────────────────
   @override

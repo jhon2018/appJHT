@@ -783,6 +783,7 @@ class _AccessoryPageState extends State<AccessoryPage>
         bg = const Color(0xFF1E8A4A); // verde
         break;
       case 'completado':
+      case 'completo':
         bg = const Color(0xFF0D8ABC); // azulino
         break;
       case 'inactivo':

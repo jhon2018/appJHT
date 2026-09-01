@@ -144,6 +144,7 @@ class _HistorialDataTableState extends State<HistorialDataTable> {
 
     switch (status.toLowerCase()) {
       case 'completado':
+      case 'completo':
         bgColor = const Color(0xFFDCFCE7); // successBg
         textColor = const Color(0xFF16A34A); // success
         break;
