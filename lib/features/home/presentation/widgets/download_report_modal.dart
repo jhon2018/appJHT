@@ -105,56 +105,55 @@ class _DownloadReportModalState extends State<DownloadReportModal> {
       );
 
       if (data.isEmpty) {
-        AppNotification.info(context, 'No hay datos para el rango seleccionado');
-        setState(() => _isGenerating = false);
+        if (mounted) {
+          AppNotification.info(context, 'No hay datos para el rango seleccionado');
+          setState(() => _isGenerating = false);
+        }
         return;
       }
 
-      // Preparar estructura para CSV
-      List<List<dynamic>> csvData = [
-        // Cabeceras (ajustadas según el JSON de respuesta)
-        [
-          'ID Bitácora', 'Fecha Registro Bitácora', 'Kilometraje Bitácora', 'Cantidad', 
-          'ID Vehículo', 'Placa', 'Marca', 'Número VIN', 'Kilometraje Vehículo', 
-          'Proveedor', 'Código Fabricante', 'Fecha Instalación', 'Kilometraje Instalación', 
-          'Fecha Retiro', 'Kilometraje Retiro', 'Accesorio Tipo', 'Accesorio Segmento', 
-          'Diccionario', 'Tipo', 'Frecuencia Km', 'Frecuencia Tiempo (días)', 
-          'Descripción Histórico', 'Próx. Kilometraje', 'Próxima Fecha', 'Estado Histórico', 
-          'Link Foto', 'Fecha Registro Histórico'
-        ],
-      ];
-
-      // Filas
+      // 1. Extraer todas las llaves (columnas) de forma dinámica preservando el orden de llegada
+      final Set<String> allKeys = {};
       for (var item in data) {
-        csvData.add([
-          item['bitacoraId'] ?? '',
-          item['bitacoraFechaRegistro'] ?? '',
-          item['bitacoraKilometraje'] ?? '',
-          item['bitacoraCantidad'] ?? '',
-          item['vehiculoId'] ?? '',
-          item['placa'] ?? '',
-          item['marca'] ?? '',
-          item['numeroVin'] ?? '',
-          item['kilometrajeVehiculo'] ?? '',
-          item['proveedorRazonSocial'] ?? '',
-          item['codigoFabricante'] ?? '',
-          item['fechaInstalacion'] ?? '',
-          item['kilometrajeInstalacion'] ?? '',
-          item['fechaRetiro'] ?? '',
-          item['kilometrajeRetiro'] ?? '',
-          item['tipoAccesorioNombre'] ?? '',
-          item['segmentoNombre'] ?? '',
-          item['diccionarioNombre'] ?? '',
-          item['diccionarioTipo'] ?? '',
-          item['frecuenciaKilometros'] ?? '',
-          item['frecuenciaTiempo'] ?? '',
-          item['historicoDescripcion'] ?? '',
-          item['historicoProximoKilometraje'] ?? '',
-          item['historicoProximaFecha'] ?? '',
-          item['historicoEstado'] ?? '',
-          item['historicoLinkFoto'] ?? '',
-          item['historicoFechaRegistro'] ?? '',
-        ]);
+        if (item is Map) {
+          for (var key in item.keys) {
+            allKeys.add(key.toString());
+          }
+        }
+      }
+
+      if (allKeys.isEmpty) {
+        if (mounted) {
+          AppNotification.info(context, 'El reporte no contiene columnas para exportar');
+          setState(() => _isGenerating = false);
+        }
+        return;
+      }
+
+      // 2. Generar cabeceras dinámicas con nombres amigables
+      final List<dynamic> headers = allKeys.map((key) => _formatearNombreColumna(key)).toList();
+
+      // 3. Generar filas dinámicamente según las llaves encontradas
+      final List<List<dynamic>> csvData = [headers];
+
+      for (var item in data) {
+        if (item is Map) {
+          final row = allKeys.map((key) {
+            final val = item[key];
+            if (val == null) return '';
+            if (val is String) {
+              // Limpiar iconos/emojis de retiro o instalación para dejar solo texto limpio
+              return val
+                  .replaceAll('🔻', '')
+                  .replaceAll('🔺', '')
+                  .replaceAll('▼', '')
+                  .replaceAll('▲', '')
+                  .trim();
+            }
+            return val;
+          }).toList();
+          csvData.add(row);
+        }
       }
 
       final dateStr = DateFormat('yyyyMMdd').format(DateTime.now());
@@ -401,5 +400,67 @@ class _DownloadReportModalState extends State<DownloadReportModal> {
         ),
       ],
     );
+  }
+
+  String _formatearNombreColumna(String key) {
+    final normalized = key.toLowerCase();
+
+    // Diccionario de cabeceras amigables para campos conocidos
+    const friendlyHeaders = {
+      'bitacoraid': 'ID Bitácora',
+      'bitacorafecharegistro': 'Fecha Registro Bitácora',
+      'bitacorafecha': 'Fecha Bitácora',
+      'bitacorahora': 'Hora Bitácora',
+      'bitacorakilometraje': 'Kilometraje Bitácora',
+      'bitacoracantidad': 'Cantidad Bitácora',
+      'vehiculoid': 'ID Vehículo',
+      'placa': 'Placa',
+      'marca': 'Marca',
+      'numerovin': 'Número VIN',
+      'kilometrajevehiculo': 'Kilometraje Vehículo',
+      'proveedorrazonsocial': 'Proveedor',
+      'codigofabricante': 'Código Fabricante',
+      'fechainstalacion': 'Fecha Instalación',
+      'horainstalacion': 'Hora Instalación',
+      'kilometrajeinstalacion': 'Kilometraje Instalación',
+      'fecharetiro': 'Fecha Retiro',
+      'kilometrajeretiro': 'Kilometraje Retiro',
+      'tipoaccesorionombre': 'Accesorio Tipo',
+      'segmentonombre': 'Accesorio Segmento',
+      'diccionarionombre': 'Concepto Mantenimiento',
+      'diccionariotipo': 'Tipo Clasificación',
+      'frecuenciakilometros': 'Frecuencia Km',
+      'frecuenciatiempo': 'Frecuencia Tiempo (días)',
+      'historicodescripcion': 'Descripción Histórico',
+      'historicoproximokilometraje': 'Próx. Kilometraje',
+      'historicoproximafecha': 'Próxima Fecha',
+      'historicoestado': 'Estado Histórico',
+      'historicolinkfoto': 'Link Foto',
+      'historicofecharegistro': 'Fecha Registro Histórico',
+      'historicofecha': 'Fecha Histórico',
+      'historicohora': 'Hora Histórico',
+      'montofactura': 'Monto Factura (S/)',
+      'gasbmonto': 'Monto Gasto (S/)',
+    };
+
+    if (friendlyHeaders.containsKey(normalized)) {
+      return friendlyHeaders[normalized]!;
+    }
+
+    // Si es un campo nuevo (añadido en el backend a futuro):
+    // Separa camelCase o snake_case y capitaliza cada palabra
+    final formatted = key
+        .replaceAllMapped(
+          RegExp(r'([a-z])([A-Z])'),
+          (Match m) => '${m[1]} ${m[2]}',
+        )
+        .replaceAll('_', ' ')
+        .trim();
+
+    return formatted
+        .split(' ')
+        .where((word) => word.isNotEmpty)
+        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .join(' ');
   }
 }
